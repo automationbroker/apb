@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dymurray/sbcli/cmd"
+	"github.com/automationbroker/sbcli/cmd"
 )
 
 func main() {
