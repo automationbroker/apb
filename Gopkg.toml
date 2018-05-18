@@ -25,9 +25,9 @@
 #   unused-packages = true
 
 
-#[[constraint]]
-#  name = "github.com/automationbroker/bundle-lib"
-#  version = "0.1.3"
+[[constraint]]
+  name = "github.com/automationbroker/bundle-lib"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
