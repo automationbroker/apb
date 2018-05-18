@@ -33,8 +33,9 @@
 
 [[projects]]
   name = "github.com/automationbroker/bundle-lib"
+  branch = "master"
   packages = [
-    "apb",
+    "bundle",
     "clients",
     "origin/copy/authorization",
     "origin/copy/user",
@@ -43,8 +44,7 @@
     "registries/adapters",
     "runtime"
   ]
-  revision = "02293f7f6c59d1e9d77f43389a2ef0636202317f"
-  version = "0.1.3"
+  revision = "d0de112e5f56ec855c413e0815954dd325f11b86"
 
 [[projects]]
   name = "github.com/coreos/etcd"
