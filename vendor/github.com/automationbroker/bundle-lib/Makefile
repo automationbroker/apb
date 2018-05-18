@@ -1,4 +1,4 @@
-SOURCE_DIRS      = apb clients crd registries runtime
+SOURCE_DIRS      = bundle clients crd registries runtime
 SOURCES          := $(shell find . -name '*.go' -not -path "*/vendor/*" -not -path "*/.git/*")
 PACKAGES         := $(shell go list $(addprefix ./, $(addsuffix /... , $(shell ls -d */ | grep -v vendor))))
 COVERAGE_SVC     := travis-ci
@@ -43,6 +43,10 @@ check: fmtcheck vet lint build test ## Pre-flight checks before creating PR
 
 clean: ## Clean up your working environment
 	@rm -f coverage-all.out coverage.out
+
+generate: ## regenerate mocks
+	go get github.com/vektra/mockery/.../
+	@go generate ./...
 
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'

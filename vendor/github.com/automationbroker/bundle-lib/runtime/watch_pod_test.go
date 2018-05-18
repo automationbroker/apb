@@ -1,3 +1,19 @@
+//
+// Copyright (c) 2018 Red Hat, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package runtime
 
 import (
@@ -5,15 +21,19 @@ import (
 
 	"fmt"
 
+	"github.com/automationbroker/bundle-lib/clients"
 	core1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/kubernetes/typed/core/v1"
 	ktesting "k8s.io/client-go/testing"
 )
 
 func TestWatchPod(t *testing.T) {
+	k8scli, err := clients.Kubernetes()
+	if err != nil {
+		t.Fatal()
+	}
 
 	podStateUpdater := func(watcher *watch.FakeWatcher, podUpdates []*core1.Pod) {
 		for _, podUpdate := range podUpdates {
@@ -23,18 +43,18 @@ func TestWatchPod(t *testing.T) {
 
 	cases := []struct {
 		Name            string
-		PodClient       func() (v1.PodInterface, *watch.FakeWatcher)
+		PodClient       func() (*fake.Clientset, *watch.FakeWatcher)
 		UpdatePodStates func(watcher *watch.FakeWatcher)
 		ExpectError     bool
 		Validate        func(status []string) error
 	}{
 		{
 			Name: "should get error and state update when pod fails",
-			PodClient: func() (v1.PodInterface, *watch.FakeWatcher) {
+			PodClient: func() (*fake.Clientset, *watch.FakeWatcher) {
 				kfake := &fake.Clientset{}
 				podWatch := watch.NewFake()
 				kfake.AddWatchReactor("pods", ktesting.DefaultWatchReactor(podWatch, nil))
-				return kfake.CoreV1().Pods("test"), podWatch
+				return kfake, podWatch
 			},
 			ExpectError: true,
 			UpdatePodStates: func(watcher *watch.FakeWatcher) {
@@ -75,11 +95,11 @@ func TestWatchPod(t *testing.T) {
 		},
 		{
 			Name: "should get state updates when pod succeeds and no error",
-			PodClient: func() (v1.PodInterface, *watch.FakeWatcher) {
+			PodClient: func() (*fake.Clientset, *watch.FakeWatcher) {
 				kfake := &fake.Clientset{}
 				podWatch := watch.NewFake()
 				kfake.AddWatchReactor("pods", ktesting.DefaultWatchReactor(podWatch, nil))
-				return kfake.CoreV1().Pods("test"), podWatch
+				return kfake, podWatch
 			},
 			UpdatePodStates: func(watcher *watch.FakeWatcher) {
 				podStates := []*core1.Pod{{
@@ -120,11 +140,11 @@ func TestWatchPod(t *testing.T) {
 		},
 		{
 			Name: "should get state updates error if pod unexpectedly deleted",
-			PodClient: func() (v1.PodInterface, *watch.FakeWatcher) {
+			PodClient: func() (*fake.Clientset, *watch.FakeWatcher) {
 				kfake := &fake.Clientset{}
 				podWatch := watch.NewFake()
 				kfake.AddWatchReactor("pods", ktesting.DefaultWatchReactor(podWatch, nil))
-				return kfake.CoreV1().Pods("test"), podWatch
+				return kfake, podWatch
 			},
 			UpdatePodStates: func(watcher *watch.FakeWatcher) {
 				podStates := []*core1.Pod{{
@@ -163,17 +183,17 @@ func TestWatchPod(t *testing.T) {
 			podClient, podWatch := tc.PodClient()
 			descriptions := []string{}
 			done := make(chan bool)
+			k8scli.Client = podClient
 
 			go func() {
-				watchErr = WatchPod("test", "test", podClient, func(newDescription string, newDashURL string) {
-					fmt.Printf("got newDescription -> %v\n", newDescription)
+				watchErr = defaultWatchRunningBundle("test", "test", func(d, newDashURL string) {
+					fmt.Printf("got newDescription -> %v\n", d)
 					fmt.Printf("got newDashURL-> %v\n", newDashURL)
-
-					if newDescription != "" {
-						descriptions = append(descriptions, newDescription)
+					if d != "" {
+						descriptions = append(descriptions, d)
 					}
 
-					if newDashURL != "" {
+					if dashURL != "" {
 						dashURL = newDashURL
 					}
 				})

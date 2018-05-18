@@ -24,22 +24,19 @@
   packages = [
     "client/clientset/versioned",
     "client/clientset/versioned/scheme",
-    "client/clientset/versioned/typed/automationbroker.io/v1",
-    "pkg/apis/automationbroker.io",
-    "pkg/apis/automationbroker.io/v1"
+    "client/clientset/versioned/typed/automationbroker/v1alpha1",
+    "pkg/apis/automationbroker",
+    "pkg/apis/automationbroker/v1alpha1"
   ]
-  revision = "99aa044d32de771f45a17e3632ccffdc87086063"
-  version = "0.1.1"
+  revision = "6918e8ae55fc54e0b69c5d17afd77d07efd5dc23"
+  version = "0.1.2"
 
 [[projects]]
-  name = "github.com/automationbroker/bundle-lib"
   branch = "master"
+  name = "github.com/automationbroker/bundle-lib"
   packages = [
     "bundle",
     "clients",
-    "origin/copy/authorization",
-    "origin/copy/user",
-    "origin/copy/user/validation",
     "registries",
     "registries/adapters",
     "runtime"
@@ -279,7 +276,11 @@
 
 [[projects]]
   name = "github.com/openshift/api"
-  packages = ["network/v1"]
+  packages = [
+    "authorization/v1",
+    "network/v1",
+    "pkg/serialization"
+  ]
   revision = "0d921e363e951d89f583292c60d013c318df64dc"
   version = "v3.9.0"
 
@@ -497,15 +498,11 @@
   branch = "release-1.9"
   name = "k8s.io/apimachinery"
   packages = [
-    "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
-    "pkg/api/validation",
-    "pkg/api/validation/path",
     "pkg/apis/meta/v1",
     "pkg/apis/meta/v1/unstructured",
-    "pkg/apis/meta/v1/validation",
     "pkg/apis/meta/v1alpha1",
     "pkg/conversion",
     "pkg/conversion/queryparams",
@@ -542,15 +539,6 @@
     "third_party/forked/golang/reflect"
   ]
   revision = "4a1945a9cfdfa104d202059c7e64250618d8d009"
-
-[[projects]]
-  branch = "master"
-  name = "k8s.io/apiserver"
-  packages = [
-    "pkg/authentication/serviceaccount",
-    "pkg/authentication/user"
-  ]
-  revision = "2bd5c649bd35508c4d15149c1d188913542a64bb"
 
 [[projects]]
   branch = "release-6.0"
@@ -614,15 +602,9 @@
   packages = ["pkg/common"]
   revision = "1e45fb05b06309c0d807d0930e1a81fe0a1cd4b8"
 
-[[projects]]
-  name = "k8s.io/kubernetes"
-  packages = ["pkg/apis/rbac"]
-  revision = "d4ab47518836c750f9949b9e0d387f20fb92260b"
-  version = "v1.10.1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ce4265ebd2294b22bb3419df5e3bbd5faf0325937d4f8209bbee0cd300dd2fcd"
+  inputs-digest = "39a91b3192d8af8b19a9f04099cc57e3f3439a00e1be73581e5b1d6b93b16066"
   solver-name = "gps-cdcl"
   solver-version = 1

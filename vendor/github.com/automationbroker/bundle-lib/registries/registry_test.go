@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/automationbroker/bundle-lib/apb"
+	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries/adapters"
 	ft "github.com/stretchr/testify/assert"
 )
@@ -32,8 +32,8 @@ const SpecBadVersion = "2.0"
 const SpecVersion = "1.0"
 const SpecRuntime = 1
 const SpecBadRuntime = 0
-const SpecName = "etherpad-apb"
-const SpecImage = "fusor/etherpad-apb"
+const SpecName = "etherpad-bundle"
+const SpecImage = "fusor/etherpad-bundle"
 const SpecBindable = false
 const SpecAsync = "optional"
 const SpecDescription = "A note taking webapp"
@@ -51,31 +51,31 @@ var PlanMetadata = map[string]interface{}{
 const PlanFree = true
 const PlanBindable = true
 
-var expectedPlanParameters = []apb.ParameterDescriptor{
-	apb.ParameterDescriptor{
+var expectedPlanParameters = []bundle.ParameterDescriptor{
+	bundle.ParameterDescriptor{
 		Name:    "postgresql_database",
 		Default: "admin",
 		Type:    "string",
 		Title:   "PostgreSQL Database Name"},
-	apb.ParameterDescriptor{
+	bundle.ParameterDescriptor{
 		Name:        "postgresql_password",
 		Default:     "admin",
 		Type:        "string",
 		Description: "A random alphanumeric string if left blank",
 		Title:       "PostgreSQL Password"},
-	apb.ParameterDescriptor{
+	bundle.ParameterDescriptor{
 		Name:                "postgresql_user",
 		Default:             "admin",
 		Title:               "PostgreSQL User",
 		Type:                "string",
 		DeprecatedMaxlength: 63},
-	apb.ParameterDescriptor{
+	bundle.ParameterDescriptor{
 		Name:    "postgresql_version",
 		Default: 9.5,
 		Enum:    []string{"9.5", "9.4"},
 		Type:    "enum",
 		Title:   "PostgreSQL Version"},
-	apb.ParameterDescriptor{
+	bundle.ParameterDescriptor{
 		Name:        "postgresql_email",
 		Pattern:     "\u201c^\\\\S+@\\\\S+$\u201d",
 		Type:        "string",
@@ -83,7 +83,7 @@ var expectedPlanParameters = []apb.ParameterDescriptor{
 		Title:       "email"},
 }
 
-var p = apb.Plan{
+var p = bundle.Plan{
 	Name:        PlanName,
 	Description: PlanDescription,
 	Metadata:    PlanMetadata,
@@ -92,7 +92,7 @@ var p = apb.Plan{
 	Parameters:  expectedPlanParameters,
 }
 
-var s = apb.Spec{
+var s = bundle.Spec{
 	Version:     SpecVersion,
 	Runtime:     SpecRuntime,
 	ID:          SpecID,
@@ -102,10 +102,10 @@ var s = apb.Spec{
 	Tags:        SpecTags,
 	Bindable:    SpecBindable,
 	Async:       SpecAsync,
-	Plans:       []apb.Plan{p},
+	Plans:       []bundle.Plan{p},
 }
 
-var noPlansSpec = apb.Spec{
+var noPlansSpec = bundle.Spec{
 	Version:     SpecVersion,
 	Runtime:     SpecRuntime,
 	ID:          SpecID,
@@ -117,7 +117,7 @@ var noPlansSpec = apb.Spec{
 	Async:       SpecAsync,
 }
 
-var noVersionSpec = apb.Spec{
+var noVersionSpec = bundle.Spec{
 	Runtime:     SpecRuntime,
 	ID:          SpecID,
 	Description: SpecDescription,
@@ -126,10 +126,10 @@ var noVersionSpec = apb.Spec{
 	Tags:        SpecTags,
 	Bindable:    SpecBindable,
 	Async:       SpecAsync,
-	Plans:       []apb.Plan{p},
+	Plans:       []bundle.Plan{p},
 }
 
-var badVersionSpec = apb.Spec{
+var badVersionSpec = bundle.Spec{
 	Version:     SpecBadVersion,
 	Runtime:     SpecRuntime,
 	ID:          SpecID,
@@ -139,10 +139,10 @@ var badVersionSpec = apb.Spec{
 	Tags:        SpecTags,
 	Bindable:    SpecBindable,
 	Async:       SpecAsync,
-	Plans:       []apb.Plan{p},
+	Plans:       []bundle.Plan{p},
 }
 
-var badRuntimeSpec = apb.Spec{
+var badRuntimeSpec = bundle.Spec{
 	Version:     SpecVersion,
 	Runtime:     SpecBadRuntime,
 	ID:          SpecID,
@@ -152,13 +152,13 @@ var badRuntimeSpec = apb.Spec{
 	Tags:        SpecTags,
 	Bindable:    SpecBindable,
 	Async:       SpecAsync,
-	Plans:       []apb.Plan{p},
+	Plans:       []bundle.Plan{p},
 }
 
 type TestingAdapter struct {
 	Name   string
 	Images []string
-	Specs  []*apb.Spec
+	Specs  []*bundle.Spec
 	Called map[string]bool
 }
 
@@ -167,7 +167,7 @@ func (t TestingAdapter) GetImageNames() ([]string, error) {
 	return t.Images, nil
 }
 
-func (t TestingAdapter) FetchSpecs(images []string) ([]*apb.Spec, error) {
+func (t TestingAdapter) FetchSpecs(images []string) ([]*bundle.Spec, error) {
 	t.Called["FetchSpecs"] = true
 	return t.Specs, nil
 }
@@ -183,8 +183,8 @@ var r Registry
 func setUp() Registry {
 	a = &TestingAdapter{
 		Name:   "testing",
-		Images: []string{"image1-apb", "image2"},
-		Specs:  []*apb.Spec{&s},
+		Images: []string{"image1-bundle", "image2"},
+		Specs:  []*bundle.Spec{&s},
 		Called: map[string]bool{},
 	}
 	filter := Filter{}
@@ -198,8 +198,8 @@ func setUp() Registry {
 func setUpNoPlans() Registry {
 	a = &TestingAdapter{
 		Name:   "testing",
-		Images: []string{"image1-apb", "image2"},
-		Specs:  []*apb.Spec{&noPlansSpec},
+		Images: []string{"image1-bundle", "image2"},
+		Specs:  []*bundle.Spec{&noPlansSpec},
 		Called: map[string]bool{},
 	}
 	filter := Filter{}
@@ -213,8 +213,8 @@ func setUpNoPlans() Registry {
 func setUpNoVersion() Registry {
 	a = &TestingAdapter{
 		Name:   "testing",
-		Images: []string{"image1-apb", "image2"},
-		Specs:  []*apb.Spec{&noVersionSpec},
+		Images: []string{"image1-bundle", "image2"},
+		Specs:  []*bundle.Spec{&noVersionSpec},
 		Called: map[string]bool{},
 	}
 	filter := Filter{}
@@ -228,8 +228,8 @@ func setUpNoVersion() Registry {
 func setUpBadVersion() Registry {
 	a = &TestingAdapter{
 		Name:   "testing",
-		Images: []string{"image1-apb", "image2"},
-		Specs:  []*apb.Spec{&badVersionSpec},
+		Images: []string{"image1-bundle", "image2"},
+		Specs:  []*bundle.Spec{&badVersionSpec},
 		Called: map[string]bool{},
 	}
 	filter := Filter{}
@@ -243,8 +243,8 @@ func setUpBadVersion() Registry {
 func setUpBadRuntime() Registry {
 	a = &TestingAdapter{
 		Name:   "testing",
-		Images: []string{"image1-apb", "image2"},
-		Specs:  []*apb.Spec{&badRuntimeSpec},
+		Images: []string{"image1-bundle", "image2"},
+		Specs:  []*bundle.Spec{&badRuntimeSpec},
 		Called: map[string]bool{},
 	}
 	filter := Filter{}
@@ -418,4 +418,34 @@ func TestVersionCheck(t *testing.T) {
 	ft.False(t, isCompatibleVersion("1", "1.0", "3.0"))
 	// Test invalid version
 	ft.False(t, isCompatibleVersion("2.5", "3.0", "4.0"))
+}
+
+type fakeAdapter struct{}
+
+func (f fakeAdapter) GetImageNames() ([]string, error) {
+	return []string{}, nil
+}
+
+func (f fakeAdapter) FetchSpecs(names []string) ([]*bundle.Spec, error) {
+	return []*bundle.Spec{}, nil
+}
+
+func (f fakeAdapter) RegistryName() string {
+	return ""
+}
+
+func TestAdapterWithConfiguration(t *testing.T) {
+	c := Config{
+		Name: "nsa",
+		Type: "custom",
+	}
+
+	f := fakeAdapter{}
+
+	reg, err := NewCustomRegistry(c, f, "")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	ft.Equal(t, reg.adapter, f, "registry uses wrong adapter")
+	ft.Equal(t, reg.config, c, "registrying using wrong config")
 }

@@ -23,11 +23,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/automationbroker/bundle-lib/apb"
+	"github.com/automationbroker/bundle-lib/bundle"
 	log "github.com/sirupsen/logrus"
 )
 
-const openShiftName = "openshift"
 const openShiftManifestURL = "%v/v2/%v/manifests/%v"
 
 // OpenShiftAdapter - Docker Hub Adapter
@@ -43,26 +42,26 @@ type OpenShiftImage struct {
 
 // RegistryName - Retrieve the registry name
 func (r OpenShiftAdapter) RegistryName() string {
-	return openShiftName
+	return strings.TrimPrefix(r.Config.URL.String(), "https://")
 }
 
 // GetImageNames - retrieve the images
 func (r OpenShiftAdapter) GetImageNames() ([]string, error) {
 	log.Debug("OpenShiftAdapter::GetImageNames")
-	log.Debug("BundleSpecLabel: %s", BundleSpecLabel)
+	log.Debugf("BundleSpecLabel: %s", BundleSpecLabel)
 
 	images := r.Config.Images
-	log.Debug("Configured to use images: %v", images)
+	log.Debugf("Configured to use images: %v", images)
 
 	return images, nil
 }
 
 // FetchSpecs - retrieve the spec for the image names.
-func (r OpenShiftAdapter) FetchSpecs(imageNames []string) ([]*apb.Spec, error) {
+func (r OpenShiftAdapter) FetchSpecs(imageNames []string) ([]*bundle.Spec, error) {
 	log.Debug("OpenShiftAdapter::FetchSpecs")
-	specs := []*apb.Spec{}
+	specs := []*bundle.Spec{}
 	for _, imageName := range imageNames {
-		log.Debug("%v", imageName)
+		log.Debugf("%v", imageName)
 		spec, err := r.loadSpec(imageName)
 		if err != nil {
 			log.Errorf("Failed to retrieve spec data for image %s - %v", imageName, err)
@@ -101,11 +100,11 @@ func (r OpenShiftAdapter) getOpenShiftAuthToken() (string, error) {
 	if strings.Index(authChallenge, "realm=\"") == -1 {
 		return "", errors.New("failed to find realm in www-authenticate header")
 	}
-	if strings.Index(authChallenge, ",") == -1 {
-		return "", errors.New("failed to find realm options in www-authenticate header")
+	authOptions := ""
+	if strings.Index(authChallenge, ",") != -1 {
+		authOptions = strings.Split(authChallenge, ",")[1]
 	}
 	authRealm := strings.Split(strings.Split(authChallenge, "realm=\"")[1], "\"")[0]
-	authOptions := strings.Split(authChallenge, ",")[1]
 	authURL := fmt.Sprintf("%v?%v", authRealm, authOptions)
 	// Replace any quotes that exist in header from authOptions
 	authURL = strings.Replace(authURL, "\"", "", -1)
@@ -131,7 +130,7 @@ func (r OpenShiftAdapter) getOpenShiftAuthToken() (string, error) {
 	return tokenResp.Token, nil
 }
 
-func (r OpenShiftAdapter) loadSpec(imageName string) (*apb.Spec, error) {
+func (r OpenShiftAdapter) loadSpec(imageName string) (*bundle.Spec, error) {
 	log.Debug("OpenShiftAdapter::LoadSpec")
 	if r.Config.Tag == "" {
 		r.Config.Tag = "latest"

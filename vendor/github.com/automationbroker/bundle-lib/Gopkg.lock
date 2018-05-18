@@ -24,12 +24,12 @@
   packages = [
     "client/clientset/versioned",
     "client/clientset/versioned/scheme",
-    "client/clientset/versioned/typed/automationbroker.io/v1",
-    "pkg/apis/automationbroker.io",
-    "pkg/apis/automationbroker.io/v1"
+    "client/clientset/versioned/typed/automationbroker/v1alpha1",
+    "pkg/apis/automationbroker",
+    "pkg/apis/automationbroker/v1alpha1"
   ]
-  revision = "99aa044d32de771f45a17e3632ccffdc87086063"
-  version = "0.1.1"
+  revision = "6918e8ae55fc54e0b69c5d17afd77d07efd5dc23"
+  version = "0.1.2"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -218,7 +218,11 @@
 [[projects]]
   branch = "master"
   name = "github.com/openshift/api"
-  packages = ["network/v1"]
+  packages = [
+    "authorization/v1",
+    "network/v1",
+    "pkg/serialization"
+  ]
   revision = "dca24d1902afee9d2be02425a2d7c9f910063631"
 
 [[projects]]
@@ -395,15 +399,11 @@
   branch = "release-1.9"
   name = "k8s.io/apimachinery"
   packages = [
-    "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
-    "pkg/api/validation",
-    "pkg/api/validation/path",
     "pkg/apis/meta/v1",
     "pkg/apis/meta/v1/unstructured",
-    "pkg/apis/meta/v1/validation",
     "pkg/apis/meta/v1alpha1",
     "pkg/conversion",
     "pkg/conversion/queryparams",
@@ -440,15 +440,6 @@
     "third_party/forked/golang/reflect"
   ]
   revision = "19e3f5aa3adca672c153d324e6b7d82ff8935f03"
-
-[[projects]]
-  branch = "release-1.9"
-  name = "k8s.io/apiserver"
-  packages = [
-    "pkg/authentication/serviceaccount",
-    "pkg/authentication/user"
-  ]
-  revision = "5343f14b1d39e19add5eb0245eca715d8b37b164"
 
 [[projects]]
   branch = "release-6.0"
@@ -544,15 +535,9 @@
   packages = ["pkg/common"]
   revision = "50ae88d24ede7b8bad68e23c805b5d3da5c8abaf"
 
-[[projects]]
-  name = "k8s.io/kubernetes"
-  packages = ["pkg/apis/rbac"]
-  revision = "d2835416544f298c919e2ead3be3d0864b52323b"
-  version = "v1.9.3"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6e83e87a4e3fa1016de7759fae9ed217283d6aed16b2d2fb3d4e4021efb95533"
+  inputs-digest = "5d6fb38fcbb8024cf35ea517995086b921765de40a3f016f9ac25df44c957921"
   solver-name = "gps-cdcl"
   solver-version = 1
