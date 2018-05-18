@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/automationbroker/bundle-lib/apb"
+	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +17,7 @@ var CfgFile string
 
 type Config struct {
 	Registries []registries.Config
-	Specs      []*apb.Spec
+	Specs      []*bundle.Spec
 }
 
 var rootCmd = &cobra.Command{

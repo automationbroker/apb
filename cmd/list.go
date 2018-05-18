@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/automationbroker/bundle-lib/apb"
+	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,13 +33,13 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
-func updateCachedList(specs []*apb.Spec) error {
+func updateCachedList(specs []*bundle.Spec) error {
 	viper.Set("Specs", specs)
 	viper.WriteConfig()
 	return nil
 }
 
-func getImages() ([]*apb.Spec, error) {
+func getImages() ([]*bundle.Spec, error) {
 	authNamespace := ""
 	reg, err := registries.NewRegistry(dockerhubConfig, authNamespace)
 	if err != nil {
@@ -60,7 +60,7 @@ func getImages() ([]*apb.Spec, error) {
 }
 
 func listImages() {
-	var specs []*apb.Spec = nil
+	var specs []*bundle.Spec = nil
 	err := viper.UnmarshalKey("Specs", &specs)
 	if err != nil {
 		fmt.Println("Error unmarshalling config: ", err)
