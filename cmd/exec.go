@@ -15,6 +15,7 @@ import (
 )
 
 var execName string
+var execNamespace string
 
 var execCmd = &cobra.Command{
 	Use:   "exec",
@@ -34,19 +35,33 @@ var execProvisionCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(execCmd)
 	execProvisionCmd.Flags().StringVarP(&execName, "name", "n", "", "Name of spec to provision")
+	execProvisionCmd.Flags().StringVarP(&execNamespace, "namespace", "p", "", "Namespace to provision bundle to")
 	execCmd.AddCommand(execProvisionCmd)
 }
 
 func createExecutor() {
+	if execName == "" {
+		fmt.Println("Failed to find --name argument. No bundle selected")
+		return
+	}
+	if execNamespace == "" {
+		fmt.Println("Failed to find --namespace argument. No namespace selected")
+		return
+	}
 	specs := []*bundle.Spec{}
-	targetSpec := &bundle.Spec{}
-	targets := []string{"dylan"}
+	var targetSpec *bundle.Spec
+	targets := []string{execNamespace}
 	pn := fmt.Sprintf("bundle-%s", uuid.New())
 	viper.UnmarshalKey("Specs", &specs)
 	for _, s := range specs {
 		if s.FQName == execName {
+			fmt.Printf("HERE!")
 			targetSpec = s
 		}
+	}
+	if targetSpec == nil {
+		fmt.Printf("Didn't find supplied APB")
+		return
 	}
 	labels := map[string]string{
 		"bundle-fqname":   targetSpec.FQName,
@@ -54,13 +69,13 @@ func createExecutor() {
 		"bundle-pod-name": pn,
 	}
 	ec := runtime.ExecutionContext{
-		BundleName: targetSpec.FQName,
+		BundleName: pn,
 		Targets:    targets,
 		Metadata:   labels,
 		Action:     "provision",
 		Image:      targetSpec.Image,
 		Account:    "default",
-		Location:   "dylan",
+		Location:   execNamespace,
 	}
 	//	conf := runtime.Configuration{}
 	//	runtime.NewRuntime(conf)
@@ -68,7 +83,12 @@ func createExecutor() {
 	if err != nil {
 		panic(err.Error())
 	}
-	pods, err := k8scli.Client.CoreV1().Pods("").List(metav1.ListOptions{})
+
+	pods, err := k8scli.Client.CoreV1().Pods(execNamespace).List(metav1.ListOptions{})
+	if err != nil {
+		fmt.Printf("Error getting list of pods: %v", err)
+		return
+	}
 	fmt.Printf("%v\n", len(pods.Items))
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -94,7 +114,10 @@ func createExecutor() {
 		},
 	}
 	fmt.Printf("HERE!!: %v", ec)
-	_, err = k8scli.Client.CoreV1().Pods(ec.Location).Create(pod)
+	_, err = k8scli.Client.CoreV1().Pods(execNamespace).Create(pod)
+	if err != nil {
+		fmt.Printf("Failed to create pod: %v", err)
+	}
 	return
 }
 
