@@ -5,9 +5,11 @@ import (
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
-	//"github.com/automationbroker/bundle-lib/runtime"
+	"github.com/automationbroker/bundle-lib/runtime"
+	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	//	log "github.com/sirupsen/logrus"
 )
@@ -37,58 +39,66 @@ func init() {
 
 func createExecutor() {
 	specs := []*bundle.Spec{}
+	targetSpec := &bundle.Spec{}
+	targets := []string{"dylan"}
+	pn := fmt.Sprintf("bundle-%s", uuid.New())
 	viper.UnmarshalKey("Specs", &specs)
 	for _, s := range specs {
 		if s.FQName == execName {
-			ec := runtime.ExecutionContext{
-				BundleName: s.FQName,
-				//				Targets:
-			}
-			si.Spec = s
+			targetSpec = s
 		}
 	}
-	fmt.Printf("Spec: %v", si.Spec)
+	labels := map[string]string{
+		"bundle-fqname":   targetSpec.FQName,
+		"bundle-action":   "provision",
+		"bundle-pod-name": pn,
+	}
+	ec := runtime.ExecutionContext{
+		BundleName: targetSpec.FQName,
+		Targets:    targets,
+		Metadata:   labels,
+		Action:     "provision",
+		Image:      targetSpec.Image,
+		Account:    "default",
+		Location:   "dylan",
+	}
 	//	conf := runtime.Configuration{}
 	//	runtime.NewRuntime(conf)
 	k8scli, err := clients.Kubernetes()
 	if err != nil {
 		panic(err.Error())
 	}
-	ec := runtime.ExecutionContext{}
-	ec.Name = si.Spec.FQName
-	ec.Image = si.Spec.Image
-	ec.Action = "provision"
-	ec.Location = "dylan"
 	pods, err := k8scli.Client.CoreV1().Pods("").List(metav1.ListOptions{})
 	fmt.Printf("%v\n", len(pods.Items))
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   extContext.BundleName,
-			Labels: extContext.Metadata,
+			Name:   ec.BundleName,
+			Labels: ec.Metadata,
 		},
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
-					Name:  BundleContainerName,
-					Image: extContext.Image,
+					Name:  pn,
+					Image: ec.Image,
 					Args: []string{
-						extContext.Action,
+						ec.Action,
 						"--extra-vars",
-						extContext.ExtraVars,
+						ec.ExtraVars,
 					},
-					Env:             createPodEnv(extContext),
-					ImagePullPolicy: pullPolicy,
-					VolumeMounts:    volumeMounts,
+					Env:             createPodEnv(ec),
+					ImagePullPolicy: "IfNotPresent",
 				},
 			},
 			RestartPolicy:      v1.RestartPolicyNever,
-			ServiceAccountName: extContext.Account,
-			Volumes:            volumes,
+			ServiceAccountName: ec.Account,
 		},
 	}
+	fmt.Printf("HERE!!: %v", ec)
+	_, err = k8scli.Client.CoreV1().Pods(ec.Location).Create(pod)
+	return
 }
 
-func createPodEnv(executionContext ExecutionContext) []v1.EnvVar {
+func createPodEnv(executionContext runtime.ExecutionContext) []v1.EnvVar {
 	podEnv := []v1.EnvVar{
 		v1.EnvVar{
 			Name: "POD_NAME",
@@ -107,4 +117,5 @@ func createPodEnv(executionContext ExecutionContext) []v1.EnvVar {
 			},
 		},
 	}
+	return podEnv
 }
