@@ -102,7 +102,7 @@ type Spec struct {
 	ID          string                 `json:"id"`
 	Runtime     int                    `json:"runtime"`
 	Version     string                 `json:"version"`
-	FQName      string                 `json:"name" yaml:"name"`
+	FQName      string                 `json:"name" yaml:"name" mapstructure:"name"`
 	Image       string                 `json:"image" yaml:"-"`
 	Tags        []string               `json:"tags"`
 	Bindable    bool                   `json:"bindable"`
