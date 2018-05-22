@@ -41,7 +41,7 @@
     "registries/adapters",
     "runtime"
   ]
-  revision = "d0de112e5f56ec855c413e0815954dd325f11b86"
+  revision = "226009efa4556f31023712fe955262f435039e3b"
 
 [[projects]]
   name = "github.com/coreos/etcd"
