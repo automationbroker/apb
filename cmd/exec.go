@@ -70,7 +70,7 @@ func runBundle() {
 		fmt.Printf("Plan: %v\n", plan.Name)
 	}
 	params := selectParameters(plan)
-	extraVars, err := createExtraVars(execNamespace, &params)
+	extraVars, err := createExtraVars(execNamespace, &params, plan)
 	if err != nil {
 		fmt.Printf("Error creating extravars: %v\n", err)
 		return
@@ -135,10 +135,21 @@ func runBundle() {
 }
 
 func selectPlan(spec *bundle.Spec) bundle.Plan {
+	var planName string
 	if len(spec.Plans) > 1 {
-		fmt.Println("WE HAVE TOO MANY PLANS ADD PROMPTING FUNCTION")
+		fmt.Printf("List of available plans:\n")
+		for _, plan := range spec.Plans {
+			fmt.Printf("name: %v\n", plan.Name)
+		}
+		fmt.Printf("Enter name of plan you'd like to deploy: ")
+		fmt.Scanln(&planName)
 	} else {
 		return spec.Plans[0]
+	}
+	for _, plan := range spec.Plans {
+		if plan.Name == planName {
+			return plan
+		}
 	}
 	return bundle.Plan{}
 }
@@ -153,6 +164,9 @@ func selectParameters(plan bundle.Plan) bundle.Parameters {
 		}
 		fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
 		fmt.Scanln(&paramInput)
+		if paramInput == "" {
+			paramInput = paramDefault
+		}
 		params.Add(param.Name, paramInput)
 	}
 	fmt.Printf("Params: %v\n", params)
@@ -181,7 +195,7 @@ func createPodEnv(executionContext runtime.ExecutionContext) []v1.EnvVar {
 	return podEnv
 }
 
-func createExtraVars(targetNamespace string, parameters *bundle.Parameters) (string, error) {
+func createExtraVars(targetNamespace string, parameters *bundle.Parameters, plan bundle.Plan) (string, error) {
 	var paramsCopy bundle.Parameters
 	if parameters != nil && *parameters != nil {
 		paramsCopy = *parameters
@@ -194,6 +208,9 @@ func createExtraVars(targetNamespace string, parameters *bundle.Parameters) (str
 	}
 
 	paramsCopy["cluster"] = "openshift"
+	paramsCopy["_apb_plan_id"] = plan.Name
+	paramsCopy["_apb_service_instance_id"] = "1234"
+	paramsCopy["_apb_service_class_id"] = "1234"
 	extraVars, err := json.Marshal(paramsCopy)
 	return string(extraVars), err
 }
