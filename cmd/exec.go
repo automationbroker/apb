@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/automationbroker/bundle-lib/bundle"
@@ -28,7 +29,7 @@ var execProvisionCmd = &cobra.Command{
 	Short: "Provision ServiceBundle images",
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Run: func(cmd *cobra.Command, args []string) {
-		createExecutor()
+		runBundle()
 	},
 }
 
@@ -39,7 +40,7 @@ func init() {
 	execCmd.AddCommand(execProvisionCmd)
 }
 
-func createExecutor() {
+func runBundle() {
 	if execName == "" {
 		fmt.Println("Failed to find --name argument. No bundle selected")
 		return
@@ -55,14 +56,26 @@ func createExecutor() {
 	viper.UnmarshalKey("Specs", &specs)
 	for _, s := range specs {
 		if s.FQName == execName {
-			fmt.Printf("HERE!")
 			targetSpec = s
 		}
 	}
 	if targetSpec == nil {
-		fmt.Printf("Didn't find supplied APB")
+		fmt.Printf("Didn't find supplied APB: %v\n", execName)
 		return
 	}
+	plan := selectPlan(targetSpec)
+	if plan.Name == "" {
+		fmt.Println("Did not find a selected plan")
+	} else {
+		fmt.Printf("Plan: %v\n", plan.Name)
+	}
+	params := selectParameters(plan)
+	extraVars, err := createExtraVars(execNamespace, &params)
+	if err != nil {
+		fmt.Printf("Error creating extravars: %v\n", err)
+		return
+	}
+
 	labels := map[string]string{
 		"bundle-fqname":   targetSpec.FQName,
 		"bundle-action":   "provision",
@@ -74,8 +87,9 @@ func createExecutor() {
 		Metadata:   labels,
 		Action:     "provision",
 		Image:      targetSpec.Image,
-		Account:    "default",
+		Account:    "apb",
 		Location:   execNamespace,
+		ExtraVars:  extraVars,
 	}
 	//	conf := runtime.Configuration{}
 	//	runtime.NewRuntime(conf)
@@ -113,12 +127,36 @@ func createExecutor() {
 			ServiceAccountName: ec.Account,
 		},
 	}
-	fmt.Printf("HERE!!: %v", ec)
 	_, err = k8scli.Client.CoreV1().Pods(execNamespace).Create(pod)
 	if err != nil {
 		fmt.Printf("Failed to create pod: %v", err)
 	}
 	return
+}
+
+func selectPlan(spec *bundle.Spec) bundle.Plan {
+	if len(spec.Plans) > 1 {
+		fmt.Println("WE HAVE TOO MANY PLANS ADD PROMPTING FUNCTION")
+	} else {
+		return spec.Plans[0]
+	}
+	return bundle.Plan{}
+}
+
+func selectParameters(plan bundle.Plan) bundle.Parameters {
+	params := bundle.Parameters{}
+	for _, param := range plan.Parameters {
+		var paramDefault string = ""
+		var paramInput string
+		if param.Default != nil {
+			paramDefault = param.Default.(string)
+		}
+		fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
+		fmt.Scanln(&paramInput)
+		params.Add(param.Name, paramInput)
+	}
+	fmt.Printf("Params: %v\n", params)
+	return params
 }
 
 func createPodEnv(executionContext runtime.ExecutionContext) []v1.EnvVar {
@@ -141,4 +179,21 @@ func createPodEnv(executionContext runtime.ExecutionContext) []v1.EnvVar {
 		},
 	}
 	return podEnv
+}
+
+func createExtraVars(targetNamespace string, parameters *bundle.Parameters) (string, error) {
+	var paramsCopy bundle.Parameters
+	if parameters != nil && *parameters != nil {
+		paramsCopy = *parameters
+	} else {
+		paramsCopy = make(bundle.Parameters)
+	}
+
+	if targetNamespace != "" {
+		paramsCopy["namespace"] = targetNamespace
+	}
+
+	paramsCopy["cluster"] = "openshift"
+	extraVars, err := json.Marshal(paramsCopy)
+	return string(extraVars), err
 }
