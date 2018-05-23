@@ -94,7 +94,7 @@ func listImages() {
 		fmt.Println("Error getting images")
 		return
 	}
-	fmt.Printf("specs: %v", specs)
+	fmt.Printf("specs: %v\n", specs)
 	err = updateCachedList(specs)
 	if err != nil {
 		fmt.Println("Error updating cache")
