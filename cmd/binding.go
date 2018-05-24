@@ -83,7 +83,6 @@ func addBinding(args []string) {
 	if err != nil {
 		fmt.Errorf("Unexpected error building extracted creds: %v\n", err)
 	}
-	fmt.Printf("%v\n", extCreds.Credentials)
 	data := map[string][]byte{}
 	for key, value := range extCreds.Credentials {
 		data[key] = []byte(value.(string))
@@ -104,6 +103,10 @@ func addBinding(args []string) {
 		fmt.Errorf("Unable to create secret %v in namespace %v", newSecretName, bindingNamespace)
 		return
 	}
+
+	fmt.Printf("Successfully created secret [%v] in namespace [%v].\n", newSecretName, bindingNamespace)
+	fmt.Printf("Type the following command to attach the binding to your application:\n")
+	fmt.Printf("oc set env dc/%v --from=secret/%v\n", appName, newSecretName)
 	return
 
 }
