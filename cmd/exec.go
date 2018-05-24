@@ -29,7 +29,16 @@ var execProvisionCmd = &cobra.Command{
 	Short: "Provision ServiceBundle images",
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Run: func(cmd *cobra.Command, args []string) {
-		runBundle()
+		runBundle("provision")
+	},
+}
+
+var execDeprovisionCmd = &cobra.Command{
+	Use:   "deprovision",
+	Short: "Deprovision ServiceBundle images",
+	Long:  `Deprovision ServiceBundles from a registry adapter`,
+	Run: func(cmd *cobra.Command, args []string) {
+		runBundle("deprovision")
 	},
 }
 
@@ -37,10 +46,14 @@ func init() {
 	rootCmd.AddCommand(execCmd)
 	execProvisionCmd.Flags().StringVarP(&execName, "name", "n", "", "Name of spec to provision")
 	execProvisionCmd.Flags().StringVarP(&execNamespace, "namespace", "p", "", "Namespace to provision bundle to")
+	execDeprovisionCmd.Flags().StringVarP(&execName, "name", "n", "", "Name of spec to provision")
+	execDeprovisionCmd.Flags().StringVarP(&execNamespace, "namespace", "p", "", "Namespace to provision bundle to")
+
 	execCmd.AddCommand(execProvisionCmd)
+	execCmd.AddCommand(execDeprovisionCmd)
 }
 
-func runBundle() {
+func runBundle(action string) {
 	if execName == "" {
 		fmt.Println("Failed to find --name argument. No bundle selected")
 		return
@@ -78,14 +91,14 @@ func runBundle() {
 
 	labels := map[string]string{
 		"bundle-fqname":   targetSpec.FQName,
-		"bundle-action":   "provision",
+		"bundle-action":   action,
 		"bundle-pod-name": pn,
 	}
 	ec := runtime.ExecutionContext{
 		BundleName: pn,
 		Targets:    targets,
 		Metadata:   labels,
-		Action:     "provision",
+		Action:     action,
 		Image:      targetSpec.Image,
 		Account:    "apb",
 		Location:   execNamespace,
@@ -98,12 +111,6 @@ func runBundle() {
 		panic(err.Error())
 	}
 
-	pods, err := k8scli.Client.CoreV1().Pods(execNamespace).List(metav1.ListOptions{})
-	if err != nil {
-		fmt.Printf("Error getting list of pods: %v", err)
-		return
-	}
-	fmt.Printf("%v\n", len(pods.Items))
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   ec.BundleName,
@@ -131,6 +138,7 @@ func runBundle() {
 	if err != nil {
 		fmt.Printf("Failed to create pod: %v", err)
 	}
+	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, execName, execNamespace)
 	return
 }
 
