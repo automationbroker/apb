@@ -111,12 +111,6 @@ func runBundle(action string) {
 		panic(err.Error())
 	}
 
-	pods, err := k8scli.Client.CoreV1().Pods(execNamespace).List(metav1.ListOptions{})
-	if err != nil {
-		fmt.Printf("Error getting list of pods: %v", err)
-		return
-	}
-	fmt.Printf("%v\n", len(pods.Items))
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   ec.BundleName,
@@ -144,6 +138,7 @@ func runBundle(action string) {
 	if err != nil {
 		fmt.Printf("Failed to create pod: %v", err)
 	}
+	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, execName, execNamespace)
 	return
 }
 
