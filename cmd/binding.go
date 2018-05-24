@@ -13,11 +13,12 @@ var bindingCmd = &cobra.Command{
 }
 
 var bindingAddCmd = &cobra.Command{
-	Use:   "add",
+	Use:   "add <secret name> <app name>",
 	Short: "Add a new registry adapter",
 	Long:  `Add a new registry adapter to the configuration`,
+	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		addBinding()
+		addBinding(args)
 	},
 }
 
@@ -65,8 +66,14 @@ func updateCachedRegistries(registries []registries.Config) error {
 }
 */
 
-func addBinding() {
+func addBinding(args []string) {
 	fmt.Println("addBindings called")
+	secretName := args[0]
+	appName := args[1]
+	fmt.Println(secretName)
+	fmt.Println(appName)
+	fmt.Printf("Create a binding using secret [%s] to app [%s]\n", secretName, appName)
+
 	/*
 		var regList []registries.Config
 		err := viper.UnmarshalKey("Registries", &regList)
