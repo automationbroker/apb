@@ -15,7 +15,6 @@ import (
 	//	log "github.com/sirupsen/logrus"
 )
 
-var execName string
 var execNamespace string
 
 var execCmd = &cobra.Command{
@@ -25,43 +24,38 @@ var execCmd = &cobra.Command{
 }
 
 var execProvisionCmd = &cobra.Command{
-	Use:   "provision",
+	Use:   "provision <bundle name>",
 	Short: "Provision ServiceBundle images",
 	Long:  `Provision ServiceBundles from a registry adapter`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runBundle("provision")
+		runBundle("provision", args)
 	},
 }
 
 var execDeprovisionCmd = &cobra.Command{
-	Use:   "deprovision",
+	Use:   "deprovision <bundle name>",
 	Short: "Deprovision ServiceBundle images",
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runBundle("deprovision")
+		runBundle("deprovision", args)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(execCmd)
-	execProvisionCmd.Flags().StringVarP(&execName, "name", "n", "", "Name of spec to provision")
 	execProvisionCmd.Flags().StringVarP(&execNamespace, "namespace", "p", "", "Namespace to provision bundle to")
-	execDeprovisionCmd.Flags().StringVarP(&execName, "name", "n", "", "Name of spec to provision")
 	execDeprovisionCmd.Flags().StringVarP(&execNamespace, "namespace", "p", "", "Namespace to provision bundle to")
+	execProvisionCmd.MarkFlagRequired("namespace")
+	execDeprovisionCmd.MarkFlagRequired("namespace")
 
 	execCmd.AddCommand(execProvisionCmd)
 	execCmd.AddCommand(execDeprovisionCmd)
 }
 
-func runBundle(action string) {
-	if execName == "" {
-		fmt.Println("Failed to find --name argument. No bundle selected")
-		return
-	}
-	if execNamespace == "" {
-		fmt.Println("Failed to find --namespace argument. No namespace selected")
-		return
-	}
+func runBundle(action string, args []string) {
+	execName := args[0]
 	specs := []*bundle.Spec{}
 	var targetSpec *bundle.Spec
 	targets := []string{execNamespace}
