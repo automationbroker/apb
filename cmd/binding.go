@@ -76,12 +76,12 @@ func addBinding(args []string) {
 	fmt.Printf("Create a binding using secret [%s] to app [%s]\n", secretName, appName)
 	secretData, err := extractCredentialsAsSecret(secretName, bindingNamespace)
 	if err != nil {
-		fmt.Errorf("Unable to retrieve secret data from secret [%v]\n", err)
+		fmt.Errorf("unable to retrieve secret data from secret [%v]", err)
 		return
 	}
 	extCreds, err := buildExtractedCredentials(secretData)
 	if err != nil {
-		fmt.Errorf("Unexpected error building extracted creds: %v\n", err)
+		fmt.Errorf("unexpected error building extracted creds: %v", err)
 	}
 	data := map[string][]byte{}
 	for key, value := range extCreds.Credentials {

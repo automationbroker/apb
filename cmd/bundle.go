@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Refresh - indicates whether we should refresh the list of images
 var Refresh bool
 
 var bundleCmd = &cobra.Command{
