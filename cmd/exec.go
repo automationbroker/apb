@@ -131,6 +131,7 @@ func runBundle(action string, args []string) {
 	_, err = k8scli.Client.CoreV1().Pods(execNamespace).Create(pod)
 	if err != nil {
 		fmt.Printf("Failed to create pod: %v", err)
+		return
 	}
 	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, execName, execNamespace)
 	return
@@ -164,10 +165,18 @@ func selectParameters(plan bundle.Plan) bundle.Parameters {
 		if param.Default != nil {
 			paramDefault = param.Default.(string)
 		}
-		fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
-		fmt.Scanln(&paramInput)
-		if paramInput == "" {
-			paramInput = paramDefault
+		check := 1
+		for check < 2 {
+			fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
+			fmt.Scanln(&paramInput)
+			if paramInput == "" {
+				paramInput = paramDefault
+			}
+			if param.Required == true && paramInput == "" {
+				fmt.Printf("Parameter [%v] is required. Please try again.\n", param.Name)
+			} else {
+				check = 2
+			}
 		}
 		params.Add(param.Name, paramInput)
 	}
