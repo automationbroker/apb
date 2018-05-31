@@ -160,7 +160,7 @@ func selectPlan(spec *bundle.Spec) bundle.Plan {
 func selectParameters(plan bundle.Plan) bundle.Parameters {
 	params := bundle.Parameters{}
 	for _, param := range plan.Parameters {
-		var paramDefault string = ""
+		var paramDefault string
 		var paramInput string
 		if param.Default != nil {
 			paramDefault = param.Default.(string)

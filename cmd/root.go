@@ -2,19 +2,23 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
 )
 
 // Verbose controls the logging level, when enabled will set level to debug
 var Verbose bool
+
+// CfgFile is the configuration file
 var CfgFile string
 
+// Config sbcli configuration
 type Config struct {
 	Registries []registries.Config
 	Specs      []*bundle.Spec
