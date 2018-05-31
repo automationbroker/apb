@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/spf13/cobra"
@@ -47,7 +45,7 @@ func getImages() ([]*bundle.Spec, error) {
 	var specList []*bundle.Spec
 	err := viper.UnmarshalKey("Registries", &regConfigList)
 	if err != nil {
-		fmt.Println("Error unmarshalling config: ", err)
+		log.Error("Error unmarshalling config: ", err)
 		return nil, err
 	}
 
@@ -79,30 +77,30 @@ func listImages() {
 	var specs []*bundle.Spec
 	err := viper.UnmarshalKey("Specs", &specs)
 	if err != nil {
-		fmt.Println("Error unmarshalling config: ", err)
+		log.Error("Error unmarshalling config: ", err)
 		return
 	}
 	if len(specs) > 0 && Refresh == false {
-		fmt.Println("Found specs already in config")
+		log.Println("Found specs already in config")
 		for _, s := range specs {
-			fmt.Printf("%v - %v\n", s.FQName, s.Image)
+			log.Printf("%v - %v\n", s.FQName, s.Image)
 		}
 		return
 	}
 
 	specs, err = getImages()
 	if err != nil {
-		fmt.Println("Error getting images")
+		log.Error("Error getting images")
 		return
 	}
-	fmt.Printf("specs: %v\n", specs)
+	log.Printf("specs: %v\n", specs)
 	err = updateCachedList(specs)
 	if err != nil {
-		fmt.Println("Error updating cache")
+		log.Error("Error updating cache")
 		return
 	}
 
 	for _, s := range specs {
-		fmt.Printf("%v - %v\n", s.FQName, s.Image)
+		log.Printf("%v - %v\n", s.FQName, s.Image)
 	}
 }
