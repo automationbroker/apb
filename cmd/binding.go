@@ -22,6 +22,7 @@ import (
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,21 +84,21 @@ func updateCachedRegistries(registries []registries.Config) error {
 */
 
 func addBinding(args []string) {
-	fmt.Println("addBindings called")
+	log.Debug("addBindings called")
 	secretName := args[0]
 	newSecretName := fmt.Sprintf("%v-creds", secretName)
 	appName := args[1]
-	fmt.Println(secretName)
-	fmt.Println(appName)
-	fmt.Printf("Create a binding using secret [%s] to app [%s]\n", secretName, appName)
+	log.Debug(secretName)
+	log.Debug(appName)
+	log.Infof("Create a binding using secret [%s] to app [%s]\n", secretName, appName)
 	secretData, err := extractCredentialsAsSecret(secretName, bindingNamespace)
 	if err != nil {
-		fmt.Errorf("unable to retrieve secret data from secret [%v]", err)
+		log.Errorf("unable to retrieve secret data from secret [%v]", err)
 		return
 	}
 	extCreds, err := buildExtractedCredentials(secretData)
 	if err != nil {
-		fmt.Errorf("unexpected error building extracted creds: %v", err)
+		log.Errorf("unexpected error building extracted creds: %v", err)
 	}
 	data := map[string][]byte{}
 	for key, value := range extCreds.Credentials {
@@ -116,23 +117,23 @@ func addBinding(args []string) {
 	}
 	_, err = k8scli.Client.CoreV1().Secrets(bindingNamespace).Create(s)
 	if err != nil {
-		fmt.Errorf("Unable to create secret %v in namespace %v", newSecretName, bindingNamespace)
+		log.Errorf("Unable to create secret %v in namespace %v", newSecretName, bindingNamespace)
 		return
 	}
 
-	fmt.Printf("Successfully created secret [%v] in namespace [%v].\n", newSecretName, bindingNamespace)
-	fmt.Printf("Type the following command to attach the binding to your application:\n")
-	fmt.Printf("oc set env dc/%v --from=secret/%v\n", appName, newSecretName)
+	log.Printf("Successfully created secret [%v] in namespace [%v].\n", newSecretName, bindingNamespace)
+	log.Printf("Type the following command to attach the binding to your application:\n")
+	log.Printf("oc set env dc/%v --from=secret/%v\n", appName, newSecretName)
 	return
 
 }
 
 func listBindings() {
-	fmt.Println("listBindings called")
+	log.Println("listBindings called")
 }
 
 func removeBinding() {
-	fmt.Println("removeBinding called")
+	log.Println("removeBinding called")
 }
 
 // ExtractCredentialsAsSecret - Extract credentials from APB as secret in namespace.

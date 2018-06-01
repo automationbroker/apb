@@ -24,11 +24,11 @@ import (
 	"github.com/automationbroker/bundle-lib/clients"
 	"github.com/automationbroker/bundle-lib/runtime"
 	"github.com/pborman/uuid"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//	log "github.com/sirupsen/logrus"
 )
 
 var execNamespace string
@@ -83,19 +83,19 @@ func runBundle(action string, args []string) {
 		}
 	}
 	if targetSpec == nil {
-		fmt.Printf("Didn't find supplied APB: %v\n", execName)
+		log.Errorf("Didn't find supplied APB: %v\n", execName)
 		return
 	}
 	plan := selectPlan(targetSpec)
 	if plan.Name == "" {
-		fmt.Println("Did not find a selected plan")
+		log.Warning("Did not find a selected plan")
 	} else {
-		fmt.Printf("Plan: %v\n", plan.Name)
+		log.Printf("Plan: %v\n", plan.Name)
 	}
 	params := selectParameters(plan)
 	extraVars, err := createExtraVars(execNamespace, &params, plan)
 	if err != nil {
-		fmt.Printf("Error creating extravars: %v\n", err)
+		log.Errorf("Error creating extravars: %v\n", err)
 		return
 	}
 
@@ -146,19 +146,19 @@ func runBundle(action string, args []string) {
 	}
 	_, err = k8scli.Client.CoreV1().Pods(execNamespace).Create(pod)
 	if err != nil {
-		fmt.Printf("Failed to create pod: %v", err)
+		log.Errorf("Failed to create pod: %v", err)
 		return
 	}
-	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, execName, execNamespace)
+	log.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, execName, execNamespace)
 	return
 }
 
 func selectPlan(spec *bundle.Spec) bundle.Plan {
 	var planName string
 	if len(spec.Plans) > 1 {
-		fmt.Printf("List of available plans:\n")
+		log.Printf("List of available plans:\n")
 		for _, plan := range spec.Plans {
-			fmt.Printf("name: %v\n", plan.Name)
+			log.Printf("name: %v\n", plan.Name)
 		}
 		fmt.Printf("Enter name of plan you'd like to deploy: ")
 		fmt.Scanln(&planName)
@@ -196,7 +196,7 @@ func selectParameters(plan bundle.Plan) bundle.Parameters {
 		}
 		params.Add(param.Name, paramInput)
 	}
-	fmt.Printf("Params: %v\n", params)
+	log.Debugf("Params: %v\n", params)
 	return params
 }
 

@@ -17,7 +17,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/automationbroker/bundle-lib/bundle"
@@ -70,17 +69,17 @@ func initConfig() {
 	} else {
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err)
 			os.Exit(1)
 		}
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".sbcli")
 		filePath := home + "/.sbcli.json"
 		if err := viper.ReadInConfig(); err != nil {
-			fmt.Println("Didn't find config file, creating one.")
+			log.Warning("Didn't find config file, creating one.")
 			file, err := os.Create(filePath)
 			if err != nil {
-				fmt.Println(err)
+				log.Error(err)
 				os.Exit(1)
 			}
 			file.WriteString("{}")
@@ -88,7 +87,7 @@ func initConfig() {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Can't read config: ", err)
+		log.Error("Can't read config: ", err)
 		os.Exit(1)
 	}
 }
@@ -96,7 +95,7 @@ func initConfig() {
 // Execute invokes the root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		os.Exit(1)
 	}
 }
