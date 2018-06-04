@@ -121,19 +121,19 @@ func addBinding(args []string) {
 		return
 	}
 
-	log.Printf("Successfully created secret [%v] in namespace [%v].\n", newSecretName, bindingNamespace)
-	log.Printf("Type the following command to attach the binding to your application:\n")
-	log.Printf("oc set env dc/%v --from=secret/%v\n", appName, newSecretName)
+	fmt.Printf("Successfully created secret [%v] in namespace [%v].\n", newSecretName, bindingNamespace)
+	fmt.Printf("Type the following command to attach the binding to your application:\n")
+	fmt.Printf("oc set env dc/%v --from=secret/%v\n", appName, newSecretName)
 	return
 
 }
 
 func listBindings() {
-	log.Println("listBindings called")
+	fmt.Println("listBindings called")
 }
 
 func removeBinding() {
-	log.Println("removeBinding called")
+	fmt.Println("removeBinding called")
 }
 
 // ExtractCredentialsAsSecret - Extract credentials from APB as secret in namespace.

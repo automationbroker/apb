@@ -90,7 +90,7 @@ func runBundle(action string, args []string) {
 	if plan.Name == "" {
 		log.Warning("Did not find a selected plan")
 	} else {
-		log.Printf("Plan: %v\n", plan.Name)
+		fmt.Printf("Plan: %v\n", plan.Name)
 	}
 	params := selectParameters(plan)
 	extraVars, err := createExtraVars(execNamespace, &params, plan)
@@ -149,16 +149,16 @@ func runBundle(action string, args []string) {
 		log.Errorf("Failed to create pod: %v", err)
 		return
 	}
-	log.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, execName, execNamespace)
+	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, execName, execNamespace)
 	return
 }
 
 func selectPlan(spec *bundle.Spec) bundle.Plan {
 	var planName string
 	if len(spec.Plans) > 1 {
-		log.Printf("List of available plans:\n")
+		fmt.Printf("List of available plans:\n")
 		for _, plan := range spec.Plans {
-			log.Printf("name: %v\n", plan.Name)
+			fmt.Printf("name: %v\n", plan.Name)
 		}
 		fmt.Printf("Enter name of plan you'd like to deploy: ")
 		fmt.Scanln(&planName)

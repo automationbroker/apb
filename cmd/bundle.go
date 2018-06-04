@@ -17,6 +17,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/spf13/cobra"
@@ -97,9 +99,9 @@ func listImages() {
 		return
 	}
 	if len(specs) > 0 && Refresh == false {
-		log.Println("Found specs already in config")
+		fmt.Println("Found specs already in config")
 		for _, s := range specs {
-			log.Printf("%v - %v\n", s.FQName, s.Image)
+			fmt.Printf("%v - %v\n", s.FQName, s.Image)
 		}
 		return
 	}
@@ -109,7 +111,7 @@ func listImages() {
 		log.Error("Error getting images")
 		return
 	}
-	log.Printf("specs: %v\n", specs)
+	fmt.Printf("specs: %v\n", specs)
 	err = updateCachedList(specs)
 	if err != nil {
 		log.Error("Error updating cache")
@@ -117,6 +119,6 @@ func listImages() {
 	}
 
 	for _, s := range specs {
-		log.Printf("%v - %v\n", s.FQName, s.Image)
+		fmt.Printf("%v - %v\n", s.FQName, s.Image)
 	}
 }
