@@ -19,6 +19,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
@@ -128,6 +130,36 @@ func getImages() ([]*bundle.Spec, error) {
 	return specList, nil
 }
 
+func printSpecs(specs []*bundle.Spec) {
+	columnLabelFQName := "BUNDLE"
+	columnLabelImage := "IMAGE"
+
+	// Find longest FQName and Image URL in spec list
+	maxFQNameLen := len(columnLabelFQName)
+	maxImageLen := len(columnLabelImage)
+
+	for _, s := range specs {
+		if len(s.FQName) > maxFQNameLen {
+			maxFQNameLen = len(s.FQName)
+		}
+		if len(s.Image) > maxImageLen {
+			maxImageLen = len(s.Image)
+		}
+	}
+
+	// Print column labels
+	columnWidthFQName := strconv.Itoa(maxFQNameLen)
+	specFormatString := "%-" + columnWidthFQName + "s  |  %s\n"
+	fmt.Printf(specFormatString, columnLabelFQName, columnLabelImage)
+	fmt.Printf(specFormatString, strings.Repeat("-", maxFQNameLen), strings.Repeat("-", maxImageLen))
+
+	// Print Bundle names and image URLs
+	for _, s := range specs {
+		fmt.Printf("%-"+columnWidthFQName+"s  |  %s\n", s.FQName, s.Image)
+	}
+	return
+}
+
 func listImages() {
 	var specs []*bundle.Spec
 	err := viper.UnmarshalKey("Specs", &specs)
@@ -135,11 +167,10 @@ func listImages() {
 		log.Error("Error unmarshalling config: ", err)
 		return
 	}
+
 	if len(specs) > 0 && Refresh == false {
 		fmt.Println("Found specs already in config")
-		for _, s := range specs {
-			fmt.Printf("%v - %v\n", s.FQName, s.Image)
-		}
+		printSpecs(specs)
 		return
 	}
 
@@ -148,16 +179,14 @@ func listImages() {
 		log.Error("Error getting images")
 		return
 	}
-	fmt.Printf("specs: %v\n", specs)
+
 	err = updateCachedList(specs)
 	if err != nil {
 		log.Error("Error updating cache")
 		return
 	}
 
-	for _, s := range specs {
-		fmt.Printf("%v - %v\n", s.FQName, s.Image)
-	}
+	printSpecs(specs)
 }
 
 func runBundle(action string, args []string) {
