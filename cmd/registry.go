@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/automationbroker/bundle-lib/registries"
+	"github.com/automationbroker/sbcli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -105,6 +106,23 @@ func addRegistry() {
 	return
 }
 
+func printRegistries(regList []registries.Config) {
+	colName := util.TableColumn{Header: "NAME"}
+	colType := util.TableColumn{Header: "TYPE"}
+	colOrg := util.TableColumn{Header: "ORG"}
+	colURL := util.TableColumn{Header: "URL"}
+
+	for _, r := range regList {
+		colName.Data = append(colName.Data, r.Name)
+		colType.Data = append(colType.Data, r.Type)
+		colOrg.Data = append(colOrg.Data, r.Org)
+		colURL.Data = append(colURL.Data, r.URL)
+	}
+
+	tableToPrint := []util.TableColumn{colName, colType, colOrg, colURL}
+	util.PrintTable(tableToPrint)
+}
+
 func listRegistries() {
 	var regList []registries.Config
 	err := viper.UnmarshalKey("Registries", &regList)
@@ -114,9 +132,7 @@ func listRegistries() {
 	}
 	if len(regList) > 0 {
 		fmt.Println("Found registries already in config:")
-		for _, r := range regList {
-			fmt.Printf("name: %v - type: %v - organization: %v - URL: %v\n", r.Name, r.Type, r.Org, r.URL)
-		}
+		printRegistries(regList)
 	} else {
 		fmt.Println("Found no registries in configuration. Try `sbcli registry add`.")
 	}

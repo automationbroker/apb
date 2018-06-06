@@ -19,13 +19,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/automationbroker/bundle-lib/runtime"
+	"github.com/automationbroker/sbcli/util"
 	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -131,33 +130,16 @@ func getImages() ([]*bundle.Spec, error) {
 }
 
 func printSpecs(specs []*bundle.Spec) {
-	columnLabelFQName := "BUNDLE"
-	columnLabelImage := "IMAGE"
-
-	// Find longest FQName and Image URL in spec list
-	maxFQNameLen := len(columnLabelFQName)
-	maxImageLen := len(columnLabelImage)
+	colFQName := util.TableColumn{Header: "BUNDLE"}
+	colImage := util.TableColumn{Header: "IMAGE"}
 
 	for _, s := range specs {
-		if len(s.FQName) > maxFQNameLen {
-			maxFQNameLen = len(s.FQName)
-		}
-		if len(s.Image) > maxImageLen {
-			maxImageLen = len(s.Image)
-		}
+		colFQName.Data = append(colFQName.Data, s.FQName)
+		colImage.Data = append(colImage.Data, s.Image)
 	}
 
-	// Print column labels
-	columnWidthFQName := strconv.Itoa(maxFQNameLen)
-	specFormatString := "%-" + columnWidthFQName + "s  |  %s\n"
-	fmt.Printf(specFormatString, columnLabelFQName, columnLabelImage)
-	fmt.Printf(specFormatString, strings.Repeat("-", maxFQNameLen), strings.Repeat("-", maxImageLen))
-
-	// Print Bundle names and image URLs
-	for _, s := range specs {
-		fmt.Printf("%-"+columnWidthFQName+"s  |  %s\n", s.FQName, s.Image)
-	}
-	return
+	tableToPrint := []util.TableColumn{colFQName, colImage}
+	util.PrintTable(tableToPrint)
 }
 
 func listImages() {
@@ -167,25 +149,21 @@ func listImages() {
 		log.Error("Error unmarshalling config: ", err)
 		return
 	}
-
 	if len(specs) > 0 && Refresh == false {
 		fmt.Println("Found specs already in config")
 		printSpecs(specs)
 		return
 	}
-
 	specs, err = getImages()
 	if err != nil {
 		log.Error("Error getting images")
 		return
 	}
-
 	err = updateCachedList(specs)
 	if err != nil {
 		log.Error("Error updating cache")
 		return
 	}
-
 	printSpecs(specs)
 }
 
