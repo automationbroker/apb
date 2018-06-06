@@ -24,6 +24,7 @@ import (
 	"github.com/automationbroker/bundle-lib/clients"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/automationbroker/bundle-lib/runtime"
+	"github.com/automationbroker/sbcli/util"
 	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -128,6 +129,19 @@ func getImages() ([]*bundle.Spec, error) {
 	return specList, nil
 }
 
+func printSpecs(specs []*bundle.Spec) {
+	colFQName := util.TableColumn{Header: "BUNDLE"}
+	colImage := util.TableColumn{Header: "IMAGE"}
+
+	for _, s := range specs {
+		colFQName.Data = append(colFQName.Data, s.FQName)
+		colImage.Data = append(colImage.Data, s.Image)
+	}
+
+	tableToPrint := []util.TableColumn{colFQName, colImage}
+	util.PrintTable(tableToPrint)
+}
+
 func listImages() {
 	var specs []*bundle.Spec
 	err := viper.UnmarshalKey("Specs", &specs)
@@ -137,27 +151,20 @@ func listImages() {
 	}
 	if len(specs) > 0 && Refresh == false {
 		fmt.Println("Found specs already in config")
-		for _, s := range specs {
-			fmt.Printf("%v - %v\n", s.FQName, s.Image)
-		}
+		printSpecs(specs)
 		return
 	}
-
 	specs, err = getImages()
 	if err != nil {
 		log.Error("Error getting images")
 		return
 	}
-	fmt.Printf("specs: %v\n", specs)
 	err = updateCachedList(specs)
 	if err != nil {
 		log.Error("Error updating cache")
 		return
 	}
-
-	for _, s := range specs {
-		fmt.Printf("%v - %v\n", s.FQName, s.Image)
-	}
+	printSpecs(specs)
 }
 
 func runBundle(action string, args []string) {
