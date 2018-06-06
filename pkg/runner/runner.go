@@ -31,11 +31,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func RunBundle(action string, bundleNamespace string, args []string) {
+// RunBundle will run the bundle's action in the given namespace
+func RunBundle(action string, ns string, args []string) {
 	bundleName := args[0]
 	specs := []*bundle.Spec{}
 	var targetSpec *bundle.Spec
-	targets := []string{bundleNamespace}
+	targets := []string{ns}
 	pn := fmt.Sprintf("bundle-%s", uuid.New())
 	viper.UnmarshalKey("Specs", &specs)
 	for _, s := range specs {
@@ -54,7 +55,7 @@ func RunBundle(action string, bundleNamespace string, args []string) {
 		fmt.Printf("Plan: %v\n", plan.Name)
 	}
 	params := selectParameters(plan)
-	extraVars, err := createExtraVars(bundleNamespace, &params, plan)
+	extraVars, err := createExtraVars(ns, &params, plan)
 	if err != nil {
 		log.Errorf("Error creating extravars: %v\n", err)
 		return
@@ -72,7 +73,7 @@ func RunBundle(action string, bundleNamespace string, args []string) {
 		Action:     action,
 		Image:      targetSpec.Image,
 		Account:    "apb",
-		Location:   bundleNamespace,
+		Location:   ns,
 		ExtraVars:  extraVars,
 	}
 	//	conf := runtime.Configuration{}
@@ -105,12 +106,12 @@ func RunBundle(action string, bundleNamespace string, args []string) {
 			ServiceAccountName: ec.Account,
 		},
 	}
-	_, err = k8scli.Client.CoreV1().Pods(bundleNamespace).Create(pod)
+	_, err = k8scli.Client.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
 		log.Errorf("Failed to create pod: %v", err)
 		return
 	}
-	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, bundleName, bundleNamespace)
+	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, bundleName, ns)
 	return
 }
 
