@@ -84,43 +84,27 @@ func init() {
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 }
 
-func updateCachedList(specs []*bundle.Spec) error {
-	viper.Set("Specs", specs)
-	viper.WriteConfig()
-	return nil
-}
-
-func getImages() ([]*bundle.Spec, error) {
-	var regConfigList []registries.Config
-	var regList []registries.Registry
+// Get images from a single registry
+func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
 	var specList []*bundle.Spec
-	err := viper.UnmarshalKey("Registries", &regConfigList)
+
+	authNamespace := ""
+	registry, err := registries.NewRegistry(registryMetadata.Config, authNamespace)
 	if err != nil {
-		log.Error("Error unmarshalling config: ", err)
+		log.Error("Error from creating a NewRegistry")
+		log.Error(err)
 		return nil, err
 	}
 
-	authNamespace := ""
-	for _, config := range regConfigList {
-		registry, err := registries.NewRegistry(config, authNamespace)
-		if err != nil {
-			log.Error("Error from creating a NewRegistry")
-			log.Error(err)
-			return nil, err
-		}
-		regList = append(regList, registry)
+	specs, count, err := registry.LoadSpecs()
+	if err != nil {
+		log.Errorf("registry: %v was unable to complete bootstrap - %v",
+			registry.RegistryName(), err)
+		return nil, err
 	}
-	for _, reg := range regList {
-		specs, count, err := reg.LoadSpecs()
-		if err != nil {
-			log.Errorf("registry: %v was unable to complete bootstrap - %v",
-				reg.RegistryName(), err)
-			return nil, err
-		}
-		log.Infof("Registry %v has %d bundles available from %d images scanned", reg.RegistryName(), len(specs), count)
-		specList = append(specList, specs...)
-	}
+	log.Infof("Registry %v has %d bundles available from %d images scanned", registry.RegistryName(), len(specs), count)
 
+	specList = append(specList, specs...)
 	return specList, nil
 }
 
@@ -138,26 +122,41 @@ func printSpecs(specs []*bundle.Spec) {
 }
 
 func listImages() {
-	var specs []*bundle.Spec
-	err := viper.UnmarshalKey("Specs", &specs)
+	var regConfigs []Registry
+	var newRegConfigs []Registry
+
+	err := viper.UnmarshalKey("Registries", &regConfigs)
 	if err != nil {
 		log.Error("Error unmarshalling config: ", err)
 		return
 	}
-	if len(specs) > 0 && Refresh == false {
-		fmt.Println("Found specs already in config")
-		printSpecs(specs)
-		return
+
+	for _, regConfig := range regConfigs {
+		if len(regConfig.Specs) > 0 && Refresh == false {
+			fmt.Println("Found specs already in config")
+			for _, s := range regConfig.Specs {
+				fmt.Printf("%v - %v\n", s.FQName, s.Image)
+			}
+			newRegConfigs = append(newRegConfigs, regConfig)
+			continue
+		}
+		specs, err := getImages(regConfig)
+		if err != nil {
+			log.Error("Error getting images")
+			return
+		}
+
+		regConfig.Specs = specs
+		newRegConfigs = append(newRegConfigs, regConfig)
+
+		for _, s := range specs {
+			fmt.Printf("%v - %v\n", s.FQName, s.Image)
+		}
 	}
-	specs, err = getImages()
-	if err != nil {
-		log.Error("Error getting images")
-		return
-	}
-	err = updateCachedList(specs)
+
+	err = updateCachedRegistries(newRegConfigs)
 	if err != nil {
 		log.Error("Error updating cache")
 		return
 	}
-	printSpecs(specs)
 }

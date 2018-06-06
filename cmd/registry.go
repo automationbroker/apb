@@ -19,13 +19,21 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/automationbroker/sbcli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var registryConfig registries.Config
+// Registry stores a single registry config and references all associated bundle specs
+type Registry struct {
+	Config registries.Config
+	Specs  []*bundle.Spec
+}
+
+// var registryConfig registries.Config
+var registryConfig Registry
 var whitelist string
 var removeName string
 
@@ -65,12 +73,12 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVar(&registryConfig.Type, "type", "dockerhub", "Type of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Org, "org", "ansibleplaybookbundle", "Type of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.URL, "url", "docker.io", "URL of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Name, "name", "docker", "Name of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Type, "type", "dockerhub", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "ansibleplaybookbundle", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "docker.io", "URL of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Name, "name", "docker", "Name of registry adapter to add")
 	registryAddCmd.Flags().StringVar(&whitelist, "whitelist", ".*-apb$", "Whitelist for configuration of registry adapter")
-	registryConfig.WhiteList = append(registryConfig.WhiteList, whitelist)
+	registryConfig.Config.WhiteList = append(registryConfig.Config.WhiteList, whitelist)
 
 	//Registry Remove Flags
 	registryRemoveCmd.Flags().StringVar(&removeName, "name", "", "Name of registry adapter to remove")
@@ -81,26 +89,25 @@ func init() {
 	registryCmd.AddCommand(registryRemoveCmd)
 }
 
-func updateCachedRegistries(registries []registries.Config) error {
-	viper.Set("Registries", registries)
+func updateCachedRegistries(regList []Registry) error {
+	viper.Set("Registries", regList)
 	viper.WriteConfig()
 	return nil
 }
 
 func addRegistry() {
-	var regList []registries.Config
+	var regList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Println("Error unmarshalling config: ", err)
 		return
 	}
 	for _, reg := range regList {
-		if reg.Name == registryConfig.Name {
-			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]\n", registryConfig.Name, reg.Name)
+		if reg.Config.Name == registryConfig.Config.Name {
+			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]\n", registryConfig.Config.Name, reg.Config.Name)
 			return
 		}
 	}
-
 	regList = append(regList, registryConfig)
 	updateCachedRegistries(regList)
 	return
@@ -124,7 +131,7 @@ func printRegistries(regList []registries.Config) {
 }
 
 func listRegistries() {
-	var regList []registries.Config
+	var regList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Printf("Error unmarshalling config: %v", err)
@@ -132,7 +139,9 @@ func listRegistries() {
 	}
 	if len(regList) > 0 {
 		fmt.Println("Found registries already in config:")
-		printRegistries(regList)
+		for _, r := range regList {
+			fmt.Printf("name: %v - type: %v - organization: %v - URL: %v\n", r.Config.Name, r.Config.Type, r.Config.Org, r.Config.URL)
+		}
 	} else {
 		fmt.Println("Found no registries in configuration. Try `sbcli registry add`.")
 	}
@@ -140,14 +149,14 @@ func listRegistries() {
 }
 
 func removeRegistry() {
-	var regList []registries.Config
-	var newRegList []registries.Config
+	var regList []Registry
+	var newRegList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Printf("Error unmarshalling config: %v", err)
 	}
 	for i, r := range regList {
-		if r.Name == removeName {
+		if r.Config.Name == removeName {
 			newRegList = append(regList[:i], regList[i+1:]...)
 		}
 	}
