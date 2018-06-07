@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/automationbroker/bundle-lib/bundle"
@@ -35,11 +36,9 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, args []string) {
-	bundleName := args[0]
+func RunBundle(action string, ns string, bundleName string, args []string) {
 	reg := []Registry{}
 	var targetSpec *bundle.Spec
-	targets := []string{ns}
 	pn := fmt.Sprintf("bundle-%s", uuid.New())
 	viper.UnmarshalKey("Registries", &reg)
 	for _, r := range reg {
@@ -51,9 +50,12 @@ func RunBundle(action string, ns string, args []string) {
 	}
 	if targetSpec == nil {
 		log.Errorf("Didn't find supplied APB: %v\n", bundleName)
+
+		// TODO: return an ErrorBundleNotFound
 		return
 	}
 
+	// determine the correct plan
 	plan := selectPlan(targetSpec)
 	if plan.Name == "" {
 		log.Warning("Did not find a selected plan")
@@ -77,19 +79,32 @@ func RunBundle(action string, ns string, args []string) {
 		"bundle-action":   action,
 		"bundle-pod-name": pn,
 	}
+
+	// TODO: using edit directly. The bundle code uses clusterConfig.SandboxRole
+	// which is defined by the template. So far we've been using edit.
+
+	runtime.NewRuntime(runtime.Configuration{})
+	targets := []string{ns}
+	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(pn, ns, targets, "edit", labels)
+	if err != nil {
+		fmt.Printf("\nProblem creating sandbox [%s] to run bundle. Did you run `oc new-project %s` first?\n\n", pn, ns)
+		os.Exit(-1)
+	}
+
 	ec := runtime.ExecutionContext{
 		BundleName: pn,
 		Targets:    targets,
 		Metadata:   labels,
 		Action:     action,
 		Image:      targetSpec.Image,
-		Account:    "apb",
-		Location:   ns,
+		Account:    serviceAccount,
+		Location:   namespace,
 		ExtraVars:  extraVars,
 	}
 
 	k8scli, err := clients.Kubernetes()
 	if err != nil {
+		// TODO: return err
 		panic(err.Error())
 	}
 
@@ -119,9 +134,11 @@ func RunBundle(action string, ns string, args []string) {
 	_, err = k8scli.Client.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
 		log.Errorf("Failed to create pod: %v", err)
+		// TODO: return ErrorPodCreationFailed
 		return
 	}
 	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, bundleName, ns)
+	// TODO: return nil
 	return
 }
 
@@ -159,7 +176,7 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 		if param.Default != nil {
 			paramDefault = param.Default
 		}
-		var check bool = true
+		var check = true
 		for check {
 			var paramInput string
 			fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)

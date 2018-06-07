@@ -55,7 +55,7 @@ var bundleProvisionCmd = &cobra.Command{
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runner.RunBundle("provision", bundleNamespace, args)
+		runner.RunBundle("provision", bundleNamespace, args[0], args[1:])
 	},
 }
 
@@ -65,7 +65,7 @@ var bundleDeprovisionCmd = &cobra.Command{
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runner.RunBundle("deprovision", bundleNamespace, args)
+		runner.RunBundle("deprovision", bundleNamespace, args[0], args[1:])
 	},
 }
 
