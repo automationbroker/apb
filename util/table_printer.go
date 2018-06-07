@@ -28,30 +28,14 @@ type TableColumn struct {
 	Data   []string
 }
 
-// TableSettings provides an optional way to change default PrintTable() settings
-type TableSettings struct {
-	BaseFormatString string
-	DividerString    string
-}
-
 // Default table formatting
-const defaultBaseFormatString = " %%-%ss  "
-const defaultDividerString = " | "
+const baseFormatString = " %%-%ss  "
+const headerDivider = "   "
+const dividerDivider = "-+-"
+const contentDivider = " | "
 
 // PrintTable prints a list of TableColumns with auto-sized columns and dividers.
-func PrintTable(columns []*TableColumn, settings *TableSettings) {
-	// Define table formatting
-	var baseFormatString string
-	var dividerString string
-
-	if settings == nil {
-		baseFormatString = defaultBaseFormatString
-		dividerString = defaultDividerString
-	} else {
-		baseFormatString = settings.BaseFormatString
-		dividerString = settings.DividerString
-	}
-
+func PrintTable(columns []*TableColumn) {
 	// Vars for keeping track of column widths
 	columnWidth := make(map[string]int)
 	columnWidthStr := make(map[string]string)
@@ -70,7 +54,7 @@ func PrintTable(columns []*TableColumn, settings *TableSettings) {
 	for i, column := range columns {
 		formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
 		if i < (len(columns)) && i > 0 {
-			fmt.Print(dividerString)
+			fmt.Print(headerDivider)
 		}
 		fmt.Printf(formatString, column.Header)
 	}
@@ -80,7 +64,7 @@ func PrintTable(columns []*TableColumn, settings *TableSettings) {
 	for i, column := range columns {
 		formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
 		if i < (len(columns)) && i > 0 {
-			fmt.Print(dividerString)
+			fmt.Print(dividerDivider)
 		}
 		fmt.Printf(formatString, strings.Repeat("-", columnWidth[column.Header]))
 	}
@@ -91,7 +75,7 @@ func PrintTable(columns []*TableColumn, settings *TableSettings) {
 		for i, column := range columns {
 			formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
 			if i < (len(columns)) && i > 0 {
-				fmt.Print(dividerString)
+				fmt.Print(contentDivider)
 			}
 			fmt.Printf(formatString, column.Data[rowIndex])
 		}

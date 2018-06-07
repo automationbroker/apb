@@ -126,7 +126,7 @@ func printRegistries(regList []Registry) {
 	}
 
 	tableToPrint := []*util.TableColumn{colName, colType, colOrg, colURL}
-	util.PrintTable(tableToPrint, nil)
+	util.PrintTable(tableToPrint)
 }
 
 func listRegistries() {

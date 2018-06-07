@@ -122,7 +122,7 @@ func printRegConfigSpecs(regConfigs []Registry) {
 	}
 
 	tableToPrint := []*util.TableColumn{colFQName, colImage, colRegName}
-	util.PrintTable(tableToPrint, nil)
+	util.PrintTable(tableToPrint)
 }
 
 func listImages() {
