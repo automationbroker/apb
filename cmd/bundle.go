@@ -108,17 +108,21 @@ func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
 	return specList, nil
 }
 
-func printSpecs(specs []*bundle.Spec) {
-	colFQName := util.TableColumn{Header: "BUNDLE"}
-	colImage := util.TableColumn{Header: "IMAGE"}
+func printRegConfigSpecs(regConfigs []Registry) {
+	colFQName := &util.TableColumn{Header: "BUNDLE"}
+	colImage := &util.TableColumn{Header: "IMAGE"}
+	colRegName := &util.TableColumn{Header: "REGISTRY"}
 
-	for _, s := range specs {
-		colFQName.Data = append(colFQName.Data, s.FQName)
-		colImage.Data = append(colImage.Data, s.Image)
+	for _, r := range regConfigs {
+		for _, s := range r.Specs {
+			colFQName.Data = append(colFQName.Data, s.FQName)
+			colImage.Data = append(colImage.Data, s.Image)
+			colRegName.Data = append(colRegName.Data, r.Config.Name)
+		}
 	}
 
-	tableToPrint := []util.TableColumn{colFQName, colImage}
-	util.PrintTable(tableToPrint)
+	tableToPrint := []*util.TableColumn{colFQName, colImage, colRegName}
+	util.PrintTable(tableToPrint, nil)
 }
 
 func listImages() {
@@ -133,26 +137,21 @@ func listImages() {
 
 	for _, regConfig := range regConfigs {
 		if len(regConfig.Specs) > 0 && Refresh == false {
-			fmt.Println("Found specs already in config")
-			for _, s := range regConfig.Specs {
-				fmt.Printf("%v - %v\n", s.FQName, s.Image)
-			}
+			fmt.Printf("Found specs already in registry: [%s]\n", regConfig.Config.Name)
 			newRegConfigs = append(newRegConfigs, regConfig)
 			continue
 		}
+		fmt.Printf("Getting specs for registry: [%s]\n", regConfig.Config.Name)
 		specs, err := getImages(regConfig)
 		if err != nil {
 			log.Error("Error getting images")
-			return
+			continue
 		}
 
 		regConfig.Specs = specs
 		newRegConfigs = append(newRegConfigs, regConfig)
-
-		for _, s := range specs {
-			fmt.Printf("%v - %v\n", s.FQName, s.Image)
-		}
 	}
+	printRegConfigSpecs(newRegConfigs)
 
 	err = updateCachedRegistries(newRegConfigs)
 	if err != nil {

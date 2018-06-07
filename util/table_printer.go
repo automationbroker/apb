@@ -28,18 +28,36 @@ type TableColumn struct {
 	Data   []string
 }
 
-// PrintTable prints a list of TableColumns to the CLI with auto-sized columns and dividers
-func PrintTable(tableColumns []TableColumn) {
+// TableSettings provides an optional way to change default PrintTable() settings
+type TableSettings struct {
+	BaseFormatString string
+	DividerString    string
+}
+
+// Default table formatting
+const defaultBaseFormatString = " %%-%ss  "
+const defaultDividerString = " | "
+
+// PrintTable prints a list of TableColumns with auto-sized columns and dividers.
+func PrintTable(columns []*TableColumn, settings *TableSettings) {
 	// Define table formatting
-	baseFormatString := " %%-%ss  "
-	dividerString := " | "
+	var baseFormatString string
+	var dividerString string
+
+	if settings == nil {
+		baseFormatString = defaultBaseFormatString
+		dividerString = defaultDividerString
+	} else {
+		baseFormatString = settings.BaseFormatString
+		dividerString = settings.DividerString
+	}
 
 	// Vars for keeping track of column widths
 	columnWidth := make(map[string]int)
 	columnWidthStr := make(map[string]string)
 
 	// Set appropriate column width for all columns
-	for _, column := range tableColumns {
+	for _, column := range columns {
 		for _, cellData := range column.Data {
 			if len(cellData) > columnWidth[column.Header] {
 				columnWidth[column.Header] = len(cellData)
@@ -49,9 +67,9 @@ func PrintTable(tableColumns []TableColumn) {
 	}
 
 	// Print column header
-	for i, column := range tableColumns {
+	for i, column := range columns {
 		formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
-		if i < (len(tableColumns)) && i > 0 {
+		if i < (len(columns)) && i > 0 {
 			fmt.Print(dividerString)
 		}
 		fmt.Printf(formatString, column.Header)
@@ -59,9 +77,9 @@ func PrintTable(tableColumns []TableColumn) {
 	fmt.Println()
 
 	// Print header to content divider (---)
-	for i, column := range tableColumns {
+	for i, column := range columns {
 		formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
-		if i < (len(tableColumns)) && i > 0 {
+		if i < (len(columns)) && i > 0 {
 			fmt.Print(dividerString)
 		}
 		fmt.Printf(formatString, strings.Repeat("-", columnWidth[column.Header]))
@@ -69,10 +87,10 @@ func PrintTable(tableColumns []TableColumn) {
 	fmt.Println()
 
 	// Print table contents
-	for rowIndex := range tableColumns[0].Data {
-		for i, column := range tableColumns {
+	for rowIndex := range columns[0].Data {
+		for i, column := range columns {
 			formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
-			if i < (len(tableColumns)) && i > 0 {
+			if i < (len(columns)) && i > 0 {
 				fmt.Print(dividerString)
 			}
 			fmt.Printf(formatString, column.Data[rowIndex])
