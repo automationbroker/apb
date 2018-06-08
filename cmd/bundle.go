@@ -144,7 +144,7 @@ func listImages() {
 		fmt.Printf("Getting specs for registry: [%s]\n", regConfig.Config.Name)
 		specs, err := getImages(regConfig)
 		if err != nil {
-			log.Error("Error getting images")
+			log.Errorf("Error getting images - %v", err)
 			continue
 		}
 
@@ -155,7 +155,7 @@ func listImages() {
 
 	err = updateCachedRegistries(newRegConfigs)
 	if err != nil {
-		log.Error("Error updating cache")
+		log.Errorf("Error updating cache - %v", err)
 		return
 	}
 }

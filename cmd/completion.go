@@ -61,7 +61,7 @@ var zshCompletionCmd = &cobra.Command{
 To configure your zsh shell to load completions for each session add to your zshrc
 
 # ~/.zshrc or ~/.zprofile
-source <(kubectl completion zsh)
+source <(sbcli completion zsh)
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCmd.GenZshCompletion(os.Stdout)
