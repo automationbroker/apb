@@ -28,18 +28,20 @@ type TableColumn struct {
 	Data   []string
 }
 
-// PrintTable prints a list of TableColumns to the CLI with auto-sized columns and dividers
-func PrintTable(tableColumns []TableColumn) {
-	// Define table formatting
-	baseFormatString := " %%-%ss  "
-	dividerString := " | "
+// Default table formatting
+const baseFormatString = " %%-%ss  "
+const headerDivider = "   "
+const dividerDivider = "-+-"
+const contentDivider = " | "
 
+// PrintTable prints a list of TableColumns with auto-sized columns and dividers.
+func PrintTable(columns []*TableColumn) {
 	// Vars for keeping track of column widths
 	columnWidth := make(map[string]int)
 	columnWidthStr := make(map[string]string)
 
 	// Set appropriate column width for all columns
-	for _, column := range tableColumns {
+	for _, column := range columns {
 		for _, cellData := range column.Data {
 			if len(cellData) > columnWidth[column.Header] {
 				columnWidth[column.Header] = len(cellData)
@@ -49,31 +51,31 @@ func PrintTable(tableColumns []TableColumn) {
 	}
 
 	// Print column header
-	for i, column := range tableColumns {
+	for i, column := range columns {
 		formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
-		if i < (len(tableColumns)) && i > 0 {
-			fmt.Print(dividerString)
+		if i < (len(columns)) && i > 0 {
+			fmt.Print(headerDivider)
 		}
 		fmt.Printf(formatString, column.Header)
 	}
 	fmt.Println()
 
 	// Print header to content divider (---)
-	for i, column := range tableColumns {
+	for i, column := range columns {
 		formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
-		if i < (len(tableColumns)) && i > 0 {
-			fmt.Print(dividerString)
+		if i < (len(columns)) && i > 0 {
+			fmt.Print(dividerDivider)
 		}
 		fmt.Printf(formatString, strings.Repeat("-", columnWidth[column.Header]))
 	}
 	fmt.Println()
 
 	// Print table contents
-	for rowIndex := range tableColumns[0].Data {
-		for i, column := range tableColumns {
+	for rowIndex := range columns[0].Data {
+		for i, column := range columns {
 			formatString := fmt.Sprintf(baseFormatString, columnWidthStr[column.Header])
-			if i < (len(tableColumns)) && i > 0 {
-				fmt.Print(dividerString)
+			if i < (len(columns)) && i > 0 {
+				fmt.Print(contentDivider)
 			}
 			fmt.Printf(formatString, column.Data[rowIndex])
 		}

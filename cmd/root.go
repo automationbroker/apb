@@ -19,8 +19,6 @@ package cmd
 import (
 	"os"
 
-	"github.com/automationbroker/bundle-lib/bundle"
-	"github.com/automationbroker/bundle-lib/registries"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -32,12 +30,6 @@ var Verbose bool
 
 // CfgFile is the configuration file
 var CfgFile string
-
-// Config sbcli configuration
-type Config struct {
-	Registries []registries.Config
-	Specs      []*bundle.Spec
-}
 
 var rootCmd = &cobra.Command{
 	Use:   "sbcli",

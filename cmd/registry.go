@@ -19,13 +19,20 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/automationbroker/sbcli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var registryConfig registries.Config
+// Registry stores a single registry config and references all associated bundle specs
+type Registry struct {
+	Config registries.Config
+	Specs  []*bundle.Spec
+}
+
+var registryConfig Registry
 var whitelist string
 var removeName string
 
@@ -65,12 +72,12 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVar(&registryConfig.Type, "type", "dockerhub", "Type of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Org, "org", "ansibleplaybookbundle", "Type of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.URL, "url", "docker.io", "URL of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Name, "name", "docker", "Name of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Type, "type", "dockerhub", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "ansibleplaybookbundle", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "docker.io", "URL of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Name, "name", "docker", "Name of registry adapter to add")
 	registryAddCmd.Flags().StringVar(&whitelist, "whitelist", ".*-apb$", "Whitelist for configuration of registry adapter")
-	registryConfig.WhiteList = append(registryConfig.WhiteList, whitelist)
+	registryConfig.Config.WhiteList = append(registryConfig.Config.WhiteList, whitelist)
 
 	//Registry Remove Flags
 	registryRemoveCmd.Flags().StringVar(&removeName, "name", "", "Name of registry adapter to remove")
@@ -81,50 +88,49 @@ func init() {
 	registryCmd.AddCommand(registryRemoveCmd)
 }
 
-func updateCachedRegistries(registries []registries.Config) error {
-	viper.Set("Registries", registries)
+func updateCachedRegistries(regList []Registry) error {
+	viper.Set("Registries", regList)
 	viper.WriteConfig()
 	return nil
 }
 
 func addRegistry() {
-	var regList []registries.Config
+	var regList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Println("Error unmarshalling config: ", err)
 		return
 	}
 	for _, reg := range regList {
-		if reg.Name == registryConfig.Name {
-			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]\n", registryConfig.Name, reg.Name)
+		if reg.Config.Name == registryConfig.Config.Name {
+			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]\n", registryConfig.Config.Name, reg.Config.Name)
 			return
 		}
 	}
-
 	regList = append(regList, registryConfig)
 	updateCachedRegistries(regList)
 	return
 }
 
-func printRegistries(regList []registries.Config) {
-	colName := util.TableColumn{Header: "NAME"}
-	colType := util.TableColumn{Header: "TYPE"}
-	colOrg := util.TableColumn{Header: "ORG"}
-	colURL := util.TableColumn{Header: "URL"}
+func printRegistries(regList []Registry) {
+	colName := &util.TableColumn{Header: "NAME"}
+	colType := &util.TableColumn{Header: "TYPE"}
+	colOrg := &util.TableColumn{Header: "ORG"}
+	colURL := &util.TableColumn{Header: "URL"}
 
 	for _, r := range regList {
-		colName.Data = append(colName.Data, r.Name)
-		colType.Data = append(colType.Data, r.Type)
-		colOrg.Data = append(colOrg.Data, r.Org)
-		colURL.Data = append(colURL.Data, r.URL)
+		colName.Data = append(colName.Data, r.Config.Name)
+		colType.Data = append(colType.Data, r.Config.Type)
+		colOrg.Data = append(colOrg.Data, r.Config.Org)
+		colURL.Data = append(colURL.Data, r.Config.URL)
 	}
 
-	tableToPrint := []util.TableColumn{colName, colType, colOrg, colURL}
+	tableToPrint := []*util.TableColumn{colName, colType, colOrg, colURL}
 	util.PrintTable(tableToPrint)
 }
 
 func listRegistries() {
-	var regList []registries.Config
+	var regList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Printf("Error unmarshalling config: %v", err)
@@ -140,14 +146,14 @@ func listRegistries() {
 }
 
 func removeRegistry() {
-	var regList []registries.Config
-	var newRegList []registries.Config
+	var regList []Registry
+	var newRegList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Printf("Error unmarshalling config: %v", err)
 	}
 	for i, r := range regList {
-		if r.Name == removeName {
+		if r.Config.Name == removeName {
 			newRegList = append(regList[:i], regList[i+1:]...)
 		}
 	}
