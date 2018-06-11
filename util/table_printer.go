@@ -29,7 +29,7 @@ type TableColumn struct {
 }
 
 // Default table formatting
-const baseFormatString = " %%-%ss  "
+const baseFormatString = " %%-%ss "
 const headerDivider = "   "
 const dividerDivider = "-+-"
 const contentDivider = " | "
@@ -42,6 +42,8 @@ func PrintTable(columns []*TableColumn) {
 
 	// Set appropriate column width for all columns
 	for _, column := range columns {
+		columnWidth[column.Header] = len(column.Header)
+		columnWidthStr[column.Header] = strconv.Itoa(len(column.Header))
 		for _, cellData := range column.Data {
 			if len(cellData) > columnWidth[column.Header] {
 				columnWidth[column.Header] = len(cellData)
