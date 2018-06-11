@@ -64,7 +64,7 @@ func RunBundle(action string, ns string, args []string) {
 		log.Errorf("Error validating selected parameters: %v", err)
 		return
 	}
-	extraVars, err := createExtraVars(execNamespace, &params, plan)
+	extraVars, err := createExtraVars(ns, &params, plan)
 	if err != nil {
 		log.Errorf("Error creating extravars: %v\n", err)
 		return
@@ -153,13 +153,13 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 	schemaParams := planSchema.ServiceInstance.Create["parameters"]
 	params := bundle.Parameters{}
 	for _, param := range plan.Parameters {
-		var paramInput string
 		var paramDefault interface{}
 		if param.Default != nil {
 			paramDefault = param.Default
 		}
 		check := 1
 		for check < 2 {
+			var paramInput string
 			fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
 			fmt.Scanln(&paramInput)
 			if paramInput == "" {
@@ -175,6 +175,13 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 			if param.Required == true && paramInput == "" {
 				fmt.Printf("Parameter [%v] is required. Please try again.\n", param.Name)
 				continue
+			}
+
+			if len(param.Enum) > 0 {
+				if !contains(param.Enum, paramInput) {
+					fmt.Printf("[%v] is not a valid option. Available options: %v\n", paramInput, param.Enum)
+					continue
+				}
 			}
 
 			input, err := pruneInput(paramInput, param)
@@ -262,4 +269,13 @@ func pruneInput(input string, param bundle.ParameterDescriptor) (interface{}, er
 		output = input
 	}
 	return output, nil
+}
+
+func contains(s []string, t string) bool {
+	for _, str := range s {
+		if str == t {
+			return true
+		}
+	}
+	return false
 }
