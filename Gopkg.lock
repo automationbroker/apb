@@ -41,7 +41,7 @@
     "registries/adapters",
     "runtime"
   ]
-  revision = "226009efa4556f31023712fe955262f435039e3b"
+  revision = "9ba4469801f566ed7d5a6e1b48854aeabc254b2b"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -233,6 +233,51 @@
   packages = ["."]
   revision = "59fac5042749a5afb9af70e813da1dd5474f0167"
   version = "1.0.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lestrrat/go-jspointer"
+  packages = ["."]
+  revision = "d5f7c71bfd03c8e9489a636874cd106c22d3a47c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lestrrat/go-jsref"
+  packages = [
+    ".",
+    "provider"
+  ]
+  revision = "50df7b2d07d799426a9ac43fa24bdb4785f72a54"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lestrrat/go-jsschema"
+  packages = [
+    ".",
+    "validator"
+  ]
+  revision = "a6a42341b50d8d7e2a733db922eefaa756321021"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lestrrat/go-jsval"
+  packages = [
+    ".",
+    "builder"
+  ]
+  revision = "cf70aae60f5b41a32922066c41287b0168e55904"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lestrrat/go-pdebug"
+  packages = ["."]
+  revision = "569c97477ae8837e053e5a50bc739e15172b8ebe"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lestrrat/go-structinfo"
+  packages = ["."]
+  revision = "8204d40bbcd79eb7603cd4c2c998e60eb2479ded"
 
 [[projects]]
   name = "github.com/magiconair/properties"
@@ -605,6 +650,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "754502d2ea236a3d7aa74c35da1aa8651546c43471e399e1120c37ea06c875bd"
+  inputs-digest = "166a48e17ab137d6b5630977afbe7129f51bf8c7b70f96454debd6f1e9b05c87"
   solver-name = "gps-cdcl"
   solver-version = 1

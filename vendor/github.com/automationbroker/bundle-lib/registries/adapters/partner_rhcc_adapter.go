@@ -184,5 +184,10 @@ func (r PartnerRhccAdapter) loadSpec(imageName string) (*bundle.Spec, error) {
 	if err != nil {
 		return nil, fmt.Errorf("PartnerRhccAdapter::error handling registry response %s", err)
 	}
-	return imageToSpec(body, fmt.Sprintf("%s/%s:%s", r.Config.URL.Hostname(), imageName, r.Config.Tag))
+	registryName := r.Config.URL.Hostname()
+	if r.Config.URL.Port() != "" {
+		registryName = fmt.Sprintf("%s:%s", r.Config.URL.Hostname(), r.Config.URL.Port())
+	}
+
+	return imageToSpec(body, fmt.Sprintf("%s/%s:%s", registryName, imageName, r.Config.Tag))
 }
