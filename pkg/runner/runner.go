@@ -37,14 +37,16 @@ import (
 // RunBundle will run the bundle's action in the given namespace
 func RunBundle(action string, ns string, args []string) {
 	bundleName := args[0]
-	specs := []*bundle.Spec{}
+	reg := []Registry{}
 	var targetSpec *bundle.Spec
 	targets := []string{ns}
 	pn := fmt.Sprintf("bundle-%s", uuid.New())
-	viper.UnmarshalKey("Specs", &specs)
-	for _, s := range specs {
-		if s.FQName == bundleName {
-			targetSpec = s
+	viper.UnmarshalKey("Registries", &reg)
+	for _, r := range reg {
+		for _, s := range r.Specs {
+			if s.FQName == bundleName {
+				targetSpec = s
+			}
 		}
 	}
 	if targetSpec == nil {
