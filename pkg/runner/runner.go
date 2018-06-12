@@ -157,8 +157,8 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 		if param.Default != nil {
 			paramDefault = param.Default
 		}
-		check := 1
-		for check < 2 {
+		var check bool = true
+		for check {
 			var paramInput string
 			fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
 			fmt.Scanln(&paramInput)
@@ -189,7 +189,7 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 				fmt.Printf("Error accepting input: %v\n", err)
 				fmt.Println("Please try again")
 			} else {
-				check = 2
+				check = false
 				params.Add(param.Name, input)
 			}
 		}
