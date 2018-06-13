@@ -5,6 +5,12 @@ SOURCES          := $(shell find . -name '*.go' -not -path "*/vendor/*")
 sbcli: $(SOURCES) ## Build the samplebroker
 	go build -i -ldflags="-s -w"
 
+install:
+	go install -ldflags="-s -w"
+
+uninstall: clean
+	@rm -f ${GOPATH}/bin/sbcli
+
 lint: ## Run golint
 	@golint -set_exit_status $(addsuffix /... , $(SOURCE_DIRS))
 
@@ -31,4 +37,4 @@ help: ## Show this help screen
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ''
 
-.PHONY: clean lint build fmtcheck test vet help
+.PHONY: clean lint build fmtcheck test vet help install uninstall
