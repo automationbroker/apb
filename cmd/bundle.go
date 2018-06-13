@@ -48,6 +48,7 @@ var bundleListCmd = &cobra.Command{
 }
 
 var bundleNamespace string
+var sandboxRole string
 
 var bundleProvisionCmd = &cobra.Command{
 	Use:   "provision <bundle name>",
@@ -55,7 +56,7 @@ var bundleProvisionCmd = &cobra.Command{
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runner.RunBundle("provision", bundleNamespace, args[0], args[1:])
+		runner.RunBundle("provision", bundleNamespace, args[0], sandboxRole, args[1:])
 	},
 }
 
@@ -65,7 +66,7 @@ var bundleDeprovisionCmd = &cobra.Command{
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runner.RunBundle("deprovision", bundleNamespace, args[0], args[1:])
+		runner.RunBundle("deprovision", bundleNamespace, args[0], sandboxRole, args[1:])
 	},
 }
 
@@ -76,10 +77,12 @@ func init() {
 	bundleCmd.AddCommand(bundleListCmd)
 
 	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "p", "", "Namespace to provision bundle to")
+	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleProvisionCmd.MarkFlagRequired("namespace")
 	bundleCmd.AddCommand(bundleProvisionCmd)
 
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "p", "", "Namespace to provision bundle to")
+	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleDeprovisionCmd.MarkFlagRequired("namespace")
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 }
