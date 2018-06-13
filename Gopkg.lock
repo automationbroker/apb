@@ -39,9 +39,10 @@
     "clients",
     "registries",
     "registries/adapters",
+    "registries/adapters/oauth",
     "runtime"
   ]
-  revision = "9ba4469801f566ed7d5a6e1b48854aeabc254b2b"
+  revision = "84c06b4bb09011ce638980f8365325b5d4ace1bd"
 
 [[projects]]
   name = "github.com/coreos/etcd"
