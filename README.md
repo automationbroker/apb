@@ -26,6 +26,15 @@ Found registries already in config:
 ## List available Service Bundles
 ```
 $ sbcli bundle list
+Found specs already in registry: [docker]                                                                                                    
+ BUNDLE                    IMAGE                                                                   REGISTRY                                  
+ --------------------- -+- ------------------------------------------------------------------- -+- --------                                  
+ blankvm-apb            |  docker.io/ansibleplaybookbundle/virtualmachines-apb:latest           |  docker                                    
+ prometheus-apb         |  docker.io/ansibleplaybookbundle/prometheus-apb:latest                |  docker                                    
+ dynamic-apb            |  docker.io/ansibleplaybookbundle/dynamic-apb:latest                   |  docker                                    
+ eclipse-che-apb        |  docker.io/ansibleplaybookbundle/eclipse-che-apb:latest               |  docker                                    
+ etherpad-apb           |  docker.io/ansibleplaybookbundle/etherpad-apb:latest                  |  docker                                    
+ pyzip-demo-db-apb      |  docker.io/ansibleplaybookbundle/pyzip-demo-db-apb:latest             |  docker
 ```
 The first time you run this command it will attempt to bootstrap any newly added registries. If it finds some already then it will used the cached list.
 
