@@ -36,7 +36,7 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, args []string) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, args []string) {
 	reg := []Registry{}
 	var targetSpec *bundle.Spec
 	pn := fmt.Sprintf("bundle-%s", uuid.New())
@@ -85,7 +85,7 @@ func RunBundle(action string, ns string, bundleName string, args []string) {
 
 	runtime.NewRuntime(runtime.Configuration{})
 	targets := []string{ns}
-	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(pn, ns, targets, "edit", labels)
+	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(pn, ns, targets, sandboxRole, labels)
 	if err != nil {
 		fmt.Printf("\nProblem creating sandbox [%s] to run bundle. Did you run `oc new-project %s` first?\n\n", pn, ns)
 		os.Exit(-1)
