@@ -21,7 +21,7 @@ import (
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
-	"github.com/automationbroker/sbcli/util"
+	"github.com/automationbroker/sbcli/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
