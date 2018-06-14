@@ -183,7 +183,11 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 		var check = true
 		for check {
 			var paramInput string
-			fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
+			if len(param.Description) > 0 {
+				fmt.Printf("Enter value for parameter [%v] (%v), default: [%v]: ", param.Name, param.Description, paramDefault)
+			} else {
+				fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
+			}
 			fmt.Scanln(&paramInput)
 			if paramInput == "" {
 				switch paramDefault.(type) {
