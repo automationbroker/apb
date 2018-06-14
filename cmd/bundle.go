@@ -76,12 +76,12 @@ func init() {
 	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
 	bundleCmd.AddCommand(bundleListCmd)
 
-	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "p", "", "Namespace to provision bundle to")
+	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
 	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleProvisionCmd.MarkFlagRequired("namespace")
 	bundleCmd.AddCommand(bundleProvisionCmd)
 
-	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "p", "", "Namespace to provision bundle to")
+	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleDeprovisionCmd.MarkFlagRequired("namespace")
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
