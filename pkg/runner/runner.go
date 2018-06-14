@@ -144,20 +144,24 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 
 func selectPlan(spec *bundle.Spec) bundle.Plan {
 	var planName string
-	if len(spec.Plans) > 1 {
-		fmt.Printf("List of available plans:\n")
-		for _, plan := range spec.Plans {
-			fmt.Printf("name: %v\n", plan.Name)
+	var check = true
+	for check {
+		if len(spec.Plans) > 1 {
+			fmt.Printf("List of available plans:\n")
+			for _, plan := range spec.Plans {
+				fmt.Printf("name: %v\n", plan.Name)
+			}
+		} else {
+			return spec.Plans[0]
 		}
 		fmt.Printf("Enter name of plan you'd like to deploy: ")
 		fmt.Scanln(&planName)
-	} else {
-		return spec.Plans[0]
-	}
-	for _, plan := range spec.Plans {
-		if plan.Name == planName {
-			return plan
+		for _, plan := range spec.Plans {
+			if plan.Name == planName {
+				return plan
+			}
 		}
+		fmt.Printf("Did not find plan [%v], try again.\n\n", planName)
 	}
 	return bundle.Plan{}
 }
