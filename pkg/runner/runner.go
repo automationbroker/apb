@@ -214,6 +214,8 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 					paramInput = paramDefault.(string)
 				case float64:
 					paramInput = strconv.FormatFloat(paramDefault.(float64), 'f', 0, 32)
+				case bool:
+					paramInput = strconv.FormatBool(paramDefault.(bool))
 				}
 			}
 			if param.Required == true && paramInput == "" {
