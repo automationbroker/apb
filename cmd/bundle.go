@@ -47,6 +47,18 @@ var bundleListCmd = &cobra.Command{
 	},
 }
 
+var bundleRegistry string
+
+var bundleInfoCmd = &cobra.Command{
+	Use:   "info <bundle name>",
+	Short: "Print info on ServiceBundle image",
+	Long:  `Print metadata, plans, and params associated with ServiceBundle image`,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		showBundleInfo(args[0], bundleRegistry)
+	},
+}
+
 var bundleNamespace string
 var sandboxRole string
 
@@ -75,6 +87,9 @@ func init() {
 
 	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
 	bundleCmd.AddCommand(bundleListCmd)
+
+	bundleInfoCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to retrieve bundle info from")
+	bundleCmd.AddCommand(bundleInfoCmd)
 
 	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
 	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
@@ -161,4 +176,63 @@ func listImages() {
 		log.Errorf("Error updating cache - %v", err)
 		return
 	}
+}
+
+func printBundleInfo(bundleSpec *bundle.Spec) {
+	fmt.Printf(" %-11s  |  %v\n", "NAME", bundleSpec.FQName)
+	fmt.Printf(" %-11s  |  %v\n", "DESCRIPTION", bundleSpec.Description)
+	fmt.Printf(" %-11s  |  %v\n", "IMAGE", bundleSpec.Image)
+	fmt.Printf(" %-11s  |  %v\n", "ASYNC BIND", bundleSpec.Async)
+	fmt.Printf(" %-11s  |  %v\n", "BINDABLE", bundleSpec.Bindable)
+	fmt.Printf(" %-11s  |  %v\n", "VERSION", bundleSpec.Version)
+	fmt.Printf(" %-11s  |  %v\n", "APB RUNTIME", bundleSpec.Runtime)
+	fmt.Printf(" %-11s  | \n", "")
+
+	for i, plan := range bundleSpec.Plans {
+		fmt.Printf(" %-11s  |  %v\n", "PLAN", plan.Name)
+		for _, param := range plan.Parameters {
+			fmt.Printf("   %-9s  |    %v\n", "param", param.Name)
+		}
+		if i < len(bundleSpec.Plans)-1 {
+			fmt.Printf(" %-11s  | \n", "")
+		}
+	}
+	fmt.Println()
+}
+
+func showBundleInfo(bundleName string, registryName string) {
+	var regConfigs []Registry
+
+	err := viper.UnmarshalKey("Registries", &regConfigs)
+	if err != nil {
+		log.Error("Error unmarshalling config: ", err)
+		return
+	}
+
+	var bundleSpecMatches []*bundle.Spec
+
+	for _, regConfig := range regConfigs {
+		if len(registryName) > 0 && regConfig.Config.Name != registryName {
+			continue
+		}
+		for _, bundleSpec := range regConfig.Specs {
+			if bundleSpec.FQName == bundleName {
+				bundleSpecMatches = append(bundleSpecMatches, bundleSpec)
+				fmt.Printf("Found bundle [%v] in registry: [%v]\n", bundleName, regConfig.Config.Name)
+			}
+		}
+	}
+
+	if len(bundleSpecMatches) == 0 {
+		log.Errorf("No bundles found with name [%v]", bundleName)
+		return
+	}
+	if len(bundleSpecMatches) > 1 {
+		log.Warnf("Found multiple bundles matching name [%v]. Specify a registry with -r or --registry.", bundleName)
+		return
+	}
+	fmt.Println()
+	printBundleInfo(bundleSpecMatches[0])
+
+	return
 }
