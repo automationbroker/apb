@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"syscall"
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
@@ -29,6 +30,7 @@ import (
 	"github.com/lestrrat/go-jsschema/validator"
 	"github.com/pborman/uuid"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/api/core/v1"
 
 	log "github.com/sirupsen/logrus"
@@ -176,19 +178,34 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 	schemaParams := planSchema.ServiceInstance.Create["parameters"]
 	params := bundle.Parameters{}
 	for _, param := range plan.Parameters {
+		var inputValid = false
 		var paramDefault interface{}
+
 		if param.Default != nil {
 			paramDefault = param.Default
 		}
-		var check = true
-		for check {
+
+		for !inputValid {
 			var paramInput string
+
 			if len(param.Description) > 0 {
 				fmt.Printf("Enter value for parameter [%v] (%v), default: [%v]: ", param.Name, param.Description, paramDefault)
 			} else {
 				fmt.Printf("Enter value for parameter [%v], default: [%v]: ", param.Name, paramDefault)
 			}
-			fmt.Scanln(&paramInput)
+
+			if param.DisplayType == "password" {
+				passwordInputBytes, err := terminal.ReadPassword(int(syscall.Stdin))
+				fmt.Println()
+				if err != nil {
+					log.Errorf("Error while collecting password: %v", err)
+					continue
+				}
+				paramInput = string(passwordInputBytes)
+			} else {
+				fmt.Scanln(&paramInput)
+			}
+
 			if paramInput == "" {
 				switch paramDefault.(type) {
 				case int:
@@ -216,7 +233,7 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 				fmt.Printf("Error accepting input: %v\n", err)
 				fmt.Println("Please try again")
 			} else {
-				check = false
+				inputValid = true
 				params.Add(param.Name, input)
 			}
 		}
