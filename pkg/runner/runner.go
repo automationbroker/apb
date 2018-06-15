@@ -311,6 +311,11 @@ func pruneInput(input string, param bundle.ParameterDescriptor) (interface{}, er
 		if err != nil {
 			return nil, errors.New("Input must be an integer")
 		}
+	case "number":
+		output, err = strconv.ParseFloat(input, 64)
+		if err != nil {
+			return nil, errors.New("Input must be a float")
+		}
 	default:
 		output = input
 	}
