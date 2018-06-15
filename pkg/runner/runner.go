@@ -214,6 +214,8 @@ func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 					paramInput = paramDefault.(string)
 				case float64:
 					paramInput = strconv.FormatFloat(paramDefault.(float64), 'f', 0, 32)
+				case bool:
+					paramInput = strconv.FormatBool(paramDefault.(bool))
 				}
 			}
 			if param.Required == true && paramInput == "" {
@@ -308,6 +310,11 @@ func pruneInput(input string, param bundle.ParameterDescriptor) (interface{}, er
 		output, err = strconv.ParseInt(input, 0, 0)
 		if err != nil {
 			return nil, errors.New("Input must be an integer")
+		}
+	case "number":
+		output, err = strconv.ParseFloat(input, 64)
+		if err != nil {
+			return nil, errors.New("Input must be a float")
 		}
 	default:
 		output = input
