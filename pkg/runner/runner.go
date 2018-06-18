@@ -306,7 +306,7 @@ func pruneInput(input string, param bundle.ParameterDescriptor) (interface{}, er
 		if err != nil {
 			return nil, errors.New("Input must be a boolean")
 		}
-	case "int":
+	case "integer":
 		output, err = strconv.ParseInt(input, 0, 0)
 		if err != nil {
 			return nil, errors.New("Input must be an integer")
