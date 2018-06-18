@@ -301,7 +301,7 @@ func pruneInput(input string, param bundle.ParameterDescriptor) (interface{}, er
 		output = input
 	case "enum":
 		output = input
-	case "bool":
+	case "boolean":
 		output, err = strconv.ParseBool(input)
 		if err != nil {
 			return nil, errors.New("Input must be a boolean")
