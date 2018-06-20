@@ -65,7 +65,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		// TODO: return an ErrorBundleNotFound
 	}
 	if len(candidateSpecs) > 1 {
-		log.Warnf("Found multiple bundles matching name [%v]. Specify a registry with -r or --registry.", bundleName)
+		log.Warnf("Found multiple bundles matching name [%v]. Specify a registry with --registry.", bundleName)
 		return
 	}
 
