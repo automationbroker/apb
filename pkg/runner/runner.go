@@ -38,24 +38,38 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, sandboxRole string, args []string) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, args []string) {
 	reg := []Registry{}
 	var targetSpec *bundle.Spec
+	var candidateSpecs []*bundle.Spec
 	pn := fmt.Sprintf("bundle-%s", uuid.New())
 	viper.UnmarshalKey("Registries", &reg)
 	for _, r := range reg {
+		if len(bundleRegistry) > 0 && r.Config.Name != bundleRegistry {
+			continue
+		}
 		for _, s := range r.Specs {
 			if s.FQName == bundleName {
-				targetSpec = s
+				candidateSpecs = append(candidateSpecs, s)
+				fmt.Printf("Found bundle [%v] in registry [%v]\n", bundleName, r.Config.Name)
 			}
 		}
 	}
-	if targetSpec == nil {
-		log.Errorf("Didn't find supplied APB: %v\n", bundleName)
-
+	if len(candidateSpecs) == 0 {
+		if len(bundleRegistry) > 0 {
+			log.Errorf("Didn't find bundle [%v] in registry [%v]\n", bundleName, bundleRegistry)
+			return
+		}
+		log.Errorf("Didn't find bundle [%v] in configured registries\n", bundleName)
+		return
 		// TODO: return an ErrorBundleNotFound
+	}
+	if len(candidateSpecs) > 1 {
+		log.Warnf("Found multiple bundles matching name [%v]. Specify a registry with --registry.", bundleName)
 		return
 	}
+
+	targetSpec = candidateSpecs[0]
 
 	// determine the correct plan
 	plan := selectPlan(targetSpec)

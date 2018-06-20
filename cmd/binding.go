@@ -38,8 +38,8 @@ var bindingCmd = &cobra.Command{
 
 var bindingAddCmd = &cobra.Command{
 	Use:   "add <secret name> <app name>",
-	Short: "Add a new registry adapter",
-	Long:  `Add a new registry adapter to the configuration`,
+	Short: "Create a new binding",
+	Long:  `Create a new binding secret`,
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		addBinding(args)
@@ -48,8 +48,8 @@ var bindingAddCmd = &cobra.Command{
 
 var bindingRemoveCmd = &cobra.Command{
 	Use:   "remove",
-	Short: "Remove a registry adapter",
-	Long:  `Remove a registry adapter from stored configuration`,
+	Short: "Remove a binding",
+	Long:  `Remove a binding secret`,
 	Run: func(cmd *cobra.Command, args []string) {
 		removeBinding()
 	},
