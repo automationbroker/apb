@@ -43,7 +43,7 @@ var bundleListCmd = &cobra.Command{
 	Short: "List ServiceBundle images",
 	Long:  `List ServiceBundles from a registry adapter`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listImages()
+		ListImages()
 	},
 }
 
@@ -102,6 +102,42 @@ func init() {
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 }
 
+// Find and print info on bundle images from all registries
+func ListImages() {
+	var regConfigs []Registry
+	var newRegConfigs []Registry
+
+	err := viper.UnmarshalKey("Registries", &regConfigs)
+	if err != nil {
+		log.Error("Error unmarshalling config: ", err)
+		return
+	}
+
+	for _, regConfig := range regConfigs {
+		if len(regConfig.Specs) > 0 && Refresh == false {
+			fmt.Printf("Found specs already in registry: [%s]\n", regConfig.Config.Name)
+			newRegConfigs = append(newRegConfigs, regConfig)
+			continue
+		}
+		fmt.Printf("Getting specs for registry: [%s]\n", regConfig.Config.Name)
+		specs, err := getImages(regConfig)
+		if err != nil {
+			log.Errorf("Error getting images - %v", err)
+			continue
+		}
+
+		regConfig.Specs = specs
+		newRegConfigs = append(newRegConfigs, regConfig)
+	}
+	printRegConfigSpecs(newRegConfigs)
+
+	err = updateCachedRegistries(newRegConfigs)
+	if err != nil {
+		log.Errorf("Error updating cache - %v", err)
+		return
+	}
+}
+
 // Get images from a single registry
 func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
 	var specList []*bundle.Spec
@@ -141,41 +177,6 @@ func printRegConfigSpecs(regConfigs []Registry) {
 
 	tableToPrint := []*util.TableColumn{colFQName, colImage, colRegName}
 	util.PrintTable(tableToPrint)
-}
-
-func listImages() {
-	var regConfigs []Registry
-	var newRegConfigs []Registry
-
-	err := viper.UnmarshalKey("Registries", &regConfigs)
-	if err != nil {
-		log.Error("Error unmarshalling config: ", err)
-		return
-	}
-
-	for _, regConfig := range regConfigs {
-		if len(regConfig.Specs) > 0 && Refresh == false {
-			fmt.Printf("Found specs already in registry: [%s]\n", regConfig.Config.Name)
-			newRegConfigs = append(newRegConfigs, regConfig)
-			continue
-		}
-		fmt.Printf("Getting specs for registry: [%s]\n", regConfig.Config.Name)
-		specs, err := getImages(regConfig)
-		if err != nil {
-			log.Errorf("Error getting images - %v", err)
-			continue
-		}
-
-		regConfig.Specs = specs
-		newRegConfigs = append(newRegConfigs, regConfig)
-	}
-	printRegConfigSpecs(newRegConfigs)
-
-	err = updateCachedRegistries(newRegConfigs)
-	if err != nil {
-		log.Errorf("Error updating cache - %v", err)
-		return
-	}
 }
 
 func printBundleInfo(bundleSpec *bundle.Spec) {
