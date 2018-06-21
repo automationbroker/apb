@@ -18,12 +18,14 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/automationbroker/bundle-lib/bundle"
-	"github.com/automationbroker/bundle-lib/registries"
+	"github.com/automationbroker/bundle-lib/clients"
 	"github.com/automationbroker/sbcli/pkg/util"
+	osb "github.com/pmorie/go-open-service-broker-client/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var brokerName string
@@ -46,94 +48,91 @@ var brokerCatalogCmd = &cobra.Command{
 var brokerBootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap an Automation Broker instance",
-	Long:  `Fetch list of service bundles in Automation Broker catalog`,
+	Long:  `Refrsh list of bootstrapped service bundles in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listBroker()
+		bootstrapBroker()
 	},
 }
 
 func init() {
+	brokerCmd.PersistentFlags().StringVarP(&brokerName, "name", "n", "openshift-automation-service-broker", "Name of Automation Broker instance")
 	rootCmd.AddCommand(brokerCmd)
-	// Broker List Flags
-	brokerCmd.Flags().StringVar(&brokerName, "name", "automation-broker", "Name of Automation Broker instance")
 
-	//Broker Bootstrap Flags
-	brokerBootstrap.Flags().StringVar(&removeName, "name", "", "Name of registry adapter to remove")
-	registryRemoveCmd.MarkFlagRequired("name")
-
-	registryCmd.AddCommand(registryAddCmd)
-	registryCmd.AddCommand(registryListCmd)
-	registryCmd.AddCommand(registryRemoveCmd)
+	brokerCmd.AddCommand(brokerCatalogCmd)
+	brokerCmd.AddCommand(brokerBootstrapCmd)
 }
 
-func updateCachedRegistries(regList []Registry) error {
-	viper.Set("Registries", regList)
-	viper.WriteConfig()
-	return nil
-}
-
-func addRegistry() {
-	var regList []Registry
-	err := viper.UnmarshalKey("Registries", &regList)
+func listBrokerCatalog() {
+	log.Debugf("func::listBrokerCatalog()")
+	var brokerRoute = ""
+	kube, err := clients.Kubernetes()
 	if err != nil {
-		fmt.Println("Error unmarshalling config: ", err)
+		log.Errorf("Failed to connect to cluster: %v", err)
 		return
 	}
-	for _, reg := range regList {
-		if reg.Config.Name == registryConfig.Config.Name {
-			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]\n", registryConfig.Config.Name, reg.Config.Name)
-			return
+	ocp, err := clients.Openshift()
+	if err != nil {
+		log.Errorf("Failed to connect to cluster: %v", err)
+		return
+	}
+
+	// Attempt to get route of Automation Broker
+	rc, err := ocp.Route().Routes(brokerName).List(metav1.ListOptions{})
+	if err != nil {
+		log.Errorf("Failed to list routes in namespace %v: %v", brokerName, err)
+	}
+
+	for _, route := range rc.Items {
+		if route.Spec.To.Name == brokerName {
+			brokerRoute = route.Spec.Host
 		}
 	}
-	regList = append(regList, registryConfig)
-	updateCachedRegistries(regList)
+	if brokerRoute == "" {
+		log.Errorf("Failed to find broker route.")
+		return
+	}
+
+	brokerRoute = fmt.Sprintf("https://%v/%v", brokerRoute, brokerName)
+
+	osbConf := &osb.ClientConfiguration{
+		Name:                "automation-broker",
+		URL:                 brokerRoute,
+		APIVersion:          osb.LatestAPIVersion(),
+		TimeoutSeconds:      60,
+		EnableAlphaFeatures: false,
+		Insecure:            true,
+		AuthConfig: &osb.AuthConfig{
+			BearerConfig: &osb.BearerConfig{
+				Token: kube.ClientConfig.BearerToken,
+			},
+		},
+	}
+	osbClient, err := osb.NewClient(osbConf)
+	if err != nil {
+		log.Errorf("Failed to make osb client: %v", err)
+		return
+	}
+
+	services, err := osbClient.GetCatalog()
+	printServices(services.Services)
 	return
 }
 
-func printRegistries(regList []Registry) {
+func bootstrapBroker() {
+	return
+}
+
+func printServices(services []osb.Service) {
 	colName := &util.TableColumn{Header: "NAME"}
-	colType := &util.TableColumn{Header: "TYPE"}
-	colOrg := &util.TableColumn{Header: "ORG"}
-	colURL := &util.TableColumn{Header: "URL"}
+	colID := &util.TableColumn{Header: "ID"}
+	colBind := &util.TableColumn{Header: "BINDABLE"}
 
-	for _, r := range regList {
-		colName.Data = append(colName.Data, r.Config.Name)
-		colType.Data = append(colType.Data, r.Config.Type)
-		colOrg.Data = append(colOrg.Data, r.Config.Org)
-		colURL.Data = append(colURL.Data, r.Config.URL)
+	for _, s := range services {
+		colName.Data = append(colName.Data, s.Name)
+		colID.Data = append(colID.Data, s.ID)
+		colBind.Data = append(colBind.Data, strconv.FormatBool(s.Bindable))
 	}
 
-	tableToPrint := []*util.TableColumn{colName, colType, colOrg, colURL}
+	tableToPrint := []*util.TableColumn{colName, colID, colBind}
 	util.PrintTable(tableToPrint)
-}
-
-func listRegistries() {
-	var regList []Registry
-	err := viper.UnmarshalKey("Registries", &regList)
-	if err != nil {
-		fmt.Printf("Error unmarshalling config: %v", err)
-		return
-	}
-	if len(regList) > 0 {
-		fmt.Println("Found registries already in config:")
-		printRegistries(regList)
-	} else {
-		fmt.Println("Found no registries in configuration. Try `sbcli registry add`.")
-	}
-	return
-}
-
-func removeRegistry() {
-	var regList []Registry
-	var newRegList []Registry
-	err := viper.UnmarshalKey("Registries", &regList)
-	if err != nil {
-		fmt.Printf("Error unmarshalling config: %v", err)
-	}
-	for i, r := range regList {
-		if r.Config.Name == removeName {
-			newRegList = append(regList[:i], regList[i+1:]...)
-		}
-	}
-	updateCachedRegistries(newRegList)
 }
