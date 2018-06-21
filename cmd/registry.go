@@ -109,6 +109,7 @@ func addRegistry() {
 	}
 	regList = append(regList, registryConfig)
 	updateCachedRegistries(regList)
+	ListImages()
 	return
 }
 
