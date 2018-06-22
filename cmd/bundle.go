@@ -17,7 +17,13 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"regexp"
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
@@ -35,7 +41,19 @@ var Refresh bool
 var bundleCmd = &cobra.Command{
 	Use:   "bundle",
 	Short: "Interact with ServiceBundles",
-	Long:  `List and execute ServiceBundles from configured registry adapters`,
+	Long:  `Commands for listing, executing and building ServiceBundles`,
+}
+
+var bundleMetadataFilename string
+var containerMetadataFilename string
+
+var bundlePrepareCmd = &cobra.Command{
+	Use:   "prepare",
+	Short: "Stamp ServiceBundle metadata onto Dockerfile as b64",
+	Long:  `Prepare for ServiceBundle image build by stamping apb.yml contents onto Dockerfile as b64`,
+	Run: func(cmd *cobra.Command, args []string) {
+		stampBundleMetadata(bundleMetadataFilename, containerMetadataFilename)
+	},
 }
 
 var bundleListCmd = &cobra.Command{
@@ -84,6 +102,10 @@ var bundleDeprovisionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(bundleCmd)
+
+	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bmeta", "b", "apb.yml", "Bundle metadata file to encode as b64")
+	bundlePrepareCmd.Flags().StringVarP(&containerMetadataFilename, "cmeta", "c", "Dockerfile", "Container metadata file to stamp")
+	bundleCmd.AddCommand(bundlePrepareCmd)
 
 	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
 	bundleCmd.AddCommand(bundleListCmd)
@@ -238,4 +260,74 @@ func showBundleInfo(bundleName string, registryName string) {
 	printBundleInfo(bundleSpecMatches[0])
 
 	return
+}
+
+// stampBundleMetadata encodes bundle metadata (e.g. apb.yml) as b64 and stamps onto container build file (e.g. Dockerfile)
+func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string) {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		log.Errorf("Couldn't determine working directory")
+		return
+	}
+
+	bundleMetaPath := filepath.Join(workingDir, bundleMetaFilename)
+	containerMetaPath := filepath.Join(workingDir, containerMetaFilename)
+
+	bundleMeta, bundleErr := ioutil.ReadFile(bundleMetaPath)
+	if bundleErr != nil {
+		log.Errorf("Bundle metadata file [%s] not found in working directory")
+	}
+	containerMeta, containerErr := ioutil.ReadFile(containerMetaPath)
+	if containerErr != nil {
+		log.Errorf("Container metadata file [%s] not found in working directory")
+	}
+	if bundleErr != nil || containerErr != nil {
+		return
+	}
+
+	newContainerMeta := addBundleMetadata(bundleMeta, containerMeta)
+	fmt.Printf("\n%s\n", newContainerMeta)
+}
+
+func addBundleMetadata(bundleMeta []byte, containerMeta []byte) string {
+	const LineBreakAfter = 76
+	const LineBreakStr = "\\\n"
+
+	// Match the "LABEL" line and everything after, up to the opening quote on the b64 blob
+	labelRegexp, _ := regexp.Compile(`LABEL.*(\")?com\.redhat\.apb\.spec(\")?\=(\\)?\n?\"`)
+	indices := labelRegexp.FindIndex(containerMeta)
+
+	lineStartIndex := indices[0]
+	blobStartIndex := indices[1]
+	blobEndOffset := bytes.IndexByte(containerMeta[blobStartIndex:], byte('"'))
+	if blobEndOffset == -1 {
+		log.Errorf("Couldn't find end of bundle label in container metadata")
+		return ""
+	}
+	blobEndIndex := blobStartIndex + blobEndOffset
+
+	// Encode the content of bundle metadata (apb.yml)
+	bundleMetaEncoded := base64.StdEncoding.EncodeToString(bundleMeta)
+
+	// Pass everything after "LABEL: " to addLineBreaks
+	bundleMetaSection := string(containerMeta[lineStartIndex:blobStartIndex]) + bundleMetaEncoded
+	bundleMetaSection = addLineBreaks(bundleMetaSection, LineBreakStr, LineBreakAfter)
+
+	// Build final output with linebreaked "LABEL"
+	newContainerMeta := containerMeta[0:lineStartIndex]
+	newContainerMeta = append(newContainerMeta, []byte(bundleMetaSection)...)
+	newContainerMeta = append(newContainerMeta, containerMeta[blobEndIndex:]...)
+
+	return string(newContainerMeta)
+}
+
+func addLineBreaks(text string, lineBreakText string, breakAfter int) string {
+	newString := ""
+	for index, currentPoint := range text {
+		newString = newString + string(currentPoint)
+		if (index+1)%breakAfter == 0 {
+			newString = newString + lineBreakText
+		}
+	}
+	return newString
 }
