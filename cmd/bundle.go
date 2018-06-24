@@ -104,7 +104,7 @@ func init() {
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 }
 
-// Find and print info on bundle images from all registries
+// ListImages finds and prints inforomation on bundle images from all the registries
 func ListImages() {
 	var regConfigs []Registry
 	var newRegConfigs []Registry
