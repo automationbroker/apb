@@ -103,8 +103,8 @@ var bundleDeprovisionCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(bundleCmd)
 
-	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bmeta", "b", "apb.yml", "Bundle metadata file to encode as b64")
-	bundlePrepareCmd.Flags().StringVarP(&containerMetadataFilename, "cmeta", "c", "Dockerfile", "Container metadata file to stamp")
+	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bundlemeta", "b", "apb.yml", "Bundle metadata file to encode as b64")
+	bundlePrepareCmd.Flags().StringVarP(&containerMetadataFilename, "containermeta", "c", "Dockerfile", "Container metadata file to stamp")
 	bundleCmd.AddCommand(bundlePrepareCmd)
 
 	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
@@ -262,7 +262,6 @@ func showBundleInfo(bundleName string, registryName string) {
 	return
 }
 
-// stampBundleMetadata encodes bundle metadata (e.g. apb.yml) as b64 and stamps onto container build file (e.g. Dockerfile)
 func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string) {
 	workingDir, err := os.Getwd()
 	if err != nil {
@@ -273,15 +272,18 @@ func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string
 	bundleMetaPath := filepath.Join(workingDir, bundleMetaFilename)
 	containerMetaPath := filepath.Join(workingDir, containerMetaFilename)
 
-	bundleMeta, errB := ioutil.ReadFile(bundleMetaPath)
-	if errB != nil {
+	fileErr := false
+	bundleMeta, err := ioutil.ReadFile(bundleMetaPath)
+	if err != nil {
 		log.Errorf("Bundle metadata file [%s] not found in working directory", bundleMetaFilename)
+		fileErr = true
 	}
-	containerMeta, errC := ioutil.ReadFile(containerMetaPath)
-	if errC != nil {
+	containerMeta, err := ioutil.ReadFile(containerMetaPath)
+	if err != nil {
 		log.Errorf("Container metadata file [%s] not found in working directory", containerMetaFilename)
+		fileErr = true
 	}
-	if errB != nil || errC != nil {
+	if fileErr {
 		return
 	}
 
