@@ -41,7 +41,7 @@ var Refresh bool
 var bundleCmd = &cobra.Command{
 	Use:   "bundle",
 	Short: "Interact with ServiceBundles",
-	Long:  `Commands for listing, executing and building ServiceBundles`,
+	Long:  `List, execute and build ServiceBundles`,
 }
 
 var bundleMetadataFilename string
@@ -273,61 +273,83 @@ func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string
 	bundleMetaPath := filepath.Join(workingDir, bundleMetaFilename)
 	containerMetaPath := filepath.Join(workingDir, containerMetaFilename)
 
-	bundleMeta, bundleErr := ioutil.ReadFile(bundleMetaPath)
-	if bundleErr != nil {
-		log.Errorf("Bundle metadata file [%s] not found in working directory")
+	bundleMeta, errB := ioutil.ReadFile(bundleMetaPath)
+	if errB != nil {
+		log.Errorf("Bundle metadata file [%s] not found in working directory", bundleMetaFilename)
 	}
-	containerMeta, containerErr := ioutil.ReadFile(containerMetaPath)
-	if containerErr != nil {
-		log.Errorf("Container metadata file [%s] not found in working directory")
+	containerMeta, errC := ioutil.ReadFile(containerMetaPath)
+	if errC != nil {
+		log.Errorf("Container metadata file [%s] not found in working directory", containerMetaFilename)
 	}
-	if bundleErr != nil || containerErr != nil {
+	if errB != nil || errC != nil {
 		return
 	}
 
 	newContainerMeta := addBundleMetadata(bundleMeta, containerMeta)
-	fmt.Printf("\n%s\n", newContainerMeta)
+	if len(newContainerMeta) == 0 {
+		log.Errorf("Failed to add [%s] contents to [%s]", bundleMetaFilename, containerMetaFilename)
+		return
+	}
+
+	writeErr := ioutil.WriteFile(containerMetaFilename, newContainerMeta, 0644)
+	if writeErr != nil {
+		log.Errorf("Container metadata file [%s] could not be written", containerMetaFilename)
+		return
+	}
+	fmt.Printf("Wrote b64 encoded [%s] to [%s]\n", bundleMetaFilename, containerMetaFilename)
 }
 
-func addBundleMetadata(bundleMeta []byte, containerMeta []byte) string {
-	const LineBreakAfter = 76
-	const LineBreakStr = "\\\n"
+func addBundleMetadata(bundleMeta []byte, containerMeta []byte) []byte {
+	lineBreakAfter := 76
+	lineBreakText := []byte("\\\n")
 
-	// Match the "LABEL" line and everything after, up to the opening quote on the b64 blob
+	// Encode bundle metadata as b64 and add linebreaks
+	bundleMetaEncoded := make([]byte, base64.StdEncoding.EncodedLen(len(bundleMeta)))
+	base64.StdEncoding.Encode(bundleMetaEncoded, bundleMeta)
+	bundleMetaEncoded = addLineBreaks(bundleMetaEncoded, lineBreakText, lineBreakAfter)
+
+	// Match the apb spec "LABEL" line up to the opening quote on the b64 blob
 	labelRegexp, _ := regexp.Compile(`LABEL.*(\")?com\.redhat\.apb\.spec(\")?\=(\\)?\n?\"`)
 	indices := labelRegexp.FindIndex(containerMeta)
 
+	if len(indices) == 0 {
+		log.Errorf("Didn't find expected bundle label in container metadata file")
+		return []byte{}
+	}
 	lineStartIndex := indices[0]
 	blobStartIndex := indices[1]
 	blobEndOffset := bytes.IndexByte(containerMeta[blobStartIndex:], byte('"'))
 	if blobEndOffset == -1 {
-		log.Errorf("Couldn't find end of bundle label in container metadata")
-		return ""
+		log.Errorf("Didn't find end of bundle label in container metadata file")
+		return []byte{}
 	}
 	blobEndIndex := blobStartIndex + blobEndOffset
 
-	// Encode the content of bundle metadata (apb.yml)
-	bundleMetaEncoded := base64.StdEncoding.EncodeToString(bundleMeta)
+	// Build new label section
+	bundleMetaSection := containerMeta[lineStartIndex : blobStartIndex-1]
+	if !bytes.Contains(bundleMetaSection, []byte(lineBreakText)) {
+		bundleMetaSection = append(bundleMetaSection, lineBreakText...)
+	}
+	bundleMetaSection = append(bundleMetaSection, byte('"'))
+	bundleMetaSection = append(bundleMetaSection, bundleMetaEncoded...)
 
-	// Pass everything after "LABEL: " to addLineBreaks
-	bundleMetaSection := string(containerMeta[lineStartIndex:blobStartIndex]) + bundleMetaEncoded
-	bundleMetaSection = addLineBreaks(bundleMetaSection, LineBreakStr, LineBreakAfter)
-
-	// Build final output with linebreaked "LABEL"
+	// Build final output with linebreaked "LABEL" b64 content
 	newContainerMeta := containerMeta[0:lineStartIndex]
 	newContainerMeta = append(newContainerMeta, []byte(bundleMetaSection)...)
 	newContainerMeta = append(newContainerMeta, containerMeta[blobEndIndex:]...)
 
-	return string(newContainerMeta)
+	return newContainerMeta
 }
 
-func addLineBreaks(text string, lineBreakText string, breakAfter int) string {
-	newString := ""
-	for index, currentPoint := range text {
-		newString = newString + string(currentPoint)
+func addLineBreaks(text []byte, lineBreakText []byte, breakAfter int) []byte {
+	newText := []byte("")
+	for index, currentByte := range text {
+		if currentByte != '\n' {
+			newText = append(newText, currentByte)
+		}
 		if (index+1)%breakAfter == 0 {
-			newString = newString + lineBreakText
+			newText = append(newText, lineBreakText...)
 		}
 	}
-	return newString
+	return newText
 }
