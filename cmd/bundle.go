@@ -327,7 +327,7 @@ func addBundleMetadata(bundleMeta []byte, containerMeta []byte) []byte {
 
 	// Build new label section
 	bundleMetaSection := containerMeta[lineStartIndex : blobStartIndex-1]
-	if !bytes.Contains(bundleMetaSection, []byte(lineBreakText)) {
+	if !bytes.Contains(bundleMetaSection, lineBreakText) {
 		bundleMetaSection = append(bundleMetaSection, lineBreakText...)
 	}
 	bundleMetaSection = append(bundleMetaSection, byte('"'))
@@ -335,7 +335,7 @@ func addBundleMetadata(bundleMeta []byte, containerMeta []byte) []byte {
 
 	// Build final output with linebreaked "LABEL" b64 content
 	newContainerMeta := containerMeta[0:lineStartIndex]
-	newContainerMeta = append(newContainerMeta, []byte(bundleMetaSection)...)
+	newContainerMeta = append(newContainerMeta, bundleMetaSection...)
 	newContainerMeta = append(newContainerMeta, containerMeta[blobEndIndex:]...)
 
 	return newContainerMeta
