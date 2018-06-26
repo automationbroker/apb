@@ -326,8 +326,7 @@ func addBundleMetadata(bMeta []byte, cMeta []byte) []byte {
 		log.Errorf("Didn't find expected bundle label in container metadata file")
 		return []byte{}
 	}
-	lineStartIndex := indices[0]
-	blobStartIndex := indices[1]
+	lineStartIndex, blobStartIndex := indices[0], indices[1]
 	blobEndOffset := bytes.IndexByte(cMeta[blobStartIndex:], byte('"'))
 	if blobEndOffset == -1 {
 		log.Errorf("Didn't find end of bundle label in container metadata file")
