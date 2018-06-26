@@ -314,11 +314,9 @@ func addBundleMetadata(bundleMeta []byte, containerMeta []byte) []byte {
 	initialLabelRegexp, _ := regexp.Compile(`LABEL\s\"com\.redhat\.apb\.spec\"\=\\\n[^\"]`)
 	indices := initialLabelRegexp.FindIndex(containerMeta)
 	if len(indices) > 0 {
-		tmpContainerMeta := []byte{}
-		tmpContainerMeta = append(tmpContainerMeta, containerMeta[:indices[1]-1]...)
-		tmpContainerMeta = append(tmpContainerMeta, []byte("\"\"\n\n")...)
-		tmpContainerMeta = append(tmpContainerMeta, containerMeta[indices[1]:]...)
-		containerMeta = tmpContainerMeta
+		fixBytes := []byte("\"\"\n")
+		insertAt := indices[1] - 1
+		containerMeta = append(containerMeta[:insertAt], append(fixBytes, containerMeta[insertAt:]...)...)
 	}
 
 	// Match the apb spec "LABEL" line up to the opening quote on the b64 blob
@@ -338,7 +336,8 @@ func addBundleMetadata(bundleMeta []byte, containerMeta []byte) []byte {
 	blobEndIndex := blobStartIndex + blobEndOffset
 
 	// Build new label section
-	bundleMetaSection := containerMeta[lineStartIndex : blobStartIndex-1]
+	bundleMetaSection := []byte{}
+	bundleMetaSection = append(bundleMetaSection, containerMeta[lineStartIndex:blobStartIndex-1]...)
 	if !bytes.Contains(bundleMetaSection, lineBreakText) {
 		bundleMetaSection = append(bundleMetaSection, lineBreakText...)
 	}
@@ -346,11 +345,8 @@ func addBundleMetadata(bundleMeta []byte, containerMeta []byte) []byte {
 	bundleMetaSection = append(bundleMetaSection, bundleMetaEncoded...)
 
 	// Build final output with linebreaked "LABEL" b64 content
-	newContainerMeta := containerMeta[0:lineStartIndex]
-	newContainerMeta = append(newContainerMeta, bundleMetaSection...)
-	newContainerMeta = append(newContainerMeta, containerMeta[blobEndIndex:]...)
-
-	return newContainerMeta
+	containerMeta = append(containerMeta[:lineStartIndex], append(bundleMetaSection, containerMeta[blobEndIndex:]...)...)
+	return containerMeta
 }
 
 func addLineBreaks(text []byte, lineBreakText []byte, breakAfter int) []byte {
