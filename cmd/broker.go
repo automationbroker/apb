@@ -17,7 +17,12 @@
 package cmd
 
 import (
+	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 
 	"github.com/automationbroker/bundle-lib/clients"
@@ -27,6 +32,11 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type bootstrapResponse struct {
+	SpecCount  int `json:"spec_count"`
+	ImageCount int `json:"image_count"`
+}
 
 var brokerName string
 
@@ -64,36 +74,16 @@ func init() {
 
 func listBrokerCatalog() {
 	log.Debugf("func::listBrokerCatalog()")
-	var brokerRoute string
 	kube, err := clients.Kubernetes()
 	if err != nil {
 		log.Errorf("Failed to connect to cluster: %v", err)
 		return
 	}
-	ocp, err := clients.Openshift()
+
+	brokerRoute, err := getBrokerRoute(brokerName)
 	if err != nil {
-		log.Errorf("Failed to connect to cluster: %v", err)
-		return
+		log.Errorf("Failed to get broker route: %v", err)
 	}
-
-	// Attempt to get route of Automation Broker
-	rc, err := ocp.Route().Routes(brokerName).List(metav1.ListOptions{})
-	if err != nil {
-		log.Errorf("Failed to list routes in namespace %v: %v", brokerName, err)
-	}
-
-	for _, route := range rc.Items {
-		if route.Spec.To.Name == brokerName {
-			brokerRoute = route.Spec.Host
-			break
-		}
-	}
-	if brokerRoute == "" {
-		log.Errorf("Failed to find broker route.")
-		return
-	}
-
-	brokerRoute = fmt.Sprintf("https://%v/%v", brokerRoute, brokerName)
 
 	osbConf := &osb.ClientConfiguration{
 		Name:                "automation-broker",
@@ -120,6 +110,64 @@ func listBrokerCatalog() {
 }
 
 func bootstrapBroker() {
+	kube, err := clients.Kubernetes()
+	if err != nil {
+		log.Errorf("Failed to connect to cluster: %v", err)
+		return
+	}
+
+	// Get the broker route given brokerName
+	brokerRoute, err := getBrokerRoute(brokerName)
+	if err != nil {
+		log.Errorf("Failed to get broker route: %v", err)
+		return
+	}
+
+	// Create a new bootstrap request
+	req, err := http.NewRequest("POST", fmt.Sprintf("%v/v2/bootstrap", brokerRoute), nil)
+	if err != nil {
+		log.Errorf("Failed to create request: %v", err)
+		return
+	}
+
+	// Set Bearer token Auth
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", kube.ClientConfig.BearerToken))
+
+	// Set TLS settings
+	cfg := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	http.DefaultClient.Transport = &http.Transport{
+		TLSClientConfig: cfg,
+	}
+
+	// Do bootstrap request
+	fmt.Printf("Attempting to contact the broker at %v/v2/bootstrap...\n", brokerRoute)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Errorf("Failed to get response: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		log.Errorf("Failed to bootstrap the broker. Expected status 200, got: %v", resp.StatusCode)
+		return
+	}
+
+	// Unmarshal response
+	jsonBoot, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Failed to read response body: %v", err)
+	}
+
+	bootResp := bootstrapResponse{}
+	err = json.Unmarshal(jsonBoot, &bootResp)
+	if err != nil {
+		log.Errorf("Failed to unmarshal response: %v", err)
+	}
+
+	fmt.Printf("Successfully bootstrapped broker [%v]\n", brokerName)
+	fmt.Printf("Found %v specs out of %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
 	return
 }
 
@@ -136,4 +184,28 @@ func printServices(services []osb.Service) {
 
 	tableToPrint := []*util.TableColumn{colName, colID, colBind}
 	util.PrintTable(tableToPrint)
+}
+
+func getBrokerRoute(brokerName string) (string, error) {
+	var brokerRoute string
+	ocp, err := clients.Openshift()
+	if err != nil {
+		log.Errorf("Failed to connect to cluster: %v", err)
+		return "", err
+	}
+
+	// Attempt to get route of Automation Broker
+	rc, err := ocp.Route().Routes(brokerName).List(metav1.ListOptions{})
+	if err != nil {
+		log.Errorf("Failed to list routes in namespace %v: %v", brokerName, err)
+		return "", err
+	}
+
+	for _, route := range rc.Items {
+		if route.Spec.To.Name == brokerName {
+			brokerRoute = fmt.Sprintf("https://%v/%v", route.Spec.Host, brokerName)
+			return brokerRoute, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Failed to find route for broker: %v", brokerName))
 }
