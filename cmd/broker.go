@@ -48,7 +48,7 @@ var brokerCatalogCmd = &cobra.Command{
 var brokerBootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap an Automation Broker instance",
-	Long:  `Refrsh list of bootstrapped service bundles in Automation Broker catalog`,
+	Long:  `Refresh list of bootstrapped service bundles in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
 		bootstrapBroker()
 	},
@@ -64,7 +64,7 @@ func init() {
 
 func listBrokerCatalog() {
 	log.Debugf("func::listBrokerCatalog()")
-	var brokerRoute = ""
+	var brokerRoute string
 	kube, err := clients.Kubernetes()
 	if err != nil {
 		log.Errorf("Failed to connect to cluster: %v", err)
@@ -85,6 +85,7 @@ func listBrokerCatalog() {
 	for _, route := range rc.Items {
 		if route.Spec.To.Name == brokerName {
 			brokerRoute = route.Spec.Host
+			break
 		}
 	}
 	if brokerRoute == "" {
