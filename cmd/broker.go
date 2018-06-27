@@ -153,6 +153,13 @@ func bootstrapBroker() {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == 504 {
+		log.Errorf("Timed out waiting for broker bootstrap response.")
+		fmt.Print("Try increasing the route timeout with:\n")
+		fmt.Printf("oc annotate route asb -n %v --overwrite haproxy.router.openshift.io/timeout=60s\n", brokerName)
+		return
+	}
+
 	if resp.StatusCode != 200 {
 		log.Errorf("Failed to bootstrap the broker. Expected status 200, got: %v", resp.StatusCode)
 		return
