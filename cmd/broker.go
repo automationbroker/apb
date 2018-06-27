@@ -107,6 +107,7 @@ func listBrokerCatalog() {
 	services, err := osbClient.GetCatalog()
 	if err != nil {
 		log.Errorf("Failed fetch catalog: %v", err)
+		return
 	}
 	printServices(services.Services)
 	return
