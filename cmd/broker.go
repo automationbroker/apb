@@ -105,6 +105,9 @@ func listBrokerCatalog() {
 	}
 
 	services, err := osbClient.GetCatalog()
+	if err != nil {
+		log.Errorf("Failed fetch catalog: %v", err)
+	}
 	printServices(services.Services)
 	return
 }
@@ -142,7 +145,7 @@ func bootstrapBroker() {
 	}
 
 	// Do bootstrap request
-	fmt.Printf("Attempting to contact the broker at %v/v2/bootstrap...\n", brokerRoute)
+	fmt.Printf("Bootstrapping the broker at [%v/v2/bootstrap]. This may take up to a minute...\n", brokerRoute)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Errorf("Failed to get response: %v", err)
@@ -167,7 +170,7 @@ func bootstrapBroker() {
 	}
 
 	fmt.Printf("Successfully bootstrapped broker [%v]\n", brokerName)
-	fmt.Printf("Found %v specs out of %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
+	fmt.Printf("Broker loaded %v bundle specs from %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
 	return
 }
 
