@@ -343,7 +343,7 @@ func addBundleMetadata(bMeta []byte, cMeta []byte, noLineBreaks bool) []byte {
 	// Build new "LABEL" section for container metadata file
 	bMetaSection := []byte{}
 	bMetaSection = append(bMetaSection, cMeta[lineStartIndex:blobStartIndex-1]...)
-	if !bytes.Contains(bMetaSection, lineBreakText) {
+	if !bytes.Contains(bMetaSection, lineBreakText) && !noLineBreaks {
 		bMetaSection = append(bMetaSection, lineBreakText...)
 	}
 	bMetaSection = append(bMetaSection, byte('"'))
