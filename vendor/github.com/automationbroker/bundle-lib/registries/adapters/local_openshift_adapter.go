@@ -17,14 +17,34 @@
 package adapters
 
 import (
+	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
+	v1image "github.com/openshift/api/image/v1"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var (
+	errRuntimeNotFound = errors.New("runtime not found")
+)
+
+type imageLabel struct {
+	Spec    string `json:"com.redhat.apb.spec"`
+	Runtime string `json:"com.redhat.apb.runtime"`
+}
+
+type containerConfig struct {
+	Labels imageLabel `json:"Labels"`
+}
+
+type imageMetadata struct {
+	ContainerConfig containerConfig `json:"ContainerConfig"`
+}
 
 const localOpenShiftName = "openshift-registry"
 
@@ -55,7 +75,12 @@ func (r LocalOpenShiftAdapter) GetImageNames() ([]string, error) {
 		return nil, err
 	}
 
-	return images, nil
+	imageList := []string{}
+	for _, image := range images.Items {
+		imageList = append(imageList, strings.Split(image.DockerImageManifest, "@")[0])
+	}
+
+	return imageList, nil
 }
 
 // FetchSpecs - retrieve the spec for the image names.
@@ -74,55 +99,55 @@ func (r LocalOpenShiftAdapter) FetchSpecs(imageNames []string) ([]*bundle.Spec, 
 		return nil, err
 	}
 
-	fqImages, err := openshiftClient.ConvertRegistryImagesToSpecs(imageNames)
+	listImages, err := openshiftClient.ListRegistryImages()
 	if err != nil {
 		log.Errorf("Failed to load registry images")
 		return nil, err
 	}
 
-	for _, image := range fqImages {
-		spec, err := r.loadSpec(image.DecodedSpec)
-		if err != nil {
-			log.Errorf("Failed to load image spec")
-			continue
-		}
-		spec.Runtime, err = getAPBRuntimeVersion(image.Runtime)
-		if err != nil {
-			log.Errorf("Failed to parse image runtime version")
-			continue
-		}
-		if strings.HasPrefix(image.Name, registryIP) == false {
-			log.Debugf("Image does not have a registry IP as prefix. This might cause problems but not erroring out.")
-		}
-		if r.Config.Namespaces == nil {
-			log.Debugf("Namespace not set. Assuming `openshift`")
-			r.Config.Namespaces = append(r.Config.Namespaces, "openshift")
-		}
-		spec.Image = image.Name
-		nsList := strings.Split(image.Name, "/")
-		var namespace string
-		if len(nsList) == 0 {
-			log.Errorf("Image [%v] is not in the proper format. Erroring.", image.Name)
-			continue
-		} else if len(nsList) < 3 {
-			// Image does not have any registry prefix. May be a product of S2I
-			// Expecting openshift/foo-bundle
-			namespace = nsList[0]
-		} else {
-			// Expecting format: 172.30.1.1:5000/openshift/foo-bundle
-			namespace = nsList[1]
-		}
-		for _, ns := range r.Config.Namespaces {
-			// logging to warn users about the potential bug if
-			// the svc-acct does not have access to the namespace.
-			if ns != "openshift" {
-				log.Warningf("You may not be able to load provision images from the namespace: %v.\n"+
-					"You should make sure that the namespace has given the permissions for the "+
-					"system:authenticated group.", ns)
-			}
-			if ns == namespace {
-				log.Debugf("Image [%v] is in configured namespace [%v]. Adding to SpecList.", image.Name, ns)
-				specList = append(specList, spec)
+	for _, image := range listImages.Items {
+		n := strings.Split(image.DockerImageManifest, "@")[0]
+		for _, providedImage := range imageNames {
+			if providedImage == n {
+				spec, err := r.loadSpec(image)
+				if err != nil {
+					log.Errorf("Failed to load image spec")
+					continue
+				}
+				if strings.HasPrefix(n, registryIP) == false {
+					log.Debugf("Image does not have a registry IP as prefix. This might cause problems but not erroring out.")
+				}
+				if r.Config.Namespaces == nil {
+					log.Debugf("Namespace not set. Assuming `openshift`")
+					r.Config.Namespaces = append(r.Config.Namespaces, "openshift")
+				}
+				spec.Image = n
+				nsList := strings.Split(n, "/")
+				var namespace string
+				if len(nsList) == 0 {
+					log.Errorf("Image [%v] is not in the proper format. Erroring.", n)
+					continue
+				} else if len(nsList) < 3 {
+					// Image does not have any registry prefix. May be a product of S2I
+					// Expecting openshift/foo-bundle
+					namespace = nsList[0]
+				} else {
+					// Expecting format: 172.30.1.1:5000/openshift/foo-bundle
+					namespace = nsList[1]
+				}
+				for _, ns := range r.Config.Namespaces {
+					// logging to warn users about the potential bug if
+					// the svc-acct does not have access to the namespace.
+					if ns != "openshift" {
+						log.Warningf("You may not be able to load provision images from the namespace: %v.\n"+
+							"You should make sure that the namespace has given the permissions for the "+
+							"system:authenticated group.", ns)
+					}
+					if ns == namespace {
+						log.Debugf("Image [%v] is in configured namespace [%v]. Adding to SpecList.", n, ns)
+						specList = append(specList, spec)
+					}
+				}
 			}
 		}
 	}
@@ -130,14 +155,30 @@ func (r LocalOpenShiftAdapter) FetchSpecs(imageNames []string) ([]*bundle.Spec, 
 	return specList, nil
 }
 
-func (r LocalOpenShiftAdapter) loadSpec(yamlSpec []byte) (*bundle.Spec, error) {
+func (r LocalOpenShiftAdapter) loadSpec(image v1image.Image) (*bundle.Spec, error) {
 	log.Debug("LocalOpenShiftAdapter::LoadSpec")
+	b, err := image.DockerImageMetadata.MarshalJSON()
+	if err != nil {
+		log.Errorf("unable to get json docker image metadata: %v", err)
+		return nil, err
+	}
+	i := imageMetadata{}
+	err = json.Unmarshal(b, &i)
+	if err != nil {
+		log.Errorf("unable to get unmarshal json docker image metadata: %v", err)
+		return nil, err
+	}
 	spec := &bundle.Spec{}
 
-	err := yaml.Unmarshal(yamlSpec, spec)
+	err = yaml.Unmarshal([]byte(i.ContainerConfig.Labels.Spec), spec)
 	if err != nil {
 		log.Errorf("Something went wrong loading decoded spec yaml, %s", err)
 		return nil, err
+	}
+	spec.Runtime, err = getAPBRuntimeVersion(i.ContainerConfig.Labels.Runtime)
+	if err != nil {
+		log.Errorf("Failed to parse image runtime version")
+		return nil, errRuntimeNotFound
 	}
 	return spec, nil
 }
