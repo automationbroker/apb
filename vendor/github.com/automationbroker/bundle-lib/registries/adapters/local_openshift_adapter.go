@@ -19,8 +19,10 @@ package adapters
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
+	b64 "encoding/base64"
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
 	v1image "github.com/openshift/api/image/v1"
@@ -69,17 +71,22 @@ func (r LocalOpenShiftAdapter) GetImageNames() ([]string, error) {
 		return nil, err
 	}
 
-	images, err := openshiftClient.ListRegistryImages()
-	if err != nil {
-		log.Errorf("Failed to load registry images")
-		return nil, err
+	imageClient := openshiftClient.Image()
+	if r.Config.Namespaces == nil {
+		log.Debug("Didn't find any namespace in configuration, assuming `openshift`.")
+		r.Config.Namespaces = append(r.Config.Namespaces, "openshift")
 	}
-
 	imageList := []string{}
-	for _, image := range images.Items {
-		imageList = append(imageList, strings.Split(image.DockerImageManifest, "@")[0])
+	for _, ns := range r.Config.Namespaces {
+		is, err := imageClient.ImageStreams(ns).List(meta_v1.ListOptions{})
+		if err != nil {
+			log.Errorf("Failed to get list of imagestreams for namespace [%v]: %v", ns, err)
+			continue
+		}
+		for _, i := range is.Items {
+			imageList = append(imageList, fmt.Sprintf("%v/%v", ns, i.Name))
+		}
 	}
-
 	return imageList, nil
 }
 
@@ -87,69 +94,38 @@ func (r LocalOpenShiftAdapter) GetImageNames() ([]string, error) {
 func (r LocalOpenShiftAdapter) FetchSpecs(imageNames []string) ([]*bundle.Spec, error) {
 	log.Debug("LocalOpenShiftAdapter::FetchSpecs")
 	specList := []*bundle.Spec{}
-	registryIP, err := r.getServiceIP("docker-registry", "default")
-	if err != nil {
-		log.Errorf("Failed get docker-registry service information.")
-		return nil, err
-	}
 
 	openshiftClient, err := clients.Openshift()
 	if err != nil {
 		log.Errorf("Failed to instantiate OpenShift client.")
 		return nil, err
 	}
+	imageClient := openshiftClient.Image()
 
-	listImages, err := openshiftClient.ListRegistryImages()
-	if err != nil {
-		log.Errorf("Failed to load registry images")
-		return nil, err
+	if r.Config.Tag == "" {
+		log.Debug("No tag specified in config, assuming `latest`")
+		r.Config.Tag = "latest"
 	}
 
-	for _, image := range listImages.Items {
-		n := strings.Split(image.DockerImageManifest, "@")[0]
-		for _, providedImage := range imageNames {
-			if providedImage == n {
-				spec, err := r.loadSpec(image)
-				if err != nil {
-					log.Errorf("Failed to load image spec")
-					continue
-				}
-				if strings.HasPrefix(n, registryIP) == false {
-					log.Debugf("Image does not have a registry IP as prefix. This might cause problems but not erroring out.")
-				}
-				if r.Config.Namespaces == nil {
-					log.Debugf("Namespace not set. Assuming `openshift`")
-					r.Config.Namespaces = append(r.Config.Namespaces, "openshift")
-				}
-				spec.Image = n
-				nsList := strings.Split(n, "/")
-				var namespace string
-				if len(nsList) == 0 {
-					log.Errorf("Image [%v] is not in the proper format. Erroring.", n)
-					continue
-				} else if len(nsList) < 3 {
-					// Image does not have any registry prefix. May be a product of S2I
-					// Expecting openshift/foo-bundle
-					namespace = nsList[0]
-				} else {
-					// Expecting format: 172.30.1.1:5000/openshift/foo-bundle
-					namespace = nsList[1]
-				}
-				for _, ns := range r.Config.Namespaces {
-					// logging to warn users about the potential bug if
-					// the svc-acct does not have access to the namespace.
-					if ns != "openshift" {
-						log.Warningf("You may not be able to load provision images from the namespace: %v.\n"+
-							"You should make sure that the namespace has given the permissions for the "+
-							"system:authenticated group.", ns)
-					}
-					if ns == namespace {
-						log.Debugf("Image [%v] is in configured namespace [%v]. Adding to SpecList.", n, ns)
-						specList = append(specList, spec)
-					}
-				}
-			}
+	for _, image := range imageNames {
+		fullName := strings.Split(image, "/")
+		if len(fullName) < 2 {
+			log.Errorf("Image name [%v] not in expected format, skipping.", image)
+			continue
 		}
+		ns := fullName[0]
+		iName := fullName[1]
+		imTag, err := imageClient.ImageStreamTags(ns).Get(fmt.Sprintf("%v:%v", iName, r.Config.Tag), meta_v1.GetOptions{})
+		if err != nil {
+			log.Errorf("Failed to get image for imagestream [%v]: %v", image, err)
+			continue
+		}
+		spec, err := r.loadSpec(imTag.Image)
+		if err != nil {
+			log.Errorf("Failed to load spec for [%v]: %v", image, err)
+			continue
+		}
+		specList = append(specList, spec)
 	}
 
 	return specList, nil
@@ -170,7 +146,12 @@ func (r LocalOpenShiftAdapter) loadSpec(image v1image.Image) (*bundle.Spec, erro
 	}
 	spec := &bundle.Spec{}
 
-	err = yaml.Unmarshal([]byte(i.ContainerConfig.Labels.Spec), spec)
+	decodedSpecYaml, err := b64.StdEncoding.DecodeString(i.ContainerConfig.Labels.Spec)
+	if err != nil {
+		log.Errorf("Failed to decode spec: %v", err)
+		return nil, err
+	}
+	err = yaml.Unmarshal([]byte(decodedSpecYaml), spec)
 	if err != nil {
 		log.Errorf("Something went wrong loading decoded spec yaml, %s", err)
 		return nil, err
@@ -180,6 +161,7 @@ func (r LocalOpenShiftAdapter) loadSpec(image v1image.Image) (*bundle.Spec, erro
 		log.Errorf("Failed to parse image runtime version")
 		return nil, errRuntimeNotFound
 	}
+	spec.Image = strings.Split(image.DockerImageReference, "@")[0]
 	return spec, nil
 }
 

@@ -23,7 +23,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -113,21 +112,19 @@ func (r Registry) LoadSpecs() ([]*bundle.Spec, int, error) {
 	log.Debugf("Filter applied against registry: %s", r.config.Name)
 
 	if len(validNames) != 0 {
-		log.Debugf("APBs passing white/blacklist filter:")
+		log.Debugf("Bundles passing white/blacklist filter:")
 		for _, name := range validNames {
 			log.Debugf("-> %s", name)
 		}
 	}
 
 	if len(filteredNames) != 0 {
-		go func() {
-			var buffer bytes.Buffer
-			buffer.WriteString("APBs filtered by white/blacklist filter:")
-			for _, name := range filteredNames {
-				buffer.WriteString(fmt.Sprintf("-> %s", name))
-			}
-			log.Infof(buffer.String())
-		}()
+		var buffer bytes.Buffer
+		buffer.WriteString("Bundles filtered by white/blacklist filter:")
+		for _, name := range filteredNames {
+			buffer.WriteString(fmt.Sprintf("-> %s", name))
+		}
+		log.Infof(buffer.String())
 	}
 
 	// Debug output filtered out names.
@@ -313,24 +310,8 @@ func validateSpecs(inSpecs []*bundle.Spec) []*bundle.Spec {
 }
 
 func validateSpecFormat(spec *bundle.Spec) (bool, string) {
-	// Specs must have compatible version
-	if !isCompatibleVersion(spec.Version, "1.0", "1.0") {
-		return false, fmt.Sprintf(
-			"APB Spec version [%v] out of bounds %v <= %v",
-			spec.Version,
-			"1.0",
-			"1.0",
-		)
-	}
-
-	// Specs must have compatible runtime version
-	if !isCompatibleRuntime(spec.Runtime, 1, 2) {
-		return false, fmt.Sprintf(
-			"APB Runtime version [%v] out of bounds %v <= %v",
-			spec.Runtime,
-			1,
-			2,
-		)
+	if !spec.ValidateVersion() {
+		return false, fmt.Sprintf("Spec [%v] failed version validation", spec.FQName)
 	}
 
 	// Specs must have at least one plan
@@ -350,33 +331,6 @@ func validateSpecFormat(spec *bundle.Spec) (bool, string) {
 	}
 
 	return true, ""
-}
-
-func isCompatibleVersion(specVersion string, minVersion string, maxVersion string) bool {
-	if len(strings.Split(specVersion, ".")) != 2 || len(strings.Split(minVersion, ".")) != 2 || len(strings.Split(maxVersion, ".")) != 2 {
-		return false
-	}
-	specMajorVersion, err := strconv.Atoi(strings.Split(specVersion, ".")[0])
-	if err != nil {
-		return false
-	}
-	minMajorVersion, err := strconv.Atoi(strings.Split(minVersion, ".")[0])
-	if err != nil {
-		return false
-	}
-	maxMajorVersion, err := strconv.Atoi(strings.Split(maxVersion, ".")[0])
-	if err != nil {
-		return false
-	}
-
-	if specMajorVersion >= minMajorVersion && specMajorVersion <= maxMajorVersion {
-		return true
-	}
-	return false
-}
-
-func isCompatibleRuntime(specRuntime int, minVersion int, maxVersion int) bool {
-	return specRuntime >= minVersion && specRuntime <= maxVersion
 }
 
 func retrieveRegistryAuth(reg Config, asbNamespace string) (Config, error) {

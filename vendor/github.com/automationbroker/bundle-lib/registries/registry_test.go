@@ -28,8 +28,8 @@ import (
 var SpecTags = []string{"latest", "old-release"}
 
 const SpecID = "ab094014-b740-495e-b178-946d5aa97ebf"
-const SpecBadVersion = "2.0"
-const SpecVersion = "1.0"
+const SpecBadVersion = "2.0.0"
+const SpecVersion = "1.0.0"
 const SpecRuntime = 1
 const SpecBadRuntime = 0
 const SpecName = "etherpad-bundle"
@@ -395,29 +395,6 @@ func TestValidateName(t *testing.T) {
 	if err == nil {
 		ft.True(t, false)
 	}
-}
-
-func TestVersionCheck(t *testing.T) {
-	// Test equal versions
-	ft.True(t, isCompatibleVersion("1.0", "1.0", "1.0"))
-	// Test out of range by major version
-	ft.False(t, isCompatibleVersion("2.0", "1.0", "1.0"))
-	// Test out of range by minor version
-	ft.True(t, isCompatibleVersion("1.10", "1.0", "1.0"))
-	// Test out of range by major and minor version
-	ft.True(t, isCompatibleVersion("2.4", "1.0", "2.0"))
-	// Test in range with differing  major and minor version
-	ft.True(t, isCompatibleVersion("1.10", "1.0", "2.0"))
-	// Test out of range by major and minor version
-	ft.False(t, isCompatibleVersion("0.6", "1.0", "2.0"))
-	// Test out of range by major and minor version and invalid version
-	ft.False(t, isCompatibleVersion("0.1.0", "1.0", "1.0"))
-	// Test in range of long possible window
-	ft.True(t, isCompatibleVersion("2.5", "1.0", "3.0"))
-	// Test invalid version
-	ft.False(t, isCompatibleVersion("1", "1.0", "3.0"))
-	// Test invalid version
-	ft.False(t, isCompatibleVersion("2.5", "3.0", "4.0"))
 }
 
 type fakeAdapter struct{}
