@@ -186,3 +186,8 @@ func (o OpenshiftClient) IsolateNamespacesNetworks(netns *networkoapi.NetNamespa
 func (o OpenshiftClient) Route() routev1.RouteV1Interface {
 	return o.routeClient
 }
+
+// Image - Returns a V1Image Interface
+func (o OpenshiftClient) Image() imagev1.ImageV1Interface {
+	return o.imageClient
+}
