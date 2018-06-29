@@ -300,7 +300,13 @@ func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string
 		log.Errorf("Container metadata file [%s] could not be written", containerMetaFilename)
 		return
 	}
-	fmt.Printf("Wrote b64 encoded [%s] to [%s]\n", bundleMetaFilename, containerMetaFilename)
+	fmt.Printf("Wrote b64 encoded [%s] to [%s]\n\n", bundleMetaFilename, containerMetaFilename)
+
+	buildConfigCmd := `oc new-build . --to <bundle-name>`
+	fmt.Printf("Create a buildconfig:\n%s\n\n", buildConfigCmd)
+
+	buildTriggerCmd := `oc start-build --from-dir . <bundle-name>`
+	fmt.Printf("Start a build:\n%s\n\n", buildTriggerCmd)
 }
 
 func addBundleMetadata(bMeta []byte, cMeta []byte, noLineBreaks bool) []byte {
