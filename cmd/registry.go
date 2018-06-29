@@ -32,6 +32,19 @@ type Registry struct {
 	Specs  []*bundle.Spec
 }
 
+var defaultLocalOpenShiftConfig = registries.Config{
+	Namespaces: []string{"openshift"},
+	Name:       "lo-openshift",
+	Type:       "local_openshift",
+	WhiteList:  []string{".*$"},
+}
+
+var defaultDockerHubConfig = registries.Config{
+	Name:      "dockerhub",
+	Org:       "ansibleplaybookbundle",
+	WhiteList: []string{".*-apb$"},
+}
+
 var registryConfig Registry
 var whitelist string
 var removeName string
@@ -46,8 +59,9 @@ var registryAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a new registry adapter",
 	Long:  `Add a new registry adapter to the configuration`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		addRegistry()
+		addRegistry(args[0])
 	},
 }
 
@@ -72,10 +86,8 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.Type, "type", "dockerhub", "Type of registry adapter to add")
 	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "ansibleplaybookbundle", "Type of registry adapter to add")
 	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "docker.io", "URL of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.Name, "name", "docker", "Name of registry adapter to add")
 	registryAddCmd.Flags().StringVar(&whitelist, "whitelist", ".*-apb$", "Whitelist for configuration of registry adapter")
 	registryConfig.Config.WhiteList = append(registryConfig.Config.WhiteList, whitelist)
 
@@ -94,13 +106,21 @@ func updateCachedRegistries(regList []Registry) error {
 	return nil
 }
 
-func addRegistry() {
+func addRegistry(regType string) {
 	var regList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Println("Error unmarshalling config: ", err)
 		return
 	}
+
+	switch regType:
+	case "dockerhub":
+		registryConfig.Config = defaultDockerHubConfig{}
+	case "local_openshift":
+		registryConfig.Config = defaultLocalOpenShiftConfig{}
+
+
 	for _, reg := range regList {
 		if reg.Config.Name == registryConfig.Config.Name {
 			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]\n", registryConfig.Config.Name, reg.Config.Name)
