@@ -98,7 +98,7 @@ var bundleDeprovisionCmd = &cobra.Command{
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		executedBundle("deprovision", args)
+		executeBundle("deprovision", args)
 	},
 }
 
