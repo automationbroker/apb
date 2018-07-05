@@ -25,11 +25,11 @@ import (
 var completionCmd = &cobra.Command{
 	Use:   "completion",
 	Short: "Generates shell completion scripts.",
-	Long: `To load sbcli completion run
+	Long: `To load apb completion run
 
-source <(sbcli completion bash)
+source <(apb completion bash)
 -- or --
-source <(sbcli completion zsh)
+source <(apb completion zsh)
 
 `,
 }
@@ -39,12 +39,12 @@ var bashCompletionCmd = &cobra.Command{
 	Short: "Generates bash completion scripts",
 	Long: `To load bash completion run
 
-source <(sbcli completion bash)
+source <(apb completion bash)
 
 To configure your bash shell to load completions for each session add to your bashrc
 
 # ~/.bashrc or ~/.profile
-source <(sbcli completion bash)
+source <(apb completion bash)
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCmd.GenBashCompletion(os.Stdout)
@@ -56,12 +56,12 @@ var zshCompletionCmd = &cobra.Command{
 	Short: "Generates zsh completion scripts",
 	Long: `To load zsh completion run
 
-. <(sbcli completion zsh)
+. <(apb completion zsh)
 
 To configure your zsh shell to load completions for each session add to your zshrc
 
 # ~/.zshrc or ~/.zprofile
-source <(sbcli completion zsh)
+source <(apb completion zsh)
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootCmd.GenZshCompletion(os.Stdout)

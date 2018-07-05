@@ -19,9 +19,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/automationbroker/apb/pkg/util"
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
-	"github.com/automationbroker/sbcli/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -141,7 +141,7 @@ func listRegistries() {
 		fmt.Println("Found registries already in config:")
 		printRegistries(regList)
 	} else {
-		fmt.Println("Found no registries in configuration. Try `sbcli registry add`.")
+		fmt.Println("Found no registries in configuration. Try `apb registry add`.")
 	}
 	return
 }
