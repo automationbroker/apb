@@ -37,7 +37,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 0.0.1
+Version: 1.9.0
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
