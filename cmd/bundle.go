@@ -88,7 +88,7 @@ var bundleProvisionCmd = &cobra.Command{
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		preRun("provision", args)
+		executeBundle("provision", args)
 	},
 }
 
@@ -98,7 +98,7 @@ var bundleDeprovisionCmd = &cobra.Command{
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		preRun("deprovision", args)
+		executedBundle("deprovision", args)
 	},
 }
 
@@ -164,7 +164,7 @@ func ListImages() {
 	}
 }
 
-func preRun(action string, args []string) {
+func executeBundle(action string, args []string) {
 	if bundleNamespace == "" {
 		bundleNamespace = util.GetCurrentNamespace(kubeConfig)
 		if bundleNamespace == "" {
