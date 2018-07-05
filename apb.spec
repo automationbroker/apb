@@ -37,7 +37,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 1.9.0
+Version: 1.9.1
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -126,3 +126,6 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Thu Jul 05 2018 Dylan Murray <dymurray@redhat.com> 1.9.1-1
+- new package built with tito
+
