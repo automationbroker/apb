@@ -59,13 +59,6 @@ var defaultHelmConfig = registries.Config{
 // Registry cmd vars
 var registryConfig Registry
 
-// Registry add flags
-var nsList []string
-var whitelist []string
-var regOrg string
-var regUrl string
-var regType string
-
 // Registry commands
 var registryCmd = &cobra.Command{
 	Use:   "registry",
@@ -105,11 +98,11 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVarP(&regType, "type", "t", "dockerhub", "Type of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&regOrg, "org", "", "Organization of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&regUrl, "url", "", "URL of registry adapter to add")
-	registryAddCmd.Flags().StringSliceVar(&whitelist, "whitelist", []string{}, "Comma-separated whitelist for configuration of registry adapter")
-	registryAddCmd.Flags().StringSliceVar(&nsList, "namespace", []string{}, "Comma-separated list of namespaces to configure local_openshift adapter")
+	registryAddCmd.Flags().StringVarP(&registryConfig.Config.Type, "type", "t", "dockerhub", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "", "Organization of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "", "URL of registry adapter to add")
+	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.WhiteList, "whitelist", []string{}, "Comma-separated whitelist for configuration of registry adapter")
+	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.Namespaces, "namespace", []string{}, "Comma-separated list of namespaces to configure local_openshift adapter")
 
 	registryCmd.AddCommand(registryAddCmd)
 	registryCmd.AddCommand(registryListCmd)
@@ -124,6 +117,7 @@ func updateCachedRegistries(regList []Registry) error {
 
 func addRegistry(addName string) {
 	var regList []Registry
+	var newConfig Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Println("Error unmarshalling config: ", err)
@@ -131,29 +125,29 @@ func addRegistry(addName string) {
 	}
 
 	// TODO: Add all cases here. For simplicity I'm keeping it like this until the v2 work merges
-	switch regType {
+	switch registryConfig.Config.Type {
 	case "dockerhub":
-		registryConfig.Config = defaultDockerHubConfig
+		newConfig.Config = defaultDockerHubConfig
 	case "local_openshift":
-		registryConfig.Config = defaultLocalOpenShiftConfig
+		newConfig.Config = defaultLocalOpenShiftConfig
 	case "helm":
-		registryConfig.Config = defaultHelmConfig
+		newConfig.Config = defaultHelmConfig
 	default:
-		fmt.Printf("Unrecognized registry type [%v]\n", regType)
+		fmt.Printf("Unrecognized registry type [%v]\n", registryConfig.Config.Type)
 		fmt.Printf("Some common types are: dockerhub, local_openshift, helm.\n")
 		return
 	}
-	registryConfig.Config.Name = addName
+	newConfig.Config.Name = addName
 
-	registryConfig.Config = applyOverrides(registryConfig.Config)
+	applyOverrides(&newConfig.Config, registryConfig.Config)
 
 	for _, reg := range regList {
-		if reg.Config.Name == registryConfig.Config.Name {
+		if reg.Config.Name == newConfig.Config.Name {
 			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]. Try specifying a different name.\n", registryConfig.Config.Name, reg.Config.Name)
 			return
 		}
 	}
-	regList = append(regList, registryConfig)
+	regList = append(regList, newConfig)
 	updateCachedRegistries(regList)
 	ListImages()
 	return
@@ -176,20 +170,19 @@ func printRegistries(regList []Registry) {
 	util.PrintTable(tableToPrint)
 }
 
-func applyOverrides(conf registries.Config) registries.Config {
-	if regOrg != "" {
-		conf.Org = regOrg
+func applyOverrides(conf *registries.Config, params registries.Config) {
+	if params.Org != "" {
+		conf.Org = params.Org
 	}
-	if regUrl != "" {
-		conf.URL = regUrl
+	if params.URL != "" {
+		conf.URL = params.URL
 	}
-	if len(nsList) > 0 {
-		conf.Namespaces = nsList
+	if len(params.Namespaces) > 0 {
+		conf.Namespaces = params.Namespaces
 	}
-	if len(whitelist) > 0 {
-		conf.WhiteList = whitelist
+	if len(params.WhiteList) > 0 {
+		conf.WhiteList = params.WhiteList
 	}
-	return conf
 }
 
 func listRegistries() {
