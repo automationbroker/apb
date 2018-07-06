@@ -17,12 +17,15 @@
 package runner
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
@@ -38,7 +41,7 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, args []string) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, args []string) {
 	reg := []Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
@@ -154,8 +157,44 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		return
 	}
 	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, bundleName, ns)
+
+	if printLogs {
+		printBundleLogs(pn, ns, action)
+	}
+
 	// TODO: return nil
 	return
+}
+
+func printBundleLogs(podName string, namespace string, action string) {
+	k8scli, err := clients.Kubernetes()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	logTailRequest := k8scli.Client.CoreV1().Pods(namespace).GetLogs(podName, &v1.PodLogOptions{Follow: true})
+
+	var requestStream io.ReadCloser
+	var podStarted bool
+
+	for podStarted == false {
+		requestStream, err = logTailRequest.Stream()
+		if err != nil {
+			fmt.Printf("Waiting for bundle [%v] pod [%v] to start...\n", action, podName)
+			log.Debugf("%v", err)
+			time.Sleep(3 * time.Second)
+		} else {
+			fmt.Printf("Pod started. Reading logs...\n")
+			podStarted = true
+		}
+	}
+	defer requestStream.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(requestStream)
+	fmt.Println("-+- --------------------- -+-")
+	fmt.Println(" |       BUNDLE LOGS       | ")
+	fmt.Println("-+- --------------------- -+-")
+	fmt.Println(buf.String())
 }
 
 func selectPlan(spec *bundle.Spec) bundle.Plan {
