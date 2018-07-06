@@ -35,7 +35,7 @@ type Registry struct {
 // Default registry configuration section
 var defaultLocalOpenShiftConfig = registries.Config{
 	Namespaces: []string{"openshift"},
-	Name:       "lo-openshift",
+	Name:       "local",
 	Type:       "local_openshift",
 	WhiteList:  []string{".*$"},
 }
@@ -45,7 +45,7 @@ var defaultDockerHubConfig = registries.Config{
 	Type:      "dockerhub",
 	URL:       "docker.io",
 	Org:       "ansibleplaybookbundle",
-	WhiteList: []string{".*-apb$"},
+	WhiteList: []string{".*$"},
 }
 
 var defaultHelmConfig = registries.Config{
@@ -64,7 +64,7 @@ var nsList []string
 var whitelist []string
 var regOrg string
 var regUrl string
-var addName string
+var regType string
 
 // Registry commands
 var registryCmd = &cobra.Command{
@@ -74,7 +74,7 @@ var registryCmd = &cobra.Command{
 }
 
 var registryAddCmd = &cobra.Command{
-	Use:   "add <registry_type>",
+	Use:   "add <registry_name>",
 	Short: "Add a new registry adapter",
 	Long:  `Add a new registry adapter to the configuration`,
 	Args:  cobra.MinimumNArgs(1),
@@ -105,11 +105,11 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVar(&regOrg, "org", "", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVarP(&regType, "type", "t", "dockerhub", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&regOrg, "org", "", "Organization of registry adapter to add")
 	registryAddCmd.Flags().StringVar(&regUrl, "url", "", "URL of registry adapter to add")
 	registryAddCmd.Flags().StringSliceVar(&whitelist, "whitelist", []string{}, "Comma-separated whitelist for configuration of registry adapter")
 	registryAddCmd.Flags().StringSliceVar(&nsList, "namespace", []string{}, "Comma-separated list of namespaces to configure local_openshift adapter")
-	registryAddCmd.Flags().StringVar(&addName, "name", "", "Name of registry adapter to add")
 
 	registryCmd.AddCommand(registryAddCmd)
 	registryCmd.AddCommand(registryListCmd)
@@ -122,7 +122,7 @@ func updateCachedRegistries(regList []Registry) error {
 	return nil
 }
 
-func addRegistry(regType string) {
+func addRegistry(addName string) {
 	var regList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
@@ -139,15 +139,17 @@ func addRegistry(regType string) {
 	case "helm":
 		registryConfig.Config = defaultHelmConfig
 	default:
-		fmt.Printf("Unrecognized type of registry [%v]\n", regType)
+		fmt.Printf("Unrecognized registry type [%v]\n", regType)
+		fmt.Printf("Some common types are: dockerhub, local_openshift, helm.\n")
 		return
 	}
+	registryConfig.Config.Name = addName
 
 	registryConfig.Config = applyOverrides(registryConfig.Config)
 
 	for _, reg := range regList {
 		if reg.Config.Name == registryConfig.Config.Name {
-			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]. Try specifying a name with --name flag.\n", registryConfig.Config.Name, reg.Config.Name)
+			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]. Try specifying a different name.\n", registryConfig.Config.Name, reg.Config.Name)
 			return
 		}
 	}
@@ -186,9 +188,6 @@ func applyOverrides(conf registries.Config) registries.Config {
 	}
 	if len(whitelist) > 0 {
 		conf.WhiteList = whitelist
-	}
-	if addName != "" {
-		conf.Name = addName
 	}
 	return conf
 }
