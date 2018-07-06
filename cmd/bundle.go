@@ -80,6 +80,7 @@ var bundleInfoCmd = &cobra.Command{
 
 var bundleNamespace string
 var sandboxRole string
+var kubeConfig string
 
 var bundleProvisionCmd = &cobra.Command{
 	Use:   "provision <bundle name>",
@@ -87,7 +88,7 @@ var bundleProvisionCmd = &cobra.Command{
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runner.RunBundle("provision", bundleNamespace, args[0], sandboxRole, bundleRegistry, args[1:])
+		executeBundle("provision", args)
 	},
 }
 
@@ -97,11 +98,12 @@ var bundleDeprovisionCmd = &cobra.Command{
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runner.RunBundle("deprovision", bundleNamespace, args[0], sandboxRole, bundleRegistry, args[1:])
+		executeBundle("deprovision", args)
 	},
 }
 
 func init() {
+	bundleCmd.PersistentFlags().StringVarP(&kubeConfig, "kubeconfig", "k", "", "Path to kubeconfig to use")
 	rootCmd.AddCommand(bundleCmd)
 
 	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bundlemeta", "b", "apb.yml", "Bundle metadata file to encode as b64")
@@ -118,13 +120,11 @@ func init() {
 	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
 	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleProvisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
-	bundleProvisionCmd.MarkFlagRequired("namespace")
 	bundleCmd.AddCommand(bundleProvisionCmd)
 
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
-	bundleDeprovisionCmd.MarkFlagRequired("namespace")
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 }
 
@@ -162,6 +162,18 @@ func ListImages() {
 		log.Errorf("Error updating cache - %v", err)
 		return
 	}
+}
+
+func executeBundle(action string, args []string) {
+	if bundleNamespace == "" {
+		bundleNamespace = util.GetCurrentNamespace(kubeConfig)
+		if bundleNamespace == "" {
+			log.Errorf("Failed to get current namespace. Try supplying it with --namespace.")
+			return
+		}
+	}
+	log.Debugf("Running bundle [%v] with action [%v] in namespace [%v].", args[0], action, bundleNamespace)
+	runner.RunBundle(action, bundleNamespace, args[0], sandboxRole, bundleRegistry, args[1:])
 }
 
 // Get images from a single registry
