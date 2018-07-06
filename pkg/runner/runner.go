@@ -17,7 +17,6 @@
 package runner
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -189,12 +188,20 @@ func printBundleLogs(podName string, namespace string, action string) {
 		}
 	}
 	defer requestStream.Close()
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(requestStream)
+
 	fmt.Println("-+- --------------------- -+-")
 	fmt.Println(" |       BUNDLE LOGS       | ")
 	fmt.Println("-+- --------------------- -+-")
-	fmt.Println(buf.String())
+
+	buf := make([]byte, 100)
+	var doneReading bool
+	for doneReading == false {
+		n, err := requestStream.Read(buf)
+		if err == io.EOF {
+			doneReading = true
+		}
+		fmt.Printf("%s", buf[:n])
+	}
 }
 
 func selectPlan(spec *bundle.Spec) bundle.Plan {
