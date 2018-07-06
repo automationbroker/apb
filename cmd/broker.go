@@ -25,8 +25,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/automationbroker/apb/pkg/util"
 	"github.com/automationbroker/bundle-lib/clients"
-	"github.com/automationbroker/sbcli/pkg/util"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

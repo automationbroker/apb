@@ -32,8 +32,8 @@ var Verbose bool
 var CfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "sbcli",
-	Short: "sbcli is a tool to manage ServiceBundle images",
+	Use:   "apb",
+	Short: "apb is a tool to manage ServiceBundle images",
 	Long: `ServiceBundles are images that represent lifecycle components
 in that they contain all of the orchestration logic to manage
 an application through out it's lifecycle, i.e. install, uninstall,
@@ -53,7 +53,7 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
-	rootCmd.PersistentFlags().StringVar(&CfgFile, "config", "", "configuration file (default is $HOME/.sbcli)")
+	rootCmd.PersistentFlags().StringVar(&CfgFile, "config", "", "configuration file (default is $HOME/.apb)")
 }
 
 func initConfig() {
@@ -67,8 +67,8 @@ func initConfig() {
 			os.Exit(1)
 		}
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".sbcli")
-		filePath := home + "/.sbcli.json"
+		viper.SetConfigName(".apb")
+		filePath := home + "/.apb.json"
 		if err := viper.ReadInConfig(); err != nil {
 			log.Warning("Didn't find config file, creating one.")
 			file, err := os.Create(filePath)

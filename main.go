@@ -17,7 +17,7 @@
 package main
 
 import (
-	"github.com/automationbroker/sbcli/cmd"
+	"github.com/automationbroker/apb/cmd"
 )
 
 func main() {

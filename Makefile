@@ -1,15 +1,15 @@
 SOURCE_DIRS      = cmd pkg
 SOURCES          := $(shell find . -name '*.go' -not -path "*/vendor/*")
-.DEFAULT_GOAL    := sbcli
+.DEFAULT_GOAL    := apb
 
-sbcli: $(SOURCES) ## Build the samplebroker
+apb: $(SOURCES) ## Build the samplebroker
 	go build -i -ldflags="-s -w"
 
 install:
 	go install -ldflags="-s -w"
 
 uninstall: clean
-	@rm -f ${GOPATH}/bin/sbcli
+	@rm -f ${GOPATH}/bin/apb
 
 lint: ## Run golint
 	@golint -set_exit_status $(addsuffix /... , $(SOURCE_DIRS))
@@ -23,10 +23,10 @@ test: ## Run unit tests
 vet: ## Run go vet
 	@go tool vet ./cmd ./pkg
 
-check: fmtcheck vet lint sbcli test ## Pre-flight checks before creating PR
+check: fmtcheck vet lint apb test ## Pre-flight checks before creating PR
 
 clean: ## Clean up your working environment
-	@rm -f sbcli
+	@rm -f apb
 
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
