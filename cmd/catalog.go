@@ -17,14 +17,27 @@
 package cmd
 
 import (
-	//"encoding/json"
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"github.com/automationbroker/bundle-lib/clients"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	"net/http"
 )
+
+type clusterServiceBrokerSpec struct {
+	RelistRequests int
+}
+
+type relistResponse struct {
+	Kind string
+	Spec clusterServiceBrokerSpec
+}
+
+var brokerResourceName string
 
 var catalogCmd = &cobra.Command{
 	Use:   "catalog",
@@ -44,6 +57,7 @@ var catalogRelistCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(catalogCmd)
 	// Catalog Relist Flags
+	catalogCmd.PersistentFlags().StringVarP(&brokerResourceName, "name", "n", "openshift-automation-service-broker", "Name of Automation Broker resource")
 	catalogCmd.AddCommand(catalogRelistCmd)
 }
 
@@ -54,15 +68,17 @@ func relistCatalog() {
 		log.Errorf("Failed to connect to cluster: %v", err)
 		return
 	}
+	// Get Cluster URL and form clusterservicebroker request
 	host := kube.ClientConfig.Host
-	brokerUrl := fmt.Sprintf("%v/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/%v", host, "ansible-service-broker")
+	brokerUrl := fmt.Sprintf("%v/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/%v", host, brokerResourceName)
+
 	req, err := http.NewRequest("GET", brokerUrl, nil)
 	if err != nil {
 		log.Errorf("Failed to create relist request: %v", err)
 		return
 	}
-
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", kube.ClientConfig.BearerToken))
+	// Skip TLS for now
 	cfg := &tls.Config{
 		InsecureSkipVerify: true,
 	}
@@ -74,10 +90,46 @@ func relistCatalog() {
 		log.Errorf("Failed to get relist response: %v", err)
 	}
 	defer resp.Body.Close()
+	// Special case for 404 to tell user about --name flag
+	if resp.StatusCode == 404 {
+		log.Errorf("Failed to find clusterservicebroker resource [%v]. Try specifying name with --name flag.", brokerResourceName)
+		return
+	}
 	if resp.StatusCode != 200 {
 		log.Errorf("Failed to get relist response. Expected status 200, got: %v", resp.StatusCode)
 		return
 	}
-	fmt.Printf("%#v\n", resp.Body)
+	// Read response and unmarshal to get relistRequest count
+	jsonRelist, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Failed to read relist response body: %v", err)
+		return
+	}
+	relistResp := relistResponse{}
+	err = json.Unmarshal(jsonRelist, &relistResp)
+	if err != nil {
+		log.Errorf("Failed to unmarshal relist response: %v", err)
+		return
+	}
+	// Increment relist requests and PATCH clusterservicebroker resource
+	newRelistCount := relistResp.Spec.RelistRequests + 1
+	var patchRequest = []byte(fmt.Sprintf("{\"spec\": {\"relistRequests\": %v}}", newRelistCount))
+	req, err = http.NewRequest("PATCH", brokerUrl, bytes.NewBuffer(patchRequest))
+	if err != nil {
+		log.Errorf("Failed to create patch relist request: %v", err)
+		return
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", kube.ClientConfig.BearerToken))
+	req.Header.Set("Content-Type", "application/strategic-merge-patch+json")
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		log.Errorf("Failed to send PATCH relist request: %v", err)
+		return
+	}
+	if resp.StatusCode != 200 {
+		log.Errorf("Error: Relist status code is not 200, got: %v", resp.Status)
+		return
+	}
+	fmt.Printf("Successfully relisted OpenShift Service Catalog for [%v]\n", brokerResourceName)
 	return
 }
