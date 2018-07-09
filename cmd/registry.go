@@ -32,10 +32,34 @@ type Registry struct {
 	Specs  []*bundle.Spec
 }
 
-var registryConfig Registry
-var whitelist string
-var removeName string
+// Default registry configuration section
+var defaultLocalOpenShiftConfig = registries.Config{
+	Namespaces: []string{"openshift"},
+	Name:       "local",
+	Type:       "local_openshift",
+	WhiteList:  []string{".*$"},
+}
 
+var defaultDockerHubConfig = registries.Config{
+	Name:      "dockerhub",
+	Type:      "dockerhub",
+	URL:       "docker.io",
+	Org:       "ansibleplaybookbundle",
+	WhiteList: []string{".*$"},
+}
+
+var defaultHelmConfig = registries.Config{
+	Name:      "helm",
+	Type:      "helm",
+	URL:       "https://kubernetes-charts.storage.googleapis.com",
+	Runner:    "docker.io/automationbroker/helm-runner:latest",
+	WhiteList: []string{".*$"},
+}
+
+// Registry cmd vars
+var registryConfig Registry
+
+// Registry commands
 var registryCmd = &cobra.Command{
 	Use:   "registry",
 	Short: "Configure registry adapters",
@@ -43,20 +67,22 @@ var registryCmd = &cobra.Command{
 }
 
 var registryAddCmd = &cobra.Command{
-	Use:   "add",
+	Use:   "add <registry_name>",
 	Short: "Add a new registry adapter",
 	Long:  `Add a new registry adapter to the configuration`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		addRegistry()
+		addRegistry(args[0])
 	},
 }
 
 var registryRemoveCmd = &cobra.Command{
-	Use:   "remove",
+	Use:   "remove <registry_name>",
 	Short: "Remove a registry adapter",
+	Args:  cobra.MinimumNArgs(1),
 	Long:  `Remove a registry adapter from stored configuration`,
 	Run: func(cmd *cobra.Command, args []string) {
-		removeRegistry()
+		removeRegistry(args[0])
 	},
 }
 
@@ -72,16 +98,11 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.Type, "type", "dockerhub", "Type of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "ansibleplaybookbundle", "Type of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "docker.io", "URL of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.Name, "name", "docker", "Name of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&whitelist, "whitelist", ".*-apb$", "Whitelist for configuration of registry adapter")
-	registryConfig.Config.WhiteList = append(registryConfig.Config.WhiteList, whitelist)
-
-	//Registry Remove Flags
-	registryRemoveCmd.Flags().StringVar(&removeName, "name", "", "Name of registry adapter to remove")
-	registryRemoveCmd.MarkFlagRequired("name")
+	registryAddCmd.Flags().StringVarP(&registryConfig.Config.Type, "type", "t", "dockerhub", "Type of registry adapter to add (dockerhub, local_openshift, helm)")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "", "Organization of registry adapter to add")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "", "URL of registry adapter to add")
+	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.WhiteList, "whitelist", []string{}, "Comma-separated whitelist for configuration of registry adapter")
+	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.Namespaces, "namespace", []string{}, "Comma-separated list of namespaces to configure local_openshift adapter")
 
 	registryCmd.AddCommand(registryAddCmd)
 	registryCmd.AddCommand(registryListCmd)
@@ -94,20 +115,39 @@ func updateCachedRegistries(regList []Registry) error {
 	return nil
 }
 
-func addRegistry() {
+func addRegistry(addName string) {
 	var regList []Registry
+	var newConfig Registry
 	err := viper.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Println("Error unmarshalling config: ", err)
 		return
 	}
+
+	// TODO: Add all cases here. For simplicity I'm keeping it like this until the v2 work merges
+	switch registryConfig.Config.Type {
+	case "dockerhub":
+		newConfig.Config = defaultDockerHubConfig
+	case "local_openshift":
+		newConfig.Config = defaultLocalOpenShiftConfig
+	case "helm":
+		newConfig.Config = defaultHelmConfig
+	default:
+		fmt.Printf("Unrecognized registry type [%v]\n", registryConfig.Config.Type)
+		fmt.Printf("Supported types are: dockerhub, local_openshift, helm.\n")
+		return
+	}
+	newConfig.Config.Name = addName
+
+	applyOverrides(&newConfig.Config, registryConfig.Config)
+
 	for _, reg := range regList {
-		if reg.Config.Name == registryConfig.Config.Name {
-			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]\n", registryConfig.Config.Name, reg.Config.Name)
+		if reg.Config.Name == newConfig.Config.Name {
+			fmt.Printf("Error adding registry [%v], found registry with conflicting name [%v]. Try specifying a different name.\n", registryConfig.Config.Name, reg.Config.Name)
 			return
 		}
 	}
-	regList = append(regList, registryConfig)
+	regList = append(regList, newConfig)
 	updateCachedRegistries(regList)
 	ListImages()
 	return
@@ -130,6 +170,21 @@ func printRegistries(regList []Registry) {
 	util.PrintTable(tableToPrint)
 }
 
+func applyOverrides(conf *registries.Config, params registries.Config) {
+	if params.Org != "" {
+		conf.Org = params.Org
+	}
+	if params.URL != "" {
+		conf.URL = params.URL
+	}
+	if len(params.Namespaces) > 0 {
+		conf.Namespaces = params.Namespaces
+	}
+	if len(params.WhiteList) > 0 {
+		conf.WhiteList = params.WhiteList
+	}
+}
+
 func listRegistries() {
 	var regList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
@@ -146,7 +201,7 @@ func listRegistries() {
 	return
 }
 
-func removeRegistry() {
+func removeRegistry(name string) {
 	var regList []Registry
 	var newRegList []Registry
 	err := viper.UnmarshalKey("Registries", &regList)
@@ -154,9 +209,12 @@ func removeRegistry() {
 		fmt.Printf("Error unmarshalling config: %v", err)
 	}
 	for i, r := range regList {
-		if r.Config.Name == removeName {
+		if r.Config.Name == name {
+			fmt.Printf("Found registry [%v]. Removing from list.\n", name)
 			newRegList = append(regList[:i], regList[i+1:]...)
+			updateCachedRegistries(newRegList)
+			return
 		}
 	}
-	updateCachedRegistries(newRegList)
+	fmt.Printf("Failed to remove registry [%v]. Check the spelling and try again.\n", name)
 }
