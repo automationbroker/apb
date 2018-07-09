@@ -81,6 +81,7 @@ var bundleInfoCmd = &cobra.Command{
 var bundleNamespace string
 var sandboxRole string
 var kubeConfig string
+var printLogs bool
 
 var bundleProvisionCmd = &cobra.Command{
 	Use:   "provision <bundle name>",
@@ -120,11 +121,13 @@ func init() {
 	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
 	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleProvisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
+	bundleProvisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
 	bundleCmd.AddCommand(bundleProvisionCmd)
 
-	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
+	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to deprovision bundle from")
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
+	bundleDeprovisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from deprovision pod")
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 }
 
@@ -173,7 +176,7 @@ func executeBundle(action string, args []string) {
 		}
 	}
 	log.Debugf("Running bundle [%v] with action [%v] in namespace [%v].", args[0], action, bundleNamespace)
-	runner.RunBundle(action, bundleNamespace, args[0], sandboxRole, bundleRegistry, args[1:])
+	runner.RunBundle(action, bundleNamespace, args[0], sandboxRole, bundleRegistry, printLogs, args[1:])
 }
 
 // Get images from a single registry
