@@ -98,7 +98,7 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVarP(&registryConfig.Config.Type, "type", "t", "dockerhub", "Type of registry adapter to add")
+	registryAddCmd.Flags().StringVarP(&registryConfig.Config.Type, "type", "t", "dockerhub", "Type of registry adapter to add (dockerhub, local_openshift, helm)")
 	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "", "Organization of registry adapter to add")
 	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "", "URL of registry adapter to add")
 	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.WhiteList, "whitelist", []string{}, "Comma-separated whitelist for configuration of registry adapter")
@@ -134,7 +134,7 @@ func addRegistry(addName string) {
 		newConfig.Config = defaultHelmConfig
 	default:
 		fmt.Printf("Unrecognized registry type [%v]\n", registryConfig.Config.Type)
-		fmt.Printf("Some common types are: dockerhub, local_openshift, helm.\n")
+		fmt.Printf("Supported types are: dockerhub, local_openshift, helm.\n")
 		return
 	}
 	newConfig.Config.Name = addName
