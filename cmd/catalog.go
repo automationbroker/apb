@@ -38,6 +38,7 @@ type relistResponse struct {
 }
 
 var brokerResourceName string
+var brokerResourceUrl = "%v/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/%v"
 
 var catalogCmd = &cobra.Command{
 	Use:   "catalog",
@@ -70,7 +71,7 @@ func relistCatalog() {
 	}
 	// Get Cluster URL and form clusterservicebroker request
 	host := kube.ClientConfig.Host
-	brokerUrl := fmt.Sprintf("%v/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/%v", host, brokerResourceName)
+	brokerUrl := fmt.Sprintf(brokerResourceUrl, host, brokerResourceName)
 
 	req, err := http.NewRequest("GET", brokerUrl, nil)
 	if err != nil {
