@@ -103,6 +103,31 @@ var bundleDeprovisionCmd = &cobra.Command{
 	},
 }
 
+var bundleInitStub = &cobra.Command{
+	Use:        "init <bundle name>",
+	Deprecated: "must use 'ansible-galaxy init --type=apb <bundle name>'",
+	Hidden:     true,
+}
+
+const buildConfigCmd string = `oc new-build . --to <bundle-name>`
+const buildTriggerCmd string = `oc start-build --from-dir . <bundle-name>`
+
+var bundlePushStub = &cobra.Command{
+	Use: "push <bundle name>",
+	Deprecated: fmt.Sprintf("the OpenShift build system can be used instead.\n\n"+
+		"Create buildconfig: '%s'\n"+
+		"Start build:        '%s'\n", buildConfigCmd, buildTriggerCmd),
+	Hidden: true,
+}
+
+var bundleBuildStub = &cobra.Command{
+	Use: "build",
+	Deprecated: fmt.Sprintf("the OpenShift build system can be used instead.\n\n"+
+		"Create buildconfig: '%s'\n"+
+		"Start build:        '%s'\n", buildConfigCmd, buildTriggerCmd),
+	Hidden: true,
+}
+
 func init() {
 	bundleCmd.PersistentFlags().StringVarP(&kubeConfig, "kubeconfig", "k", "", "Path to kubeconfig to use")
 	rootCmd.AddCommand(bundleCmd)
@@ -134,6 +159,15 @@ func init() {
 	bundleDeprovisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from deprovision pod")
 	rootCmd.AddCommand(createHiddenCmd(bundleDeprovisionCmd, ""))
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
+
+	rootCmd.AddCommand(bundlePushStub)
+	bundleCmd.AddCommand(bundlePushStub)
+
+	rootCmd.AddCommand(bundlePushStub)
+	bundleCmd.AddCommand(bundlePushStub)
+
+	rootCmd.AddCommand(bundleBuildStub)
+	bundleCmd.AddCommand(bundleBuildStub)
 }
 
 // ListImages finds and prints inforomation on bundle images from all the registries
@@ -321,11 +355,7 @@ func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string
 		return
 	}
 	fmt.Printf("Wrote b64 encoded [%s] to [%s]\n\n", bundleMetaFilename, containerMetaFilename)
-
-	buildConfigCmd := `oc new-build . --to <bundle-name>`
 	fmt.Printf("Create a buildconfig:\n%s\n\n", buildConfigCmd)
-
-	buildTriggerCmd := `oc start-build --from-dir . <bundle-name>`
 	fmt.Printf("Start a build:\n%s\n\n", buildTriggerCmd)
 }
 
