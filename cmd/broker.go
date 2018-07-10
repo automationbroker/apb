@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/automationbroker/apb/pkg/util"
 	"github.com/automationbroker/bundle-lib/clients"
@@ -83,9 +84,23 @@ func listBrokerCatalog() {
 		return
 	}
 
+	// Check for user with valid bearer token
+	if kube.ClientConfig.BearerToken == "" {
+		log.Error("Bearer token not found for current 'oc' user. Log in as a different user and retry.")
+		log.Info("View current token with 'oc whoami -t'")
+		log.Info("Some users don't have a token, including 'system:admin'")
+		return
+	}
+
 	brokerRoute, err := getBrokerRoute(brokerName)
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
+		if strings.Contains(err.Error(), "cannot list routes") {
+			log.Errorf("Current 'oc' user unable to get 'routes' in namespace [%s]. Try again with a more privileged user.\n", brokerName)
+			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
+			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+		}
+		return
 	}
 
 	osbConf := &osb.ClientConfiguration{
@@ -123,10 +138,23 @@ func bootstrapBroker() {
 		return
 	}
 
+	// Check for user with valid bearer token
+	if kube.ClientConfig.BearerToken == "" {
+		fmt.Println("`apb broker bootstrap` requires a logged in user with a valid bearer token.")
+		fmt.Println("Users without a token include `system:admin`. Log in as a different user to continue.")
+		log.Error("Error: User did not have valid bearer token.")
+		return
+	}
+
 	// Get the broker route given brokerName
 	brokerRoute, err := getBrokerRoute(brokerName)
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
+		if strings.Contains(err.Error(), "cannot list routes") {
+			log.Errorf("Current 'oc' user unable to get 'routes' in namespace [%s]. Try again with a more privileged user.\n", brokerName)
+			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
+			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+		}
 		return
 	}
 

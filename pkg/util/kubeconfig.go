@@ -15,5 +15,9 @@ func GetCurrentNamespace(configPath string) string {
 		log.Errorf("Error loading kubeconfig from [%v]: %v", configPath, err)
 		return ""
 	}
+	if len(strings.Split(config.CurrentContext, "/")) < 3 {
+		log.Errorf("Did not find expected current-context string in kubeconfig.")
+		return ""
+	}
 	return strings.Split(config.CurrentContext, "/")[0]
 }

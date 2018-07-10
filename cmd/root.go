@@ -33,11 +33,11 @@ var CfgFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "apb",
-	Short: "apb is a tool to manage ServiceBundle images",
-	Long: `ServiceBundles are images that represent lifecycle components
-in that they contain all of the orchestration logic to manage
+	Short: "apb is a tool to manage Ansible Playbook Bundle images",
+	Long: `Ansible Playbook Bundles are images that represent lifecycle
+components in that they contain all of the orchestration logic to manage
 an application through out it's lifecycle, i.e. install, uninstall,
-bind, unbind, etc.  ServiceBundles are intended to be invoked and run
+bind, unbind, etc.  APBs are intended to be invoked and run
 as a short job to execute the intended work, example I want to deploy a
 postgres database to my kubernetes cluster.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
