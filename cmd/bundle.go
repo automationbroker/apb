@@ -105,7 +105,7 @@ var bundleDeprovisionCmd = &cobra.Command{
 
 var bundleInitStub = &cobra.Command{
 	Use:        "init <bundle name>",
-	Deprecated: "must use 'ansible-galaxy init --type=apb <bundle name>'",
+	Deprecated: "use 'ansible-galaxy init --type=apb <bundle name>'",
 	Hidden:     true,
 }
 
@@ -160,8 +160,8 @@ func init() {
 	rootCmd.AddCommand(createHiddenCmd(bundleDeprovisionCmd, ""))
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 
-	rootCmd.AddCommand(bundlePushStub)
-	bundleCmd.AddCommand(bundlePushStub)
+	rootCmd.AddCommand(bundleInitStub)
+	bundleCmd.AddCommand(bundleInitStub)
 
 	rootCmd.AddCommand(bundlePushStub)
 	bundleCmd.AddCommand(bundlePushStub)
