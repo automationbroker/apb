@@ -139,7 +139,7 @@ func init() {
 	bundleCmd.AddCommand(bundlePrepareCmd)
 
 	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
-	rootCmd.AddCommand(createHiddenCmd(bundleListCmd, "running 'apb bundle list'"))
+	rootCmd.AddCommand(createHiddenCmd(bundleListCmd, "running 'apb bundle list'. To list service bundles known to a broker, run 'apb broker catalog'"))
 	bundleCmd.AddCommand(bundleListCmd)
 
 	bundleInfoCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to retrieve bundle info from")
