@@ -69,6 +69,13 @@ func relistCatalog() {
 		log.Errorf("Failed to connect to cluster: %v", err)
 		return
 	}
+	// Check for user with valid bearer token
+	if kube.ClientConfig.BearerToken == "" {
+		fmt.Println("`apb catalog relist` requires a logged in user with a valid bearer token.")
+		fmt.Println("This includes `system:admin`. Log in as a different user to continue.")
+		log.Error("Error: User did not have valid bearer token.")
+		return
+	}
 	// Get Cluster URL and form clusterservicebroker request
 	host := kube.ClientConfig.Host
 	brokerUrl := fmt.Sprintf(brokerResourceUrl, host, brokerResourceName)

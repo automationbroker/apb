@@ -80,6 +80,14 @@ func listBrokerCatalog() {
 		return
 	}
 
+	// Check for user with valid bearer token
+	if kube.ClientConfig.BearerToken == "" {
+		fmt.Println("`apb broker catalog` requires a logged in user with a valid bearer token.")
+		fmt.Println("Users without a token include `system:admin`. Log in as a different user to continue.")
+		log.Error("Error: User did not have valid bearer token.")
+		return
+	}
+
 	brokerRoute, err := getBrokerRoute(brokerName)
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
@@ -117,6 +125,14 @@ func bootstrapBroker() {
 	kube, err := clients.Kubernetes()
 	if err != nil {
 		log.Errorf("Failed to connect to cluster: %v", err)
+		return
+	}
+
+	// Check for user with valid bearer token
+	if kube.ClientConfig.BearerToken == "" {
+		fmt.Println("`apb broker bootstrap` requires a logged in user with a valid bearer token.")
+		fmt.Println("Users without a token include `system:admin`. Log in as a different user to continue.")
+		log.Error("Error: User did not have valid bearer token.")
 		return
 	}
 
