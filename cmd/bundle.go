@@ -69,7 +69,7 @@ var bundleListCmd = &cobra.Command{
 var bundleRegistry string
 
 var bundleInfoCmd = &cobra.Command{
-	Use:   "info <bundle name>",
+	Use:   "info <bundle-name>",
 	Short: "Print info on ServiceBundle image",
 	Long:  `Print metadata, plans, and params associated with ServiceBundle image`,
 	Args:  cobra.MinimumNArgs(1),
@@ -84,7 +84,7 @@ var kubeConfig string
 var printLogs bool
 
 var bundleProvisionCmd = &cobra.Command{
-	Use:   "provision <bundle name>",
+	Use:   "provision <bundle-name>",
 	Short: "Provision ServiceBundle images",
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
@@ -94,13 +94,38 @@ var bundleProvisionCmd = &cobra.Command{
 }
 
 var bundleDeprovisionCmd = &cobra.Command{
-	Use:   "deprovision <bundle name>",
+	Use:   "deprovision <bundle-name>",
 	Short: "Deprovision ServiceBundle images",
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		executeBundle("deprovision", args)
 	},
+}
+
+var bundleInitStub = &cobra.Command{
+	Use:        "init <bundle-name>",
+	Deprecated: "use 'ansible-galaxy init --type=apb <bundle-name>'",
+	Hidden:     true,
+}
+
+const buildConfigCmd string = `oc new-build . --to <bundle-name>`
+const buildTriggerCmd string = `oc start-build --from-dir . <bundle-name>`
+
+var bundlePushStub = &cobra.Command{
+	Use: "push <bundle-name>",
+	Deprecated: fmt.Sprintf("the OpenShift build system can be used instead.\n\n"+
+		"Create buildconfig: '%s'\n"+
+		"Start build:        '%s'\n", buildConfigCmd, buildTriggerCmd),
+	Hidden: true,
+}
+
+var bundleBuildStub = &cobra.Command{
+	Use: "build",
+	Deprecated: fmt.Sprintf("the OpenShift build system can be used instead.\n\n"+
+		"Create buildconfig: '%s'\n"+
+		"Start build:        '%s'\n", buildConfigCmd, buildTriggerCmd),
+	Hidden: true,
 }
 
 func init() {
@@ -110,25 +135,39 @@ func init() {
 	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bundlemeta", "b", "apb.yml", "Bundle metadata file to encode as b64")
 	bundlePrepareCmd.Flags().StringVarP(&containerMetadataFilename, "containermeta", "c", "Dockerfile", "Container metadata file to stamp")
 	bundlePrepareCmd.Flags().BoolVarP(&noLineBreaks, "nolinebreak", "n", false, "Skip adding linebreaks to b64 bundle spec")
+	rootCmd.AddCommand(createHiddenCmd(bundlePrepareCmd, "running 'apb bundle prepare'"))
 	bundleCmd.AddCommand(bundlePrepareCmd)
 
 	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
+	rootCmd.AddCommand(createHiddenCmd(bundleListCmd, "running 'apb bundle list'. To list service bundles known to a broker, run 'apb broker catalog'"))
 	bundleCmd.AddCommand(bundleListCmd)
 
 	bundleInfoCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to retrieve bundle info from")
+	rootCmd.AddCommand(createHiddenCmd(bundleInfoCmd, "running 'apb bundle info'"))
 	bundleCmd.AddCommand(bundleInfoCmd)
 
 	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
 	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleProvisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
 	bundleProvisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
+	rootCmd.AddCommand(createHiddenCmd(bundleProvisionCmd, ""))
 	bundleCmd.AddCommand(bundleProvisionCmd)
 
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to deprovision bundle from")
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
 	bundleDeprovisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from deprovision pod")
+	rootCmd.AddCommand(createHiddenCmd(bundleDeprovisionCmd, ""))
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
+
+	rootCmd.AddCommand(bundleInitStub)
+	bundleCmd.AddCommand(bundleInitStub)
+
+	rootCmd.AddCommand(bundlePushStub)
+	bundleCmd.AddCommand(bundlePushStub)
+
+	rootCmd.AddCommand(bundleBuildStub)
+	bundleCmd.AddCommand(bundleBuildStub)
 }
 
 // ListImages finds and prints inforomation on bundle images from all the registries
@@ -316,11 +355,7 @@ func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string
 		return
 	}
 	fmt.Printf("Wrote b64 encoded [%s] to [%s]\n\n", bundleMetaFilename, containerMetaFilename)
-
-	buildConfigCmd := `oc new-build . --to <bundle-name>`
 	fmt.Printf("Create a buildconfig:\n%s\n\n", buildConfigCmd)
-
-	buildTriggerCmd := `oc start-build --from-dir . <bundle-name>`
 	fmt.Printf("Start a build:\n%s\n\n", buildTriggerCmd)
 }
 
