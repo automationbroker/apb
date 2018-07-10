@@ -69,7 +69,7 @@ var bundleListCmd = &cobra.Command{
 var bundleRegistry string
 
 var bundleInfoCmd = &cobra.Command{
-	Use:   "info <bundle name>",
+	Use:   "info <bundle-name>",
 	Short: "Print info on ServiceBundle image",
 	Long:  `Print metadata, plans, and params associated with ServiceBundle image`,
 	Args:  cobra.MinimumNArgs(1),
@@ -84,7 +84,7 @@ var kubeConfig string
 var printLogs bool
 
 var bundleProvisionCmd = &cobra.Command{
-	Use:   "provision <bundle name>",
+	Use:   "provision <bundle-name>",
 	Short: "Provision ServiceBundle images",
 	Long:  `Provision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
@@ -94,7 +94,7 @@ var bundleProvisionCmd = &cobra.Command{
 }
 
 var bundleDeprovisionCmd = &cobra.Command{
-	Use:   "deprovision <bundle name>",
+	Use:   "deprovision <bundle-name>",
 	Short: "Deprovision ServiceBundle images",
 	Long:  `Deprovision ServiceBundles from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
@@ -104,8 +104,8 @@ var bundleDeprovisionCmd = &cobra.Command{
 }
 
 var bundleInitStub = &cobra.Command{
-	Use:        "init <bundle name>",
-	Deprecated: "use 'ansible-galaxy init --type=apb <bundle name>'",
+	Use:        "init <bundle-name>",
+	Deprecated: "use 'ansible-galaxy init --type=apb <bundle-name>'",
 	Hidden:     true,
 }
 
@@ -113,7 +113,7 @@ const buildConfigCmd string = `oc new-build . --to <bundle-name>`
 const buildTriggerCmd string = `oc start-build --from-dir . <bundle-name>`
 
 var bundlePushStub = &cobra.Command{
-	Use: "push <bundle name>",
+	Use: "push <bundle-name>",
 	Deprecated: fmt.Sprintf("the OpenShift build system can be used instead.\n\n"+
 		"Create buildconfig: '%s'\n"+
 		"Start build:        '%s'\n", buildConfigCmd, buildTriggerCmd),
