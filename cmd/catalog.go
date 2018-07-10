@@ -21,11 +21,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/automationbroker/bundle-lib/clients"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"net/http"
 )
 
 type clusterServiceBrokerSpec struct {
@@ -71,9 +72,9 @@ func relistCatalog() {
 	}
 	// Check for user with valid bearer token
 	if kube.ClientConfig.BearerToken == "" {
-		fmt.Println("`apb catalog relist` requires a logged in user with a valid bearer token.")
-		fmt.Println("Users without a token include `system:admin`. Log in as a different user to continue.")
-		log.Error("Error: User did not have valid bearer token.")
+		log.Error("Bearer token not found for current 'oc' user. Log in as a different user and retry.")
+		log.Info("View current token with 'oc whoami -t'")
+		log.Info("Some users don't have a token, including 'system:admin'")
 		return
 	}
 	// Get Cluster URL and form clusterservicebroker request
@@ -104,7 +105,17 @@ func relistCatalog() {
 		return
 	}
 	if resp.StatusCode != 200 {
-		log.Errorf("Failed to get relist response. Expected status 200, got: %v", resp.StatusCode)
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Errorf("Failed to read relist response body: %v", err)
+			return
+		}
+		log.Errorf("Bad relist response. Expected status 200, got: %v\n%s", resp.StatusCode, respBody)
+		if bytes.Contains(respBody, []byte("cannot get clusterservicebrokers")) {
+			log.Errorf("Current 'oc' user unable to get 'clusterservicebrokers'. Try again with a more privileged user.\n")
+			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
+			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+		}
 		return
 	}
 	// Read response and unmarshal to get relistRequest count
