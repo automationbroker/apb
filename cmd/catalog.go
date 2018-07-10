@@ -72,7 +72,7 @@ func relistCatalog() {
 	// Check for user with valid bearer token
 	if kube.ClientConfig.BearerToken == "" {
 		fmt.Println("`apb catalog relist` requires a logged in user with a valid bearer token.")
-		fmt.Println("This includes `system:admin`. Log in as a different user to continue.")
+		fmt.Println("Users without a token include `system:admin`. Log in as a different user to continue.")
 		log.Error("Error: User did not have valid bearer token.")
 		return
 	}
