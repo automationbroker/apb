@@ -85,9 +85,7 @@ func listBrokerCatalog() {
 
 	// Check for user with valid bearer token
 	if kube.ClientConfig.BearerToken == "" {
-		log.Error("Bearer token not found for current 'oc' user. Log in as a different user and retry.")
-		log.Info("View current token with 'oc whoami -t'")
-		log.Info("Some users don't have a token, including 'system:admin'")
+		handleBearerTokenErr()
 		return
 	}
 
@@ -95,9 +93,7 @@ func listBrokerCatalog() {
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
-			log.Errorf("Current 'oc' user unable to get 'routes' in namespace [%s]. Try again with a more privileged user.\n", brokerName)
-			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
-			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+			handleResourceInaccessibleErr("routes", brokerName, false)
 		}
 		return
 	}
@@ -139,9 +135,7 @@ func bootstrapBroker() {
 
 	// Check for user with valid bearer token
 	if kube.ClientConfig.BearerToken == "" {
-		log.Error("Bearer token not found for current 'oc' user. Log in as a different user and retry.")
-		log.Info("View current token with 'oc whoami -t'")
-		log.Info("Some users don't have a token, including 'system:admin'")
+		handleBearerTokenErr()
 		return
 	}
 
@@ -150,9 +144,7 @@ func bootstrapBroker() {
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
-			log.Errorf("Current 'oc' user unable to get 'routes' in namespace [%s]. Try again with a more privileged user.\n", brokerName)
-			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
-			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+			handleResourceInaccessibleErr("routes", brokerName, false)
 		}
 		return
 	}
@@ -238,7 +230,6 @@ func getBrokerRoute(brokerName string) (string, error) {
 	// Attempt to get route of Automation Broker
 	rc, err := ocp.Route().Routes(brokerName).List(metav1.ListOptions{})
 	if err != nil {
-		log.Errorf("Failed to list routes in namespace %v: %v", brokerName, err)
 		return "", err
 	}
 

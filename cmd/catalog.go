@@ -72,9 +72,7 @@ func relistCatalog() {
 	}
 	// Check for user with valid bearer token
 	if kube.ClientConfig.BearerToken == "" {
-		log.Error("Bearer token not found for current 'oc' user. Log in as a different user and retry.")
-		log.Info("View current token with 'oc whoami -t'")
-		log.Info("Some users don't have a token, including 'system:admin'")
+		handleBearerTokenErr()
 		return
 	}
 	// Get Cluster URL and form clusterservicebroker request
@@ -112,9 +110,7 @@ func relistCatalog() {
 		}
 		log.Errorf("Bad relist response. Expected status 200, got: %v\n%s", resp.StatusCode, respBody)
 		if bytes.Contains(respBody, []byte("cannot get clusterservicebrokers")) {
-			log.Errorf("Current 'oc' user unable to get 'clusterservicebrokers'. Try again with a more privileged user.\n")
-			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
-			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+			handleResourceInaccessibleErr("clusterservicebrokers", "", true)
 		}
 		return
 	}
