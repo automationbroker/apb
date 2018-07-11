@@ -40,7 +40,7 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, args []string) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) {
 	reg := []Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
@@ -81,11 +81,18 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		fmt.Printf("Plan: %v\n", plan.Name)
 	}
 
-	params, err := selectParameters(plan)
-	if err != nil {
-		log.Errorf("Error validating selected parameters: %v", err)
-		return
+	var params bundle.Parameters
+	var err error
+	if skipParams != true {
+		params, err = selectParameters(plan)
+		if err != nil {
+			log.Errorf("Error validating selected parameters: %v", err)
+			return
+		}
+	} else {
+		params = bundle.Parameters{}
 	}
+
 	extraVars, err := createExtraVars(ns, &params, plan)
 	if err != nil {
 		log.Errorf("Error creating extravars: %v\n", err)
