@@ -43,14 +43,14 @@ var brokerName string
 
 var brokerCmd = &cobra.Command{
 	Use:   "broker",
-	Short: "Interact with an Automation Broker instance",
-	Long:  `List or Bootstrap bundles on an Automation Broker instance`,
+	Short: "Interact with Automation Broker",
+	Long:  `List or Bootstrap APBs on an Automation Broker instance`,
 }
 
 var brokerCatalogCmd = &cobra.Command{
 	Use:   "catalog",
-	Short: "List available service bundles in broker catalog",
-	Long:  `Fetch list of service bundles in Automation Broker catalog`,
+	Short: "List available APBs in Automation Broker catalog",
+	Long:  `Fetch list of APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
 		listBrokerCatalog()
 	},
@@ -59,7 +59,7 @@ var brokerCatalogCmd = &cobra.Command{
 var brokerBootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap an Automation Broker instance",
-	Long:  `Refresh list of bootstrapped service bundles in Automation Broker catalog`,
+	Long:  `Refresh list of bootstrapped APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
 		bootstrapBroker()
 	},
@@ -209,7 +209,7 @@ func bootstrapBroker() {
 	}
 
 	fmt.Printf("Successfully bootstrapped broker [%v]\n", brokerName)
-	fmt.Printf("Broker loaded %v bundle specs from %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
+	fmt.Printf("Broker loaded %v valid APB specs from %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
 	return
 }
 
