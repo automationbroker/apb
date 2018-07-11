@@ -33,7 +33,7 @@ type formItem struct {
 	Items []interface{} `json:"items,omitempty"`
 }
 
-// ConvertPlanToSchema
+// ConvertPlansToSchema - converts plans to schema
 func ConvertPlansToSchema(plans []Plan) ([]SchemaPlan, error) {
 	brokerPlans := make([]SchemaPlan, len(plans))
 	for i, plan := range plans {

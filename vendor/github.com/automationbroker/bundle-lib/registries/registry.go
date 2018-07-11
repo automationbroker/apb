@@ -202,6 +202,7 @@ func NewCustomRegistry(configuration Config, adapter adapters.Adapter, asbNamesp
 			Namespaces:    configuration.Namespaces,
 			Tag:           configuration.Tag,
 			SkipVerifyTLS: configuration.SkipVerifyTLS,
+			AdapterName:   configuration.Name,
 		}
 
 		switch strings.ToLower(configuration.Type) {
@@ -211,17 +212,22 @@ func NewCustomRegistry(configuration Config, adapter adapters.Adapter, asbNamesp
 			adapter = &adapters.DockerHubAdapter{Config: c}
 		case "mock":
 			adapter = &adapters.MockAdapter{Config: c}
-		case "openshift":
-			adapter = &adapters.OpenShiftAdapter{Config: c}
-		case "partner_rhcc":
-			adapter = &adapters.PartnerRhccAdapter{Config: c}
 		case "local_openshift":
 			adapter = &adapters.LocalOpenShiftAdapter{Config: c}
 		case "helm":
 			adapter = &adapters.HelmAdapter{Config: c}
+		case "openshift":
+			adapter, err = adapters.NewOpenShiftAdapter(c)
+		case "partner_rhcc":
+			adapter, err = adapters.NewPartnerRhccAdapter(c)
+		case "apiv2":
+			adapter, err = adapters.NewAPIV2Adapter(c)
 		default:
 			log.Errorf("Unknown registry type - %s", configuration.Type)
 			return Registry{}, errors.New("Unknown registry type")
+		}
+		if err != nil {
+			return Registry{}, err
 		}
 	} else {
 		log.Infof("Using custom adapter, %v", adapter.RegistryName())

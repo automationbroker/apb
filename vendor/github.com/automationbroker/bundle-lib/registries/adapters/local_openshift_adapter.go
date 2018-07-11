@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	b64 "encoding/base64"
+
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
 	v1image "github.com/openshift/api/image/v1"
@@ -34,11 +35,6 @@ import (
 var (
 	errRuntimeNotFound = errors.New("runtime not found")
 )
-
-type imageLabel struct {
-	Spec    string `json:"com.redhat.apb.spec"`
-	Runtime string `json:"com.redhat.apb.runtime"`
-}
 
 type containerConfig struct {
 	Labels imageLabel `json:"Labels"`

@@ -67,11 +67,18 @@ type ParameterDescriptor struct {
 	Minimum          *NilableNumber `json:"minimum,omitempty"`
 	ExclusiveMinimum *NilableNumber `json:"exclusiveMinimum,omitempty" yaml:"exclusive_minimum,omitempty"`
 
-	Enum         []string `json:"enum,omitempty"`
-	Required     bool     `json:"required"`
-	Updatable    bool     `json:"updatable"`
-	DisplayType  string   `json:"displayType,omitempty" yaml:"display_type,omitempty"`
-	DisplayGroup string   `json:"displayGroup,omitempty" yaml:"display_group,omitempty"`
+	Enum         []string     `json:"enum,omitempty"`
+	Required     bool         `json:"required"`
+	Updatable    bool         `json:"updatable"`
+	DisplayType  string       `json:"displayType,omitempty" yaml:"display_type,omitempty"`
+	DisplayGroup string       `json:"displayGroup,omitempty" yaml:"display_group,omitempty"`
+	Dependencies []Dependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+}
+
+// Dependency - a parameter dependency
+type Dependency struct {
+	Key   string      `json:"key,omitempty" yaml:"key,omitempty"`
+	Value interface{} `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // Schema  - Schema to be returned
@@ -81,7 +88,7 @@ type Schema struct {
 	ServiceBinding  ServiceBindingSchema  `json:"service_binding"`
 }
 
-// ServiceInstance - Schema definitions for creating and updating a service instance.
+// ServiceInstanceSchema - Schema definitions for creating and updating a service instance.
 // Toyed with the idea of making an InputParameters
 // that was a *schema.Schema
 // based on 2.13 of the open service broker api. https://github.com/avade/servicebroker/blob/cda8c57b6a4bb7eaee84be20bb52dc155269758a/spec.md
@@ -90,7 +97,7 @@ type ServiceInstanceSchema struct {
 	Update map[string]*schema.Schema `json:"update"`
 }
 
-// ServiceBinding - Schema definitions for creating a service binding.
+// ServiceBindingSchema - Schema definitions for creating a service binding.
 type ServiceBindingSchema struct {
 	Create map[string]*schema.Schema `json:"create"`
 }

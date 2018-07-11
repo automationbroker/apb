@@ -32,7 +32,6 @@
   version = "0.1.2"
 
 [[projects]]
-  branch = "master"
   name = "github.com/automationbroker/bundle-lib"
   packages = [
     "bundle",
@@ -42,7 +41,8 @@
     "registries/adapters/oauth",
     "runtime"
   ]
-  revision = "3f94003a06bc102d05de3fe58d9221997a3deb47"
+  revision = "6b13aa1285fd32855c61277a55e3cf9da4d448c3"
+  version = "0.2.4"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -676,6 +676,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2c102cfac7df220a6b3c40585eb3c6901deb186d102d058c8eb92f1e73720266"
+  inputs-digest = "2e12e83b8a0d90a2a5673807a97ed6ee925e157e1f4fe7685948b3e203b9a563"
   solver-name = "gps-cdcl"
   solver-version = 1
