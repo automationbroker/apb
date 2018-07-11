@@ -70,7 +70,6 @@ func init() {
 	rootCmd.AddCommand(brokerCmd)
 
 	brokerCmd.AddCommand(brokerCatalogCmd)
-	rootCmd.AddCommand(createHiddenCmd(brokerCatalogCmd, "running 'apb broker catalog'"))
 
 	brokerCmd.AddCommand(brokerBootstrapCmd)
 	rootCmd.AddCommand(createHiddenCmd(brokerBootstrapCmd, "running 'apb broker boostrap'"))
