@@ -26,12 +26,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/automationbroker/apb/pkg/config"
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
 	"github.com/automationbroker/bundle-lib/runtime"
 	"github.com/lestrrat/go-jsschema/validator"
 	"github.com/pborman/uuid"
-	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/api/core/v1"
 
@@ -45,7 +45,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
 	pn := fmt.Sprintf("bundle-%s", uuid.New())
-	viper.UnmarshalKey("Registries", &reg)
+	config.Registries.UnmarshalKey("Registries", &reg)
 	for _, r := range reg {
 		if len(bundleRegistry) > 0 && r.Config.Name != bundleRegistry {
 			continue

@@ -25,12 +25,12 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/automationbroker/apb/pkg/config"
 	"github.com/automationbroker/apb/pkg/runner"
 	"github.com/automationbroker/apb/pkg/util"
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -177,7 +177,7 @@ func ListImages() {
 	var regConfigs []Registry
 	var newRegConfigs []Registry
 
-	err := viper.UnmarshalKey("Registries", &regConfigs)
+	err := config.Registries.UnmarshalKey("Registries", &regConfigs)
 	if err != nil {
 		log.Error("Error unmarshalling config: ", err)
 		return
@@ -286,7 +286,7 @@ func printBundleInfo(bundleSpec *bundle.Spec) {
 func showBundleInfo(bundleName string, registryName string) {
 	var regConfigs []Registry
 
-	err := viper.UnmarshalKey("Registries", &regConfigs)
+	err := config.Registries.UnmarshalKey("Registries", &regConfigs)
 	if err != nil {
 		log.Error("Error unmarshalling config: ", err)
 		return

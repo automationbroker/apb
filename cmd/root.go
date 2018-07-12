@@ -19,17 +19,15 @@ package cmd
 import (
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/automationbroker/apb/pkg/config"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // Verbose controls the logging level, when enabled will set level to debug
 var Verbose bool
 
-// CfgFile is the configuration file
-var CfgFile string
+var cfgDir string
 
 var rootCmd = &cobra.Command{
 	Use:   "apb",
@@ -47,37 +45,12 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
-	rootCmd.PersistentFlags().StringVar(&CfgFile, "config", "", "configuration file (default is $HOME/.apb)")
+	rootCmd.PersistentFlags().StringVar(&cfgDir, "config", "", "configuration directory (default is $HOME/.apb)")
 }
 
 func initConfig() {
-	viper.SetConfigType("json")
-	if CfgFile != "" {
-		viper.SetConfigFile(CfgFile)
-	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			log.Error(err)
-			os.Exit(1)
-		}
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".apb")
-		filePath := home + "/.apb.json"
-		if err := viper.ReadInConfig(); err != nil {
-			log.Warning("Didn't find config file, creating one.")
-			file, err := os.Create(filePath)
-			if err != nil {
-				log.Error(err)
-				os.Exit(1)
-			}
-			file.WriteString("{}")
-		}
-	}
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Error("Can't read config: ", err)
-		os.Exit(1)
-	}
+	config.Defaults = config.InitJSONConfig(cfgDir, "defaults")
+	config.Registries = config.InitJSONConfig(cfgDir, "registries")
 }
 
 // Execute invokes the root command
