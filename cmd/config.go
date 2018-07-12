@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/automationbroker/apb/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -36,10 +37,21 @@ func init() {
 }
 
 func gatherConfig() {
-	var brokerName string
-	fmt.Printf("Enter name of broker [default: openshift-automation-service-broker]: ")
-	fmt.Scanln(&brokerName)
-	if brokerName == "" {
-		brokerName = "openshift-automation-service-broker"
+	defaultSettings := &config.DefaultSettings{
+		BrokerNamespace:          getUserInput("Broker namespace", "openshift-automation-service-broker"),
+		BrokerResourceURL:        getUserInput("Broker resource URL", "/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/"),
+		BrokerRouteName:          getUserInput("Broker route name", "openshift-automation-service-broker"),
+		ClusterServiceBrokerName: getUserInput("clusterservicebroker name", "openshift-automation-service-broker"),
 	}
+	config.UpdateCachedDefaults(defaultSettings)
+}
+
+func getUserInput(prompt string, defaultValue string) string {
+	var userInput string
+	fmt.Printf("%s [default: %s]: ", prompt, defaultValue)
+	fmt.Scanln(&userInput)
+	if userInput == "" {
+		return defaultValue
+	}
+	return userInput
 }

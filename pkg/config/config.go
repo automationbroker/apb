@@ -67,3 +67,17 @@ func InitJSONConfig(configDir string, configName string) *viper.Viper {
 	}
 	return viperConfig
 }
+
+// UpdateCachedRegistries saves the contents of regList to a configuration file
+func UpdateCachedRegistries(regList []Registry) error {
+	Registries.Set("Registries", regList)
+	Registries.WriteConfig()
+	return nil
+}
+
+// UpdateCachedDefaults saves the contents of deafults to a configuration file
+func UpdateCachedDefaults(defaults *DefaultSettings) error {
+	Defaults.Set("Defaults", defaults)
+	Defaults.WriteConfig()
+	return nil
+}

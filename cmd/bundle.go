@@ -174,8 +174,8 @@ func init() {
 
 // ListImages finds and prints inforomation on bundle images from all the registries
 func ListImages() {
-	var regConfigs []Registry
-	var newRegConfigs []Registry
+	var regConfigs []config.Registry
+	var newRegConfigs []config.Registry
 
 	err := config.Registries.UnmarshalKey("Registries", &regConfigs)
 	if err != nil {
@@ -201,7 +201,7 @@ func ListImages() {
 	}
 	printRegConfigSpecs(newRegConfigs)
 
-	err = updateCachedRegistries(newRegConfigs)
+	err = config.UpdateCachedRegistries(newRegConfigs)
 	if err != nil {
 		log.Errorf("Error updating cache - %v", err)
 		return
@@ -221,7 +221,7 @@ func executeBundle(action string, args []string) {
 }
 
 // Get images from a single registry
-func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
+func getImages(registryMetadata config.Registry) ([]*bundle.Spec, error) {
 	var specList []*bundle.Spec
 
 	authNamespace := ""
@@ -244,7 +244,7 @@ func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
 	return specList, nil
 }
 
-func printRegConfigSpecs(regConfigs []Registry) {
+func printRegConfigSpecs(regConfigs []config.Registry) {
 	colFQName := &util.TableColumn{Header: "APB"}
 	colImage := &util.TableColumn{Header: "IMAGE"}
 	colRegName := &util.TableColumn{Header: "REGISTRY"}
@@ -284,7 +284,7 @@ func printBundleInfo(bundleSpec *bundle.Spec) {
 }
 
 func showBundleInfo(bundleName string, registryName string) {
-	var regConfigs []Registry
+	var regConfigs []config.Registry
 
 	err := config.Registries.UnmarshalKey("Registries", &regConfigs)
 	if err != nil {

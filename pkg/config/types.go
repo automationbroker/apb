@@ -11,8 +11,10 @@ type Registry struct {
 	Specs  []*bundle.Spec
 }
 
-// Default stores default settings for APB tool operation
-type Default struct {
-	Config registries.Config
-	Specs  []*bundle.Spec
+// DefaultSettings stores default settings for APB tool operation
+type DefaultSettings struct {
+	BrokerNamespace          string
+	BrokerResourceURL        string
+	BrokerRouteName          string
+	ClusterServiceBrokerName string
 }
