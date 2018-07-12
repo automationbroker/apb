@@ -41,7 +41,7 @@ import (
 
 // RunBundle will run the bundle's action in the given namespace
 func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) {
-	reg := []Registry{}
+	reg := []config.Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
 	pn := fmt.Sprintf("bundle-%s", uuid.New())

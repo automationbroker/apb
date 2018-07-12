@@ -1,4 +1,4 @@
-package runner
+package config
 
 import (
 	"github.com/automationbroker/bundle-lib/bundle"
@@ -7,6 +7,12 @@ import (
 
 // Registry stores a single registry config and references all associated bundle specs
 type Registry struct {
+	Config registries.Config
+	Specs  []*bundle.Spec
+}
+
+// Default stores default settings for APB tool operation
+type Default struct {
 	Config registries.Config
 	Specs  []*bundle.Spec
 }
