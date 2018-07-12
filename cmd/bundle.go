@@ -158,7 +158,7 @@ func init() {
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
 	bundleDeprovisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from deprovision pod")
-	bundleDeprovisionCmd.Flags().BoolVar(&skipParams, "skip-params", false, "Choose to not prompt for parameters")
+	bundleDeprovisionCmd.Flags().BoolVarP(&skipParams, "skip-params", "s", false, "Don't prompt for parameters")
 	rootCmd.AddCommand(createHiddenCmd(bundleDeprovisionCmd, ""))
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 

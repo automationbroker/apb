@@ -83,14 +83,14 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 
 	var params bundle.Parameters
 	var err error
-	if skipParams != true {
+	if skipParams {
+		params = bundle.Parameters{}
+	} else {
 		params, err = selectParameters(plan)
 		if err != nil {
 			log.Errorf("Error validating selected parameters: %v", err)
 			return
 		}
-	} else {
-		params = bundle.Parameters{}
 	}
 
 	extraVars, err := createExtraVars(ns, &params, plan)
@@ -223,7 +223,7 @@ func selectPlan(spec *bundle.Spec) bundle.Plan {
 		} else {
 			return spec.Plans[0]
 		}
-		fmt.Printf("Enter name of plan you'd like to deploy: ")
+		fmt.Printf("Enter name of plan to execute: ")
 		fmt.Scanln(&planName)
 		for _, plan := range spec.Plans {
 			if plan.Name == planName {
