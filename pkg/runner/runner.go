@@ -53,21 +53,21 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		for _, s := range r.Specs {
 			if s.FQName == bundleName {
 				candidateSpecs = append(candidateSpecs, s)
-				fmt.Printf("Found bundle [%v] in registry [%v]\n", bundleName, r.Config.Name)
+				fmt.Printf("Found APB [%v] in registry [%v]\n", bundleName, r.Config.Name)
 			}
 		}
 	}
 	if len(candidateSpecs) == 0 {
 		if len(bundleRegistry) > 0 {
-			log.Errorf("Didn't find bundle [%v] in registry [%v]\n", bundleName, bundleRegistry)
+			log.Errorf("Didn't find APB [%v] in registry [%v]\n", bundleName, bundleRegistry)
 			return
 		}
-		log.Errorf("Didn't find bundle [%v] in configured registries\n", bundleName)
+		log.Errorf("Didn't find APB [%v] in configured registries\n", bundleName)
 		return
 		// TODO: return an ErrorBundleNotFound
 	}
 	if len(candidateSpecs) > 1 {
-		log.Warnf("Found multiple bundles matching name [%v]. Specify a registry with --registry.", bundleName)
+		log.Warnf("Found multiple APBs matching name [%v]. Specify a registry with --registry.", bundleName)
 		return
 	}
 
@@ -105,7 +105,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	targets := []string{ns}
 	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(pn, ns, targets, sandboxRole, labels)
 	if err != nil {
-		fmt.Printf("\nProblem creating sandbox [%s] to run bundle. Did you run `oc new-project %s` first?\n\n", pn, ns)
+		fmt.Printf("\nProblem creating sandbox [%s] to run APB. Did you run `oc new-project %s` first?\n\n", pn, ns)
 		os.Exit(-1)
 	}
 
@@ -179,7 +179,7 @@ func printBundleLogs(podName string, namespace string, action string) {
 	for podStarted == false {
 		requestStream, err = logTailRequest.Stream()
 		if err != nil {
-			fmt.Printf("Waiting for bundle [%v] pod [%v] to start...\n", action, podName)
+			fmt.Printf("Waiting for APB %v pod [%v] to start...\n", action, podName)
 			log.Debugf("%v", err)
 			time.Sleep(3 * time.Second)
 		} else {
@@ -189,9 +189,9 @@ func printBundleLogs(podName string, namespace string, action string) {
 	}
 	defer requestStream.Close()
 
-	fmt.Println("-+- --------------------- -+-")
-	fmt.Println(" |       BUNDLE LOGS       | ")
-	fmt.Println("-+- --------------------- -+-")
+	fmt.Println("-+- ---------------------- -+-")
+	fmt.Println(" |         APB LOGS         | ")
+	fmt.Println("-+- ---------------------- -+-")
 
 	buf := make([]byte, 100)
 	var doneReading bool
@@ -231,7 +231,7 @@ func selectPlan(spec *bundle.Spec) bundle.Plan {
 func selectParameters(plan bundle.Plan) (bundle.Parameters, error) {
 	schemaPlan, err := bundle.ConvertPlansToSchema([]bundle.Plan{plan})
 	if err != nil {
-		log.Errorf("Error converting bundle plans to JSON Schema: %v", err)
+		log.Errorf("Error converting APB plans to JSON Schema: %v", err)
 		return nil, err
 	}
 	planSchema := schemaPlan[0].Schemas

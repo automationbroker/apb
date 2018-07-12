@@ -40,8 +40,8 @@ var Refresh bool
 
 var bundleCmd = &cobra.Command{
 	Use:   "bundle",
-	Short: "Interact with ServiceBundles",
-	Long:  `List, execute and build ServiceBundles`,
+	Short: "Interact with APBs",
+	Long:  `List, execute and build APBs`,
 }
 
 var bundleMetadataFilename string
@@ -50,8 +50,8 @@ var noLineBreaks bool
 
 var bundlePrepareCmd = &cobra.Command{
 	Use:   "prepare",
-	Short: "Stamp ServiceBundle metadata onto Dockerfile as b64",
-	Long:  `Prepare for ServiceBundle image build by stamping apb.yml contents onto Dockerfile as b64`,
+	Short: "Stamp APB metadata onto Dockerfile as b64",
+	Long:  `Prepare for APB image build by stamping apb.yml contents onto Dockerfile as b64`,
 	Run: func(cmd *cobra.Command, args []string) {
 		stampBundleMetadata(bundleMetadataFilename, containerMetadataFilename, noLineBreaks)
 	},
@@ -59,8 +59,8 @@ var bundlePrepareCmd = &cobra.Command{
 
 var bundleListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List ServiceBundle images",
-	Long:  `List ServiceBundles from a registry adapter`,
+	Short: "List APB images",
+	Long:  `List APBs from a registry adapter`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ListImages()
 	},
@@ -69,9 +69,9 @@ var bundleListCmd = &cobra.Command{
 var bundleRegistry string
 
 var bundleInfoCmd = &cobra.Command{
-	Use:   "info <bundle-name>",
-	Short: "Print info on ServiceBundle image",
-	Long:  `Print metadata, plans, and params associated with ServiceBundle image`,
+	Use:   "info <apb-name>",
+	Short: "Print info on APB image",
+	Long:  `Print metadata, plans, and params associated with an APB image`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		showBundleInfo(args[0], bundleRegistry)
@@ -84,9 +84,9 @@ var kubeConfig string
 var printLogs bool
 
 var bundleProvisionCmd = &cobra.Command{
-	Use:   "provision <bundle-name>",
-	Short: "Provision ServiceBundle images",
-	Long:  `Provision ServiceBundles from a registry adapter`,
+	Use:   "provision <apb-name>",
+	Short: "Provision APB images",
+	Long:  `Provision an APB from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		executeBundle("provision", args)
@@ -95,8 +95,8 @@ var bundleProvisionCmd = &cobra.Command{
 
 var bundleDeprovisionCmd = &cobra.Command{
 	Use:   "deprovision <bundle-name>",
-	Short: "Deprovision ServiceBundle images",
-	Long:  `Deprovision ServiceBundles from a registry adapter`,
+	Short: "Deprovision APB images",
+	Long:  `Deprovision an APB from a registry adapter`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		executeBundle("deprovision", args)
@@ -132,30 +132,30 @@ func init() {
 	bundleCmd.PersistentFlags().StringVarP(&kubeConfig, "kubeconfig", "k", "", "Path to kubeconfig to use")
 	rootCmd.AddCommand(bundleCmd)
 
-	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bundlemeta", "b", "apb.yml", "Bundle metadata file to encode as b64")
+	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bundlemeta", "b", "apb.yml", "APB metadata file to encode as b64")
 	bundlePrepareCmd.Flags().StringVarP(&containerMetadataFilename, "containermeta", "c", "Dockerfile", "Container metadata file to stamp")
-	bundlePrepareCmd.Flags().BoolVarP(&noLineBreaks, "nolinebreak", "n", false, "Skip adding linebreaks to b64 bundle spec")
+	bundlePrepareCmd.Flags().BoolVarP(&noLineBreaks, "nolinebreak", "n", false, "Skip adding linebreaks to b64 APB spec")
 	rootCmd.AddCommand(createHiddenCmd(bundlePrepareCmd, "running 'apb bundle prepare'"))
 	bundleCmd.AddCommand(bundlePrepareCmd)
 
 	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
-	rootCmd.AddCommand(createHiddenCmd(bundleListCmd, "running 'apb bundle list'. To list service bundles known to a broker, run 'apb broker catalog'"))
+	rootCmd.AddCommand(createHiddenCmd(bundleListCmd, "running 'apb bundle list'. To list APBs known to a broker, run 'apb broker catalog'"))
 	bundleCmd.AddCommand(bundleListCmd)
 
-	bundleInfoCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to retrieve bundle info from")
+	bundleInfoCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to retrieve APB info from")
 	rootCmd.AddCommand(createHiddenCmd(bundleInfoCmd, "running 'apb bundle info'"))
 	bundleCmd.AddCommand(bundleInfoCmd)
 
-	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision bundle to")
-	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
-	bundleProvisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
+	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision APB to")
+	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
+	bundleProvisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
 	bundleProvisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
 	rootCmd.AddCommand(createHiddenCmd(bundleProvisionCmd, ""))
 	bundleCmd.AddCommand(bundleProvisionCmd)
 
-	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to deprovision bundle from")
-	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to Bundle sandbox")
-	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load bundle from")
+	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to deprovision APB from")
+	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
+	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
 	bundleDeprovisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from deprovision pod")
 	rootCmd.AddCommand(createHiddenCmd(bundleDeprovisionCmd, ""))
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
@@ -236,14 +236,14 @@ func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
 			registry.RegistryName(), err)
 		return nil, err
 	}
-	log.Infof("Registry %v has %d bundles available from %d images scanned", registry.RegistryName(), len(specs), count)
+	log.Infof("Registry %v has %d valid APBs available from %d images scanned", registry.RegistryName(), len(specs), count)
 
 	specList = append(specList, specs...)
 	return specList, nil
 }
 
 func printRegConfigSpecs(regConfigs []Registry) {
-	colFQName := &util.TableColumn{Header: "BUNDLE"}
+	colFQName := &util.TableColumn{Header: "APB"}
 	colImage := &util.TableColumn{Header: "IMAGE"}
 	colRegName := &util.TableColumn{Header: "REGISTRY"}
 
@@ -305,11 +305,11 @@ func showBundleInfo(bundleName string, registryName string) {
 	}
 
 	if len(bundleSpecMatches) == 0 {
-		log.Errorf("No bundles found with name [%v]", bundleName)
+		log.Errorf("No APBs found with name [%v]", bundleName)
 		return
 	}
 	if len(bundleSpecMatches) > 1 {
-		log.Warnf("Found multiple bundles matching name [%v]. Specify a registry with -r or --registry.", bundleName)
+		log.Warnf("Found multiple APBs matching name [%v]. Specify a registry with -r or --registry.", bundleName)
 		return
 	}
 	fmt.Println()
@@ -331,7 +331,7 @@ func stampBundleMetadata(bundleMetaFilename string, containerMetaFilename string
 	fileErr := false
 	bundleMeta, err := ioutil.ReadFile(bundleMetaPath)
 	if err != nil {
-		log.Errorf("Bundle metadata file [%s] not found in working directory", bundleMetaFilename)
+		log.Errorf("APB metadata file [%s] not found in working directory", bundleMetaFilename)
 		fileErr = true
 	}
 	containerMeta, err := ioutil.ReadFile(containerMetaPath)
@@ -385,13 +385,13 @@ func addBundleMetadata(bMeta []byte, cMeta []byte, noLineBreaks bool) []byte {
 	labelRegexp, _ := regexp.Compile(`.*(\")?com\.redhat\.apb\.spec(\")?\=(\\)?\n?\"`)
 	indices = labelRegexp.FindIndex(cMeta)
 	if len(indices) == 0 {
-		log.Errorf("Didn't find expected bundle label in container metadata file")
+		log.Errorf("Didn't find expected APB label in Dockerfile")
 		return []byte{}
 	}
 	lineStartIndex, blobStartIndex := indices[0], indices[1]
 	blobEndOffset := bytes.IndexByte(cMeta[blobStartIndex:], byte('"'))
 	if blobEndOffset == -1 {
-		log.Errorf("Didn't find end of bundle label in container metadata file")
+		log.Errorf("Didn't find end of APB label in Dockerfile")
 		return []byte{}
 	}
 	blobEndIndex := blobStartIndex + blobEndOffset

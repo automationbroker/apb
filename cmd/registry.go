@@ -98,11 +98,11 @@ var registryListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 	// Registry Add Flags
-	registryAddCmd.Flags().StringVarP(&registryConfig.Config.Type, "type", "t", "dockerhub", "Type of registry adapter to add (dockerhub, local_openshift, helm)")
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "", "Organization of registry adapter to add")
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "", "URL of registry adapter to add")
-	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.WhiteList, "whitelist", []string{}, "Comma-separated whitelist for configuration of registry adapter")
-	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.Namespaces, "namespace", []string{}, "Comma-separated list of namespaces to configure local_openshift adapter")
+	registryAddCmd.Flags().StringVarP(&registryConfig.Config.Type, "type", "t", "dockerhub", "registry type (dockerhub, local_openshift, helm)")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "", "organization for 'dockerhub' adapter to search (e.g. 'ansible-playbook-bundle')")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "", "URL (e.g. docker.io)")
+	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.WhiteList, "whitelist", []string{}, "regexes for filtering registry contents (e.g. '.*apb$,.*bundle$')")
+	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.Namespaces, "namespaces", []string{}, "namespaces for 'local_openshift' adapter to search  (e.g. 'openshift,my-project')")
 
 	registryCmd.AddCommand(registryAddCmd)
 	registryCmd.AddCommand(registryListCmd)

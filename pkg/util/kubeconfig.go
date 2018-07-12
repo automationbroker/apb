@@ -1,11 +1,13 @@
 package util
 
 import (
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
-	"strings"
 )
 
+// GetCurrentNamespace returns the current OpenShift namespace or an empty string
 func GetCurrentNamespace(configPath string) string {
 	if configPath == "" {
 		configPath = clientcmd.RecommendedHomeFile

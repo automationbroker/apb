@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/automationbroker/apb/pkg/util"
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/clients"
 	log "github.com/sirupsen/logrus"
@@ -33,58 +34,35 @@ var bindingNamespace string
 var bindingCmd = &cobra.Command{
 	Use:   "binding",
 	Short: "Manage bindings",
-	Long:  `List, Add, or Delete bindings`,
+	Long:  `Create bindings`,
 }
 
 var bindingAddCmd = &cobra.Command{
-	Use:   "add <secret name> <app name>",
-	Short: "Create a new binding",
-	Long:  `Create a new binding secret`,
-	Args:  cobra.MinimumNArgs(2),
+	Use:   "add <secret-name> <deployment-config-name>",
+	Short: "Add bind credentials to an application",
+	Long:  `Add bind credentials created by an APB to another application's deployment config`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		addBinding(args)
-	},
-}
-
-var bindingRemoveCmd = &cobra.Command{
-	Use:   "remove",
-	Short: "Remove a binding",
-	Long:  `Remove a binding secret`,
-	Run: func(cmd *cobra.Command, args []string) {
-		removeBinding()
-	},
-}
-
-var bindingListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List the configured bindings",
-	Long:  `List all bindings`,
-	Run: func(cmd *cobra.Command, args []string) {
-		listBindings()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(bindingCmd)
 	// Binding Add Flags
-	bindingAddCmd.Flags().StringVarP(&bindingNamespace, "namespace", "p", "", "Namespace of binding")
-	bindingAddCmd.MarkFlagRequired("namespace")
+	bindingAddCmd.Flags().StringVarP(&bindingNamespace, "namespace", "n", "", "Namespace of binding")
 
 	bindingCmd.AddCommand(bindingAddCmd)
-	bindingCmd.AddCommand(bindingListCmd)
-	bindingCmd.AddCommand(bindingRemoveCmd)
 }
-
-/*
-func updateCachedRegistries(registries []registries.Config) error {
-	viper.Set("Registries", registries)
-	viper.WriteConfig()
-	return nil
-}
-*/
 
 func addBinding(args []string) {
-	log.Debug("addBindings called")
+	if bindingNamespace == "" {
+		bindingNamespace = util.GetCurrentNamespace(kubeConfig)
+		if bindingNamespace == "" {
+			log.Errorf("Failed to get current namespace. Try supplying it with --namespace.")
+			return
+		}
+	}
 	secretName := args[0]
 	newSecretName := fmt.Sprintf("%v-creds", secretName)
 	appName := args[1]
@@ -93,12 +71,13 @@ func addBinding(args []string) {
 	log.Infof("Create a binding using secret [%s] to app [%s]\n", secretName, appName)
 	secretData, err := extractCredentialsAsSecret(secretName, bindingNamespace)
 	if err != nil {
-		log.Errorf("unable to retrieve secret data from secret [%v]", err)
+		log.Errorf("Unable to retrieve secret data from secret: [%v]", err)
 		return
 	}
 	extCreds, err := buildExtractedCredentials(secretData)
 	if err != nil {
-		log.Errorf("unexpected error building extracted creds: %v", err)
+		log.Errorf("Unexpected error building extracted creds: [%v]", err)
+		return
 	}
 	data := map[string][]byte{}
 	for key, value := range extCreds.Credentials {
@@ -117,35 +96,27 @@ func addBinding(args []string) {
 	}
 	_, err = k8scli.Client.CoreV1().Secrets(bindingNamespace).Create(s)
 	if err != nil {
-		log.Errorf("Unable to create secret %v in namespace %v", newSecretName, bindingNamespace)
+		log.Errorf("Unable to create secret [%v] in namespace [%v]", newSecretName, bindingNamespace)
 		return
 	}
 
 	fmt.Printf("Successfully created secret [%v] in namespace [%v].\n", newSecretName, bindingNamespace)
-	fmt.Printf("Type the following command to attach the binding to your application:\n")
+	fmt.Printf("Use the following command to attach the binding to your application:\n")
 	fmt.Printf("oc set env dc/%v --from=secret/%v\n", appName, newSecretName)
 	return
 
-}
-
-func listBindings() {
-	fmt.Println("listBindings called")
-}
-
-func removeBinding() {
-	fmt.Println("removeBinding called")
 }
 
 // ExtractCredentialsAsSecret - Extract credentials from APB as secret in namespace.
 func extractCredentialsAsSecret(podname string, namespace string) ([]byte, error) {
 	k8s, err := clients.Kubernetes()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to retrive kubernetes client - %v", err)
+		return nil, fmt.Errorf("Unable to retrieve kubernetes client - [%v]", err)
 	}
 
 	secret, err := k8s.GetSecretData(podname, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve secret [ %v ] - %v", podname, err)
+		return nil, fmt.Errorf("Unable to retrieve secret [%v] - [%v]", podname, err)
 	}
 
 	return secret["fields"], nil

@@ -43,14 +43,14 @@ var brokerName string
 
 var brokerCmd = &cobra.Command{
 	Use:   "broker",
-	Short: "Interact with an Automation Broker instance",
-	Long:  `List or Bootstrap bundles on an Automation Broker instance`,
+	Short: "Interact with Automation Broker",
+	Long:  `List or Bootstrap APBs on an Automation Broker instance`,
 }
 
 var brokerCatalogCmd = &cobra.Command{
 	Use:   "catalog",
-	Short: "List available service bundles in broker catalog",
-	Long:  `Fetch list of service bundles in Automation Broker catalog`,
+	Short: "List available APBs in Automation Broker catalog",
+	Long:  `Fetch list of APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
 		listBrokerCatalog()
 	},
@@ -59,7 +59,7 @@ var brokerCatalogCmd = &cobra.Command{
 var brokerBootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap an Automation Broker instance",
-	Long:  `Refresh list of bootstrapped service bundles in Automation Broker catalog`,
+	Long:  `Refresh list of bootstrapped APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
 		bootstrapBroker()
 	},
@@ -70,7 +70,6 @@ func init() {
 	rootCmd.AddCommand(brokerCmd)
 
 	brokerCmd.AddCommand(brokerCatalogCmd)
-	rootCmd.AddCommand(createHiddenCmd(brokerCatalogCmd, "running 'apb broker catalog'"))
 
 	brokerCmd.AddCommand(brokerBootstrapCmd)
 	rootCmd.AddCommand(createHiddenCmd(brokerBootstrapCmd, "running 'apb broker boostrap'"))
@@ -86,9 +85,7 @@ func listBrokerCatalog() {
 
 	// Check for user with valid bearer token
 	if kube.ClientConfig.BearerToken == "" {
-		log.Error("Bearer token not found for current 'oc' user. Log in as a different user and retry.")
-		log.Info("View current token with 'oc whoami -t'")
-		log.Info("Some users don't have a token, including 'system:admin'")
+		handleBearerTokenErr()
 		return
 	}
 
@@ -96,9 +93,7 @@ func listBrokerCatalog() {
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
-			log.Errorf("Current 'oc' user unable to get 'routes' in namespace [%s]. Try again with a more privileged user.\n", brokerName)
-			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
-			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+			handleResourceInaccessibleErr("routes", brokerName, false)
 		}
 		return
 	}
@@ -140,9 +135,7 @@ func bootstrapBroker() {
 
 	// Check for user with valid bearer token
 	if kube.ClientConfig.BearerToken == "" {
-		fmt.Println("`apb broker bootstrap` requires a logged in user with a valid bearer token.")
-		fmt.Println("Users without a token include `system:admin`. Log in as a different user to continue.")
-		log.Error("Error: User did not have valid bearer token.")
+		handleBearerTokenErr()
 		return
 	}
 
@@ -151,9 +144,7 @@ func bootstrapBroker() {
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
-			log.Errorf("Current 'oc' user unable to get 'routes' in namespace [%s]. Try again with a more privileged user.\n", brokerName)
-			log.Infof("Administrators can grant 'cluster-admin' privileges with:")
-			log.Infof("'oc adm policy add-cluster-role-to-user cluster-admin <oc-user>'")
+			handleResourceInaccessibleErr("routes", brokerName, false)
 		}
 		return
 	}
@@ -209,7 +200,7 @@ func bootstrapBroker() {
 	}
 
 	fmt.Printf("Successfully bootstrapped broker [%v]\n", brokerName)
-	fmt.Printf("Broker loaded %v bundle specs from %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
+	fmt.Printf("Broker loaded %v valid APB specs from %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
 	return
 }
 
@@ -239,7 +230,6 @@ func getBrokerRoute(brokerName string) (string, error) {
 	// Attempt to get route of Automation Broker
 	rc, err := ocp.Route().Routes(brokerName).List(metav1.ListOptions{})
 	if err != nil {
-		log.Errorf("Failed to list routes in namespace %v: %v", brokerName, err)
 		return "", err
 	}
 

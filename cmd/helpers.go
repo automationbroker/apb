@@ -17,6 +17,9 @@
 package cmd
 
 import (
+	"fmt"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -33,4 +36,23 @@ func createHiddenCmd(cmd *cobra.Command, deprecatedText string) *cobra.Command {
 	}
 	newCmd.Flags().AddFlagSet(cmd.Flags())
 	return newCmd
+}
+
+func handleBearerTokenErr() {
+	log.Error("Bearer token not found for current 'oc' user. Log in as a different user and retry.")
+	log.Info("Some users don't have a token, including 'system:admin'")
+	log.Info("View current token with 'oc whoami -t'")
+}
+
+func handleResourceInaccessibleErr(resourceType string, namespace string, restateErr bool) {
+	errMsg := ""
+	if restateErr {
+		if namespace != "" {
+			errMsg += fmt.Sprintf("Current 'oc' user unable to get '%s' in namespace [%s]. ", resourceType, namespace)
+		} else {
+			errMsg += fmt.Sprintf("Current 'oc' user unable to get '%s'. ", resourceType)
+		}
+	}
+	log.Errorf(errMsg + "Try again with a more privileged user.")
+	log.Info("Administrators can grant 'cluster-admin' privileges with:\n   oc adm policy add-cluster-role-to-user cluster-admin <oc-user>")
 }
