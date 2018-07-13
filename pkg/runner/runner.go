@@ -40,7 +40,7 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, args []string) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) {
 	reg := []Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
@@ -81,11 +81,18 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		fmt.Printf("Plan: %v\n", plan.Name)
 	}
 
-	params, err := selectParameters(plan)
-	if err != nil {
-		log.Errorf("Error validating selected parameters: %v", err)
-		return
+	var params bundle.Parameters
+	var err error
+	if skipParams {
+		params = bundle.Parameters{}
+	} else {
+		params, err = selectParameters(plan)
+		if err != nil {
+			log.Errorf("Error validating selected parameters: %v", err)
+			return
+		}
 	}
+
 	extraVars, err := createExtraVars(ns, &params, plan)
 	if err != nil {
 		log.Errorf("Error creating extravars: %v\n", err)
@@ -216,7 +223,7 @@ func selectPlan(spec *bundle.Spec) bundle.Plan {
 		} else {
 			return spec.Plans[0]
 		}
-		fmt.Printf("Enter name of plan you'd like to deploy: ")
+		fmt.Printf("Enter name of plan to execute: ")
 		fmt.Scanln(&planName)
 		for _, plan := range spec.Plans {
 			if plan.Name == planName {

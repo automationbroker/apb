@@ -82,6 +82,7 @@ var bundleNamespace string
 var sandboxRole string
 var kubeConfig string
 var printLogs bool
+var skipParams bool
 
 var bundleProvisionCmd = &cobra.Command{
 	Use:   "provision <apb-name>",
@@ -157,6 +158,7 @@ func init() {
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
 	bundleDeprovisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from deprovision pod")
+	bundleDeprovisionCmd.Flags().BoolVarP(&skipParams, "skip-params", "s", false, "Don't prompt for parameters")
 	rootCmd.AddCommand(createHiddenCmd(bundleDeprovisionCmd, ""))
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 
@@ -215,7 +217,7 @@ func executeBundle(action string, args []string) {
 		}
 	}
 	log.Debugf("Running bundle [%v] with action [%v] in namespace [%v].", args[0], action, bundleNamespace)
-	runner.RunBundle(action, bundleNamespace, args[0], sandboxRole, bundleRegistry, printLogs, args[1:])
+	runner.RunBundle(action, bundleNamespace, args[0], sandboxRole, bundleRegistry, printLogs, skipParams, args[1:])
 }
 
 // Get images from a single registry
