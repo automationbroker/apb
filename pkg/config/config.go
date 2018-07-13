@@ -31,7 +31,7 @@ var Defaults *viper.Viper
 // Registries stores APB registry and spec data
 var Registries *viper.Viper
 
-// InitJSONConfig will load/create a JSON config at ~/configDir/configName
+// InitJSONConfig will load (or create if needed) a JSON config at ~/home/.apb/configName.json or configDir/configName.json
 func InitJSONConfig(configDir string, configName string) *viper.Viper {
 	var configPath string
 
