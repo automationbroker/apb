@@ -100,7 +100,7 @@ func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
-			handleResourceInaccessibleErr("routes", brokerName, false)
+			handleResourceInaccessibleErr("routes", brokerRouteName, false)
 		}
 		return
 	}
@@ -156,7 +156,7 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
-			handleResourceInaccessibleErr("routes", brokerName, false)
+			handleResourceInaccessibleErr("routes", brokerRouteName, false)
 		}
 		return
 	}
@@ -190,7 +190,7 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 	if resp.StatusCode == 504 {
 		log.Errorf("Timed out waiting for broker bootstrap response.")
 		fmt.Print("Try increasing the route timeout with:\n")
-		fmt.Printf("oc annotate route asb -n %v --overwrite haproxy.router.openshift.io/timeout=60s\n", brokerName)
+		fmt.Printf("oc annotate route asb -n %v --overwrite haproxy.router.openshift.io/timeout=60s\n", brokerRouteName)
 		return
 	}
 
@@ -211,7 +211,7 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 		log.Errorf("Failed to unmarshal response: %v", err)
 	}
 
-	fmt.Printf("Successfully bootstrapped broker [%v]\n", brokerName)
+	fmt.Printf("Successfully bootstrapped broker [%v]\n", brokerRouteName)
 	fmt.Printf("Broker loaded %v valid APB specs from %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
 	return
 }
