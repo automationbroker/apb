@@ -26,6 +26,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/automationbroker/apb/pkg/config"
+
 	"github.com/automationbroker/apb/pkg/util"
 	"github.com/automationbroker/bundle-lib/clients"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
@@ -52,7 +54,7 @@ var brokerCatalogCmd = &cobra.Command{
 	Short: "List available APBs in Automation Broker catalog",
 	Long:  `Fetch list of APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listBrokerCatalog()
+		listBrokerCatalog(config.LoadedDefaults.BrokerRouteName, config.LoadedDefaults.BrokerNamespace)
 	},
 }
 
@@ -61,12 +63,12 @@ var brokerBootstrapCmd = &cobra.Command{
 	Short: "Bootstrap an Automation Broker instance",
 	Long:  `Refresh list of bootstrapped APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
-		bootstrapBroker()
+		bootstrapBroker(config.LoadedDefaults.BrokerRouteName, config.LoadedDefaults.BrokerNamespace)
 	},
 }
 
 func init() {
-	brokerCmd.PersistentFlags().StringVarP(&brokerName, "name", "n", "openshift-automation-service-broker", "Name of Automation Broker instance")
+	brokerCmd.PersistentFlags().StringVarP(&brokerName, "name", "n", "", "Name of Automation Broker instance")
 	rootCmd.AddCommand(brokerCmd)
 
 	brokerCmd.AddCommand(brokerCatalogCmd)
@@ -75,8 +77,13 @@ func init() {
 	rootCmd.AddCommand(createHiddenCmd(brokerBootstrapCmd, "running 'apb broker boostrap'"))
 }
 
-func listBrokerCatalog() {
+func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
 	log.Debugf("func::listBrokerCatalog()")
+	// Override configured values if user provides brokerName as cmd arg
+	if brokerName != "" {
+		brokerRouteName = brokerName
+		brokerNamespace = brokerName
+	}
 	kube, err := clients.Kubernetes()
 	if err != nil {
 		log.Errorf("Failed to connect to cluster: %v", err)
@@ -89,7 +96,7 @@ func listBrokerCatalog() {
 		return
 	}
 
-	brokerRoute, err := getBrokerRoute(brokerName)
+	brokerRoute, err := getBrokerRoute(brokerRouteName, brokerNamespace)
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
@@ -126,7 +133,12 @@ func listBrokerCatalog() {
 	return
 }
 
-func bootstrapBroker() {
+func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
+	// Override configured values if user provides brokerName as cmd arg
+	if brokerName != "" {
+		brokerRouteName = brokerName
+		brokerNamespace = brokerName
+	}
 	kube, err := clients.Kubernetes()
 	if err != nil {
 		log.Errorf("Failed to connect to cluster: %v", err)
@@ -140,7 +152,7 @@ func bootstrapBroker() {
 	}
 
 	// Get the broker route given brokerName
-	brokerRoute, err := getBrokerRoute(brokerName)
+	brokerRoute, err := getBrokerRoute(brokerRouteName, brokerNamespace)
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
 		if strings.Contains(err.Error(), "cannot list routes") {
@@ -219,7 +231,12 @@ func printServices(services []osb.Service) {
 	util.PrintTable(tableToPrint)
 }
 
-func getBrokerRoute(brokerName string) (string, error) {
+func getBrokerRoute(brokerRouteName string, brokerNamespace string) (string, error) {
+	// Override configured values if user provides brokerName as cmd arg
+	if brokerName != "" {
+		brokerRouteName = brokerName
+		brokerNamespace = brokerName
+	}
 	var brokerRoute string
 	ocp, err := clients.Openshift()
 	if err != nil {
@@ -228,16 +245,16 @@ func getBrokerRoute(brokerName string) (string, error) {
 	}
 
 	// Attempt to get route of Automation Broker
-	rc, err := ocp.Route().Routes(brokerName).List(metav1.ListOptions{})
+	rc, err := ocp.Route().Routes(brokerNamespace).List(metav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
 
 	for _, route := range rc.Items {
-		if route.Spec.To.Name == brokerName {
-			brokerRoute = fmt.Sprintf("https://%v/%v", route.Spec.Host, brokerName)
+		if route.Spec.To.Name == brokerRouteName {
+			brokerRoute = fmt.Sprintf("https://%v/%v", route.Spec.Host, brokerRouteName)
 			return brokerRoute, nil
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Failed to find route for broker: %v", brokerName))
+	return "", errors.New(fmt.Sprintf("Failed to find route with name [%v] in namespace [%v]", brokerRouteName, brokerNamespace))
 }

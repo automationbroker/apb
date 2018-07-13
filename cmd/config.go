@@ -28,7 +28,7 @@ var configCmd = &cobra.Command{
 	Short: "Set tool defaults",
 	Long:  `Runs an interactive prompt to configure defaults for the 'apb' tool.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		gatherConfig()
+		gatherDefaultsConfig()
 	},
 }
 
@@ -36,13 +36,14 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 }
 
-func gatherConfig() {
+func gatherDefaultsConfig() {
 	defaultSettings := &config.DefaultSettings{
 		BrokerNamespace:          getUserInput("Broker namespace", config.InitialDefaultSettings().BrokerNamespace),
 		BrokerResourceURL:        getUserInput("Broker resource URL", config.InitialDefaultSettings().BrokerResourceURL),
 		BrokerRouteName:          getUserInput("Broker route name", config.InitialDefaultSettings().BrokerRouteName),
 		ClusterServiceBrokerName: getUserInput("clusterservicebroker", config.InitialDefaultSettings().ClusterServiceBrokerName),
 	}
+	fmt.Println("\nSaving new configuration....")
 	config.UpdateCachedDefaults(defaultSettings)
 }
 

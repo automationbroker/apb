@@ -27,6 +27,7 @@ import (
 
 // Defaults stores command defaults
 var Defaults *viper.Viper
+var LoadedDefaults *DefaultSettings
 
 // Registries stores APB registry and spec data
 var Registries *viper.Viper
@@ -83,7 +84,7 @@ func UpdateCachedDefaults(defaults *DefaultSettings) error {
 	return nil
 }
 
-// InitialDefaultSettings provides sane default settings for interaction with the Automation Broker
+// InitialDefaultSettings provides a DefaultSettings struct with sane values for interaction with the Automation Broker
 func InitialDefaultSettings() *DefaultSettings {
 	return &DefaultSettings{
 		BrokerNamespace:          "openshift-automation-service-broker",
@@ -91,4 +92,9 @@ func InitialDefaultSettings() *DefaultSettings {
 		BrokerRouteName:          "openshift-automation-service-broker",
 		ClusterServiceBrokerName: "openshift-automation-service-broker",
 	}
+}
+
+// LoadDefaultSettings loads default settings from disk into a config.LoadedDefaults for later use
+func LoadDefaultSettings() {
+	Defaults.UnmarshalKey("Defaults", &LoadedDefaults)
 }

@@ -24,6 +24,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/automationbroker/apb/pkg/config"
+
 	"github.com/automationbroker/bundle-lib/clients"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -39,7 +41,6 @@ type relistResponse struct {
 }
 
 var brokerResourceName string
-var brokerResourceUrl = "%v/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/%v"
 
 var catalogCmd = &cobra.Command{
 	Use:   "catalog",
@@ -52,19 +53,23 @@ var catalogRelistCmd = &cobra.Command{
 	Short: "relist service catalog",
 	Long:  `Force a relist of the OpenShift Service Catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
-		relistCatalog()
+		relistCatalog(config.LoadedDefaults.BrokerResourceURL, config.LoadedDefaults.ClusterServiceBrokerName)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(catalogCmd)
 	// Catalog Relist Flags
-	catalogCmd.PersistentFlags().StringVarP(&brokerResourceName, "name", "n", "openshift-automation-service-broker", "Name of Automation Broker resource")
+	catalogCmd.PersistentFlags().StringVarP(&brokerResourceName, "name", "n", "", "Name of Automation Broker resource")
 	catalogCmd.AddCommand(catalogRelistCmd)
 }
 
-func relistCatalog() {
+func relistCatalog(brokerResourceURL string, clusterServiceBrokerName string) {
 	log.Debug("relistCatalog called")
+	// Override setting from config file when cmd arg provided
+	if brokerResourceName != "" {
+		clusterServiceBrokerName = brokerResourceName
+	}
 	kube, err := clients.Kubernetes()
 	if err != nil {
 		log.Errorf("Failed to connect to cluster: %v", err)
@@ -77,9 +82,9 @@ func relistCatalog() {
 	}
 	// Get Cluster URL and form clusterservicebroker request
 	host := kube.ClientConfig.Host
-	brokerUrl := fmt.Sprintf(brokerResourceUrl, host, brokerResourceName)
+	brokerURL := fmt.Sprintf("%v%v%v", host, brokerResourceURL, clusterServiceBrokerName)
 
-	req, err := http.NewRequest("GET", brokerUrl, nil)
+	req, err := http.NewRequest("GET", brokerURL, nil)
 	if err != nil {
 		log.Errorf("Failed to create relist request: %v", err)
 		return
@@ -99,7 +104,7 @@ func relistCatalog() {
 	defer resp.Body.Close()
 	// Special case for 404 to tell user about --name flag
 	if resp.StatusCode == 404 {
-		log.Errorf("Failed to find clusterservicebroker resource [%v]. Try specifying name with --name flag.", brokerResourceName)
+		log.Errorf("Failed to find clusterservicebroker resource [%v]. Try specifying name with --name flag.", brokerURL)
 		return
 	}
 	if resp.StatusCode != 200 {
@@ -129,7 +134,7 @@ func relistCatalog() {
 	// Increment relist requests and PATCH clusterservicebroker resource
 	newRelistCount := relistResp.Spec.RelistRequests + 1
 	var patchRequest = []byte(fmt.Sprintf("{\"spec\": {\"relistRequests\": %v}}", newRelistCount))
-	req, err = http.NewRequest("PATCH", brokerUrl, bytes.NewBuffer(patchRequest))
+	req, err = http.NewRequest("PATCH", brokerURL, bytes.NewBuffer(patchRequest))
 	if err != nil {
 		log.Errorf("Failed to create patch relist request: %v", err)
 		return
@@ -145,6 +150,6 @@ func relistCatalog() {
 		log.Errorf("Error: Relist status code is not 200, got: %v", resp.Status)
 		return
 	}
-	fmt.Printf("Successfully relisted OpenShift Service Catalog for [%v]\n", brokerResourceName)
+	fmt.Printf("Successfully relisted OpenShift Service Catalog for [%v]\n", clusterServiceBrokerName)
 	return
 }
