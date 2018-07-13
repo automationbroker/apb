@@ -25,14 +25,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Defaults stores general tool defaults
+// Defaults stores command defaults
 var Defaults *viper.Viper
 
 // Registries stores APB registry and spec data
 var Registries *viper.Viper
 
 // InitJSONConfig will load (or create if needed) a JSON config at ~/home/.apb/configName.json or configDir/configName.json
-func InitJSONConfig(configDir string, configName string) *viper.Viper {
+func InitJSONConfig(configDir string, configName string) (config *viper.Viper, isNewConfig bool) {
 	var configPath string
 
 	viperConfig := viper.New()
@@ -52,6 +52,7 @@ func InitJSONConfig(configDir string, configName string) *viper.Viper {
 	viperConfig.SetConfigName(configName)
 	filePath := configPath + fmt.Sprintf("/%s.json", configName)
 	if err := viperConfig.ReadInConfig(); err != nil {
+		isNewConfig = true
 		log.Warningf("Didn't find config file %s, creating.", filePath)
 		os.MkdirAll(configPath, 0755)
 		file, err := os.Create(filePath)
@@ -65,7 +66,7 @@ func InitJSONConfig(configDir string, configName string) *viper.Viper {
 		log.Error("Can't read config: ", err)
 		os.Exit(1)
 	}
-	return viperConfig
+	return viperConfig, isNewConfig
 }
 
 // UpdateCachedRegistries saves the contents of regList to a configuration file
@@ -75,9 +76,19 @@ func UpdateCachedRegistries(regList []Registry) error {
 	return nil
 }
 
-// UpdateCachedDefaults saves the contents of deafults to a configuration file
+// UpdateCachedDefaults saves the contents of defaults to a configuration file
 func UpdateCachedDefaults(defaults *DefaultSettings) error {
 	Defaults.Set("Defaults", defaults)
 	Defaults.WriteConfig()
 	return nil
+}
+
+// InitialDefaultSettings provides sane default settings for interaction with the Automation Broker
+func InitialDefaultSettings() *DefaultSettings {
+	return &DefaultSettings{
+		BrokerNamespace:          "openshift-automation-service-broker",
+		BrokerResourceURL:        "/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/",
+		BrokerRouteName:          "openshift-automation-service-broker",
+		ClusterServiceBrokerName: "openshift-automation-service-broker",
+	}
 }

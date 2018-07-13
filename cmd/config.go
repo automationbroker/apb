@@ -38,10 +38,10 @@ func init() {
 
 func gatherConfig() {
 	defaultSettings := &config.DefaultSettings{
-		BrokerNamespace:          getUserInput("Broker namespace", "openshift-automation-service-broker"),
-		BrokerResourceURL:        getUserInput("Broker resource URL", "/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/"),
-		BrokerRouteName:          getUserInput("Broker route name", "openshift-automation-service-broker"),
-		ClusterServiceBrokerName: getUserInput("clusterservicebroker name", "openshift-automation-service-broker"),
+		BrokerNamespace:          getUserInput("Broker namespace", config.InitialDefaultSettings().BrokerNamespace),
+		BrokerResourceURL:        getUserInput("Broker resource URL", config.InitialDefaultSettings().BrokerResourceURL),
+		BrokerRouteName:          getUserInput("Broker route name", config.InitialDefaultSettings().BrokerRouteName),
+		ClusterServiceBrokerName: getUserInput("clusterservicebroker", config.InitialDefaultSettings().ClusterServiceBrokerName),
 	}
 	config.UpdateCachedDefaults(defaultSettings)
 }

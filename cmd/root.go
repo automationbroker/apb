@@ -49,8 +49,13 @@ func init() {
 }
 
 func initConfig() {
-	config.Defaults = config.InitJSONConfig(cfgDir, "defaults")
-	config.Registries = config.InitJSONConfig(cfgDir, "registries")
+	var isNewDefaultsConfig bool
+
+	config.Registries, _ = config.InitJSONConfig(cfgDir, "registries")
+	config.Defaults, isNewDefaultsConfig = config.InitJSONConfig(cfgDir, "defaults")
+	if isNewDefaultsConfig {
+		config.UpdateCachedDefaults(config.InitialDefaultSettings())
+	}
 }
 
 // Execute invokes the root command
