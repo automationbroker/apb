@@ -135,6 +135,8 @@ RUN chmod -R g=u /opt/{ansible,apb}
 USER apb
 ```
 
+### Building and publishing your APB for testing
+
 At this point we have a fully formed APB that we can build. To do this, we leverage the OpenShift build system. To create a `buildconfig` for your APB:
 ```bash
 $ oc new-build . --to <bundle-name>
@@ -174,6 +176,10 @@ INFO Registry my-registry has 1 valid APBs available from 2 images scanned
   ----------- -+- ------------------------------- -+- ----------- 
   my-test-apb  |  172.30.1.1:5000/foo/my-test-apb  |  my-registry 
 ```
+
+### Running the APB
+Now that `apb` is aware of the `my-test-apb` APB in the registry, we can perform any supported action against the APB. The `apb bundle` subcommand gives you some actions you can perform on a specific bundle in a registry.
+
 ### More information
 * [Design](design.md) - overall design of Ansible Playbook Bundles
 * [Developers](developers.md) - in-depth explanation of Ansible Playbook Bundles
