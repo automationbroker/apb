@@ -1,9 +1,9 @@
 # Developer Guide
 
-The Service Bundle developer guide provides an in depth guide to creating Bundles. This guide will explain the fundamental components that make up a Service Bundle and is meant to help an experienced Bundle developer get a better understanding of each individual component within a Service Bundle. If you are looking to get more information on creating your first Service Bundle, take a look at our [getting started guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/getting_started.md).
+The APB developer guide provides an in-depth guide to creating Bundles. This guide will explain the fundamental components that make up a APB and is meant to help an experienced Bundle developer get a better understanding of each individual component within a APB. If you are looking to get more information on creating your first APB, take a look at our [getting started guide](https://github.com/ansibleplaybookbundle/ansible-playbook-bundle/blob/master/docs/getting_started.md).
 
   1. [Directory Structure](#directory-structure)
-  1. [Explanation of Service Bundle Spec File](#service-bundle-spec-file)
+  1. [Explanation of APB Spec File](#apb-spec-file)
   1. [Dockerfile](#dockerfile)
   1. [Bundle Actions (Playbooks)](#actions)
      * [Binding Credentials](#binding-credentials)
@@ -17,13 +17,13 @@ The Service Bundle developer guide provides an in depth guide to creating Bundle
      * [Optional Variables](#optional-variables)
      * [Working with Restricted SCC](#working-with-the-restricted-scc)
      * [Using a ConfigMap](#using-a-configmap-within-a-bundle)
-     * [Testing Service Bundles with docker run](#using-docker-run-to-quickly-test-a-bundle)
+     * [Testing APBs with docker run](#using-docker-run-to-quickly-test-a-bundle)
      * [Developing Bundles for Use in Proxied Environments](#developing-bundles-for-use-in-proxied-environments)
-  1. [Service Bundle Spec Version](#service-bundle-spec-versioning)
+  1. [APB Spec Version](#apb-spec-versioning)
 
-## Service Bundle Examples
+## APB Examples
 
-For completed Service Bundle examples, take a look at some of the Bundles in the [ansibleplaybookbundle org](https://github.com/ansibleplaybookbundle)
+For completed APB examples, take a look at some of the Bundles in the [ansibleplaybookbundle org](https://github.com/ansibleplaybookbundle)
 * [hello-world-apb](https://github.com/ansibleplaybookbundle/hello-world-apb)
 * [hello-world-db-apb](https://github.com/ansibleplaybookbundle/hello-world-db-apbb)
 * [pyzip-demo-apb](https://github.com/ansibleplaybookbundle/pyzip-demo-apb)
@@ -45,7 +45,7 @@ For completed Service Bundle examples, take a look at some of the Bundles in the
 
 ## Directory Structure
 
-The following shows an example directory structure of a Service Bundle.
+The following shows an example directory structure of a APB.
 ```bash
 example-apb/
 ├── Dockerfile
@@ -63,9 +63,9 @@ example-apb/
     └── unbind.yml
 ```
 
-## Service Bundle Spec File
+## APB Spec File
 
-The Service Bundle Spec File (`apb.yml`) is where the outline of your application is declared.  The following is an example Bundle spec
+The APB Spec File (`apb.yml`) is where the outline of your application is declared.  The following is an example Bundle spec
 
 ```yaml
 version: 1.0
@@ -105,10 +105,10 @@ plans:
 ### Top level structure
 
 * `version`: Version of the Bundle spec. Please see [versioning](#apb-spec-versioning) for more information.
-* `name`: Name of the Service Bundle. Names must be valid ASCII and may contain lowercase letters, digits, underscores, periods and dashed. Please see [Docker's guidelines](https://docs.docker.com/engine/reference/commandline/tag/#extended-description) for valid tag names.
-* `description`: Short description of this Service Bundle.
-* `bindable`: Boolean option of whether or not this Service Bundle can be bound to. Accepted fields are `true` or `false`.
-* `async`: Field to determine whether the Service Bundle can be deployed asynchronously. Accepted fields are `optional`, `required`, `unsupported`.
+* `name`: Name of the APB. Names must be valid ASCII and may contain lowercase letters, digits, underscores, periods and dashed. Please see [Docker's guidelines](https://docs.docker.com/engine/reference/commandline/tag/#extended-description) for valid tag names.
+* `description`: Short description of this APB.
+* `bindable`: Boolean option of whether or not this APB can be bound to. Accepted fields are `true` or `false`.
+* `async`: Field to determine whether the APB can be deployed asynchronously. Accepted fields are `optional`, `required`, `unsupported`.
 * `metadata`: A dictionary field declaring relevant metadata information. Please see the [metadata section](#metadata) for more information.
 * `plans`: A list of plans that can be deployed. Please see the [plans section](#plans) for more information.
 
@@ -198,7 +198,7 @@ For a full example of how this works, see the [mediawiki-apb](https://github.com
 
 ## Dockerfile
 
-The Dockerfile is what's used to actually build the Service Bundle image.  As a result, sometimes you will need to customize it for your own needs.  For example, if running a playbook that requires interactions with PostgreSQL, you may want to install the required packages by adding the `yum install`.
+The Dockerfile is what's used to actually build the APB image.  As a result, sometimes you will need to customize it for your own needs.  For example, if running a playbook that requires interactions with PostgreSQL, you may want to install the required packages by adding the `yum install`.
 
 ```yaml
 FROM ansibleplaybookbundle/apb-base
@@ -221,7 +221,7 @@ USER apb
 
 ## Actions
 
-An action for a Service Bundle is the command that the Bundle is run with. 5 standard actions that we support are `provision`, `deprovision`, `bind`, `unbind`, and `test`. For an action to be valid there must be a valid file in the `playbooks` directory named `<action>.yml`. These playbooks can do anything which also means that you can technically create any action you would like. Our [mediawiki-apb](https://github.com/ansibleplaybookbundle/mediawiki123-apb/blob/master/playbooks/update.yml) has an example of creating an action `update`.
+An action for a APB is the command that the Bundle is run with. 5 standard actions that we support are `provision`, `deprovision`, `bind`, `unbind`, and `test`. For an action to be valid there must be a valid file in the `playbooks` directory named `<action>.yml`. These playbooks can do anything which also means that you can technically create any action you would like. Our [mediawiki-apb](https://github.com/ansibleplaybookbundle/mediawiki123-apb/blob/master/playbooks/update.yml) has an example of creating an action `update`.
 
 Most Bundles will normally have a `provision` to create resources and a `deprovision` action to destroy the resources when deleting the service.
 
@@ -241,11 +241,11 @@ To properly make our coordinates available to another service, we use the `asb_e
 
 ## Working with Common Resources
 
-Below is a list of common resources that are created when developing Service Bundles. Please see the [Ansible Kubernetes Module](https://github.com/ansible/ansible-kubernetes-modules/tree/master/library) for a full list of available resource modules.
+Below is a list of common resources that are created when developing APBs. Please see the [Ansible Kubernetes Module](https://github.com/ansible/ansible-kubernetes-modules/tree/master/library) for a full list of available resource modules.
 
 ### Service
 
-The following is a sample ansible task to create a service named `hello-world`. It is worth noting that the `namespace` variable in a Service Bundle will be provided by the Ansible Service Broker when launched from the WebUI.
+The following is a sample ansible task to create a service named `hello-world`. It is worth noting that the `namespace` variable in a APB will be provided by the Ansible Service Broker when launched from the WebUI.
 
 * Provision
 
@@ -394,7 +394,7 @@ The following is an example of creating a persistent volume claim resource and d
 
 ### Optional Variables
 
-You can add optional variables to an Ansible Playbook Bundle by using environment variables. To pass variables into a Service Bundle, you will need to escape the variable substitution in your `.yml` files. For example, the section below is of [main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/tasks/main.yml#L89) in the [etherpad-apb](https://github.com/fusor/apb-examples/tree/master/etherpad-apb):
+You can add optional variables to an Ansible Playbook Bundle by using environment variables. To pass variables into a APB, you will need to escape the variable substitution in your `.yml` files. For example, the section below is of [main.yml](https://github.com/fusor/apb-examples/blob/master/etherpad-apb/roles/provision-etherpad-apb/tasks/main.yml#L89) in the [etherpad-apb](https://github.com/fusor/apb-examples/tree/master/etherpad-apb):
 
 ```yaml
 - name: create mariadb deployment config
@@ -428,7 +428,7 @@ state: present
 ```
 
 ### Alternative to using `apb push`
-When developing Service Bundles, there are a couple of factors which could prevent the developer from using the full development lifecycle that the `apb` tooling offers. Primarily these factors are:
+When developing APBs, there are a couple of factors which could prevent the developer from using the full development lifecycle that the `apb` tooling offers. Primarily these factors are:
 * Developing against an OpenShift/Kubernetes cluster that exists on a remote host
 * Developing Bundles on a machine that doesn't have access to the Docker daemon
 
@@ -473,9 +473,9 @@ TWVkaWF3aWtpIEFkbWluIFVzZXIgUGFzc3dvcmQKICAgICAgICByZXF1aXJlZDogVHJ1ZQogICAg\
 ICAgIGRpc3BsYXlfdHlwZTogcGFzc3dvcmQK"
 ```
 
-* Step 2: Populate the internal OCP registry with our built Service Bundle image
+* Step 2: Populate the internal OCP registry with our built APB image
 
-This is what is normally handled by `apb push`. In order to build our image without using Docker, we will take advantage of the source-to-image functionality of OpenShift. By default, the Automation Broker is configured to look at the `openshift` namespace for published Service Bundles. The `openshift` namespace is detailed in our documentation as a namespace which exposes its images/imagestreams to be available to any authenticated user on the cluster. We will take advantage of this by using `oc new-app` in namespace `openshift` to build our image.
+This is what is normally handled by `apb push`. In order to build our image without using Docker, we will take advantage of the source-to-image functionality of OpenShift. By default, the Automation Broker is configured to look at the `openshift` namespace for published APBs. The `openshift` namespace is detailed in our documentation as a namespace which exposes its images/imagestreams to be available to any authenticated user on the cluster. We will take advantage of this by using `oc new-app` in namespace `openshift` to build our image.
 ```
 $ oc new-app <path_to_bundle_source> --name <bundle_name> -n openshift
 ```
@@ -501,7 +501,7 @@ $ curl -H "Authorization: Bearer $(oc whoami -t)" -k -X POST https://asb-1338-an
 ```
 Note: `oc whoami -t` should return a token and the logged in user must have permissions that are documented [here](apb_cli.md#access-permissions)
 
-* Step 4: Verify new Service Bundle exists in the Automation Broker
+* Step 4: Verify new APB exists in the Automation Broker
 
 This is normally the functionality of `apb list`. If you do not have access to use `apb list`, you can use the route gathered from step 3 and do:
 ```
@@ -547,11 +547,11 @@ RUN useradd -u ${USER_UID} -r -g 0 -M -d /usr/src -b /usr/src -s /sbin/nologin -
 USER 1001
 ```
 
-### Using a ConfigMap within an Service Bundle
+### Using a ConfigMap within an APB
 
 There is a temporary workaround we are using to create configmaps from ansible due to a bug in the Ansible modules.
 
-One common use case for ConfigMaps is when the parameters of an Service Bundle will be used within a configuration file of an application or service. The ConfigMap module allows you to mount a ConfigMap into a pod as a volume which can be used to store the config file. This approach allows you to also leverage the power Ansible's `template` module to create a ConfigMap out of Service Bundle paramters. The following is an example of creating a ConfigMap from a jinja template mounted into a pod as a volume.
+One common use case for ConfigMaps is when the parameters of an APB will be used within a configuration file of an application or service. The ConfigMap module allows you to mount a ConfigMap into a pod as a volume which can be used to store the config file. This approach allows you to also leverage the power Ansible's `template` module to create a ConfigMap out of APB paramters. The following is an example of creating a ConfigMap from a jinja template mounted into a pod as a volume.
 
 ```yaml
 - name: Create hastebin config from template
@@ -604,11 +604,11 @@ One common use case for ConfigMaps is when the parameters of an Service Bundle w
 
 ```
 
-### Using docker run to quickly test a Service Bundle
+### Using docker run to quickly test a APB
 
-While developing Service Bundles, you may want to quickly test a Bundle without involving the Automation Broker or Service Catalog. This can be accomplished by using a `docker run` command.
+While developing APBs, you may want to quickly test a Bundle without involving the Automation Broker or Service Catalog. This can be accomplished by using a `docker run` command.
 
-Before continuing, run `oc login` and provide credentials for a cluster-admin user. This method of Service Bundle invocation mounts `~/.kube` into the Bundle container for authentication.
+Before continuing, run `oc login` and provide credentials for a cluster-admin user. This method of APB invocation mounts `~/.kube` into the Bundle container for authentication.
 
 The example below shows a generic `docker run` command with placeholders for an `$SB_IMAGE_NAME`, `$ACTION_NAME`, and `extra-vars`.
 
@@ -621,7 +621,7 @@ $ACTION_NAME \
 --extra-vars 'example_param_2=bar' \
 ```
 
-The next example shows a `docker run` command which will perform the `provision` action of the MediaWiki Service Bundle, with necessary values substituted in.
+The next example shows a `docker run` command which will perform the `provision` action of the MediaWiki APB, with necessary values substituted in.
 
 ```bash
 docker run --rm --net=host -v $HOME/.kube:/opt/apb/.kube:z -u $UID \
@@ -649,7 +649,7 @@ HTTPS_PROXY="<https_proxy>:<port>"
 NO_PROXY="<no_proxy_list>"
 ```
 
-As a Service Bundle developer, you can access any of these environment variables from an Ansible Playbook using a lookup.
+As a APB developer, you can access any of these environment variables from an Ansible Playbook using a lookup.
 
 ```yaml
 set_fact:
@@ -754,7 +754,7 @@ A custom error message can be displayed when a failure occurs in the Bundle. Thi
 
 When the Bundle fails, the broker will pass the contents of the pod's termination log to the service catalog (if it exists), and the contents of the termination log will be displayed on the WebUI.  If the termination log is empty, a generic error message would be displayed.
 
-The below shows how this can be achieved in a Service Bundle. It captures the task in a `block` and `rescue`:
+The below shows how this can be achieved in a APB. It captures the task in a `block` and `rescue`:
 
 ```yaml
   - block:
@@ -771,7 +771,7 @@ The below shows how this can be achieved in a Service Bundle. It captures the ta
       - fail: msg="[Bundle Failed! - Plan - '{{ _apb_plan_id }}'] "
 ```
 
-## Service Bundle Spec Versioning
+## APB Spec Versioning
 
 We are using semantic versioning with the format of x.y where x is a major release and y is a minor release.
 
@@ -779,7 +779,7 @@ The current spec version is 1.0.
 
 ### Major Version Bump
 
-We will increment the major version whenever an API breaking change is introduced to the Service Bundle spec. Some examples include:
+We will increment the major version whenever an API breaking change is introduced to the APB spec. Some examples include:
 
 * Introduction/deletion of a required field
 * Changing the yaml format
@@ -787,7 +787,7 @@ We will increment the major version whenever an API breaking change is introduce
 
 ### Minor Version Bump
 
-We will increment the minor version whenever a non-breaking change is introduced to the Service Bundle spec. Some examples include:
+We will increment the minor version whenever a non-breaking change is introduced to the APB spec. Some examples include:
 
 * Introduction/deletion of an optional field
 * Spelling change
