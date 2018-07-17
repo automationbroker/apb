@@ -205,129 +205,69 @@ apb list
 
 ---
 
-### `init`
+### `binding`
 
 ##### Description
-Initializes a directory structure for a new apb.  Also creates example files for the new APB with sensible defaults.
+Manage bindings on an OpenShift cluster
 
 ##### Usage
 ```bash
-apb init [OPTIONS] NAME
+apb binding [command]
 ```
-##### Arguments
-_NAME_: Name of the APB and directory to be created
+
+##### Commands
+_add_: Add bind credentials to an application
 
 ##### Options
 
 | Option, shorthand      | Description |
 | :---                   | :---        |
-| --help, -h             | Show help message |
-| --force                | Force re-init and overwrite the directory  |
-| --async {required,optional,unsupported} | Specify asynchronous operation on application. Usually defaulted to "optional"|
-| --bindable             | Generate an application with bindable settings |
-| --skip-provision       | Do not generate provision playbook and role |
-| --skip-deprovision     | Do not generate deprovision playbook and role |
-| --skip-bind            | Do not generate bind playbook and role |
-| --skip-unbind          | Do not generate unbind playbook and role |
-| --skip-roles           | Do not generate any roles |
-
-
+| --help, -h             | Show help message for binding |
+| --namespace, -n        | Namespace of binding |
 
 ##### Examples
-Create directory my-new-apb
+Create binding out of secret `foo` and add it to Deployment Config `bar`
 ```bash
-apb init my-new-apb
-# my-new-apb/
-# ├── apb.yml
-# ├── Dockerfile
-# ├── playbooks
-# │   ├── deprovision.yml
-# │   └── provision.yml
-# └── roles
-#     ├── deprovision-my-new-apb
-#     │   └── tasks
-#     │       └── main.yml
-#     └── provision-my-new-apb
-#         └── tasks
-#             └── main.yml
+apb binding add foo bar
 ```
 
-Create directory my-new-apb but skip generating deprovision playbook and roles.
-```bash
-apb init my-new-apb --skip-deprovision
-# my-new-apb/
-# ├── apb.yml
-# ├── Dockerfile
-# ├── playbooks
-# │   └── provision.yml
-# └── roles
-#     └── provision-my-new-apb
-#         └── tasks
-#             └── main.yml
-```
-
-Create directory my-new-apb, overwriting any old versions. The apb will be configured to be bindable and require async.
-```bash
-apb init my-new-apb --force --bindable --async required
-# my-new-apb/
-# ├── apb.yml
-# ├── Dockerfile
-# ├── playbooks
-# │   ├── bind.yml
-# │   ├── deprovision.yml
-# │   ├── provision.yml
-# │   └── unbind.yml
-# └── roles
-#     ├── bind-my-new-apb
-#     │   └── tasks
-#     │       └── main.yml
-#     ├── deprovision-my-new-apb
-#     │   └── tasks
-#     │       └── main.yml
-#     ├── provision-my-new-apb
-#     │   └── tasks
-#     │       └── main.yml
-#     └── unbind-my-new-apb
-#         └── tasks
-#             └── main.yml
-```
-
----
-### `prepare`
+### `broker`
 
 ##### Description
-Compiles the apb into base64 encoding and writes it as a label to the Dockerfile.  
+Interact with Ansible Service Broker
 
-This will allow the Ansible Service Broker to read the apb metadata from the registry without downloading the images.  This command must be run from inside the APB directory.  Running the `build` command will automatically run prepare as well, meaning you generally don't need to run `prepare` by itself.
+Bootstrap and list available APBs in an Ansible Service Broker instance
 
 ##### Usage
 ```bash
-apb prepare [OPTIONS]
+apb broker [command]
 ```
+
+##### Commands
+_bootstrap_: Bootstrap an Ansible Service Broker instance
+_catalog_: List available APBs in Anisble Service Broker catalog
 
 ##### Options
 | Option, shorthand  | Description |
 | :---               | :---        |
-| --help, -h         | Show help message |
-| --dockerfile DOCKERFILE, -f DOCKERFILE  | Writes the apb spec to the target filename instead of a file named "Dockerfile"  |
-
+| --help, -h         | Show help message for broker |
+| --name, -n         | Name of Ansible Service Broker instance |
 
 ##### Examples
-Writes the label for the spec field in `Dockerfile`
+Bootstrap an Ansible Service Broker instance with the name `openshift-ansible-service-broker`
 ```bash
-apb prepare
+apb broker bootstrap --name openshift-ansible-service-broker
 ```
 
-Writes the label for the spec field in `Dockerfile-custom`
+List available APBs in an Ansible Service Broker instance with the name `foo-broker`
 ```bash
-apb prepare --dockerfile Dockerfile-custom
+apb broker catalog --name foo-broker
 ```
 
----
-### `build`
+### `bundle`
 
 ##### Description
-Builds the image for the APB. 
+Interact with Ansible Playbook Bundle images
 
 Similar to running `apb prepare` and `docker build` with a tag. 
 
