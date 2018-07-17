@@ -19,18 +19,11 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/automationbroker/apb/pkg/config"
 	"github.com/automationbroker/apb/pkg/util"
-	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
-
-// Registry stores a single registry config and references all associated bundle specs
-type Registry struct {
-	Config registries.Config
-	Specs  []*bundle.Spec
-}
 
 // Default registry configuration section
 var defaultLocalOpenShiftConfig = registries.Config{
@@ -57,7 +50,7 @@ var defaultHelmConfig = registries.Config{
 }
 
 // Registry cmd vars
-var registryConfig Registry
+var registryConfig config.Registry
 
 // Registry commands
 var registryCmd = &cobra.Command{
@@ -109,16 +102,10 @@ func init() {
 	registryCmd.AddCommand(registryRemoveCmd)
 }
 
-func updateCachedRegistries(regList []Registry) error {
-	viper.Set("Registries", regList)
-	viper.WriteConfig()
-	return nil
-}
-
 func addRegistry(addName string) {
-	var regList []Registry
-	var newConfig Registry
-	err := viper.UnmarshalKey("Registries", &regList)
+	var regList []config.Registry
+	var newConfig config.Registry
+	err := config.Registries.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Println("Error unmarshalling config: ", err)
 		return
@@ -148,12 +135,12 @@ func addRegistry(addName string) {
 		}
 	}
 	regList = append(regList, newConfig)
-	updateCachedRegistries(regList)
+	config.UpdateCachedRegistries(regList)
 	ListImages()
 	return
 }
 
-func printRegistries(regList []Registry) {
+func printRegistries(regList []config.Registry) {
 	colName := &util.TableColumn{Header: "NAME"}
 	colType := &util.TableColumn{Header: "TYPE"}
 	colOrg := &util.TableColumn{Header: "ORG"}
@@ -186,8 +173,8 @@ func applyOverrides(conf *registries.Config, params registries.Config) {
 }
 
 func listRegistries() {
-	var regList []Registry
-	err := viper.UnmarshalKey("Registries", &regList)
+	var regList []config.Registry
+	err := config.Registries.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Printf("Error unmarshalling config: %v", err)
 		return
@@ -202,9 +189,9 @@ func listRegistries() {
 }
 
 func removeRegistry(name string) {
-	var regList []Registry
-	var newRegList []Registry
-	err := viper.UnmarshalKey("Registries", &regList)
+	var regList []config.Registry
+	var newRegList []config.Registry
+	err := config.Registries.UnmarshalKey("Registries", &regList)
 	if err != nil {
 		fmt.Printf("Error unmarshalling config: %v", err)
 	}
@@ -212,7 +199,7 @@ func removeRegistry(name string) {
 		if r.Config.Name == name {
 			fmt.Printf("Found registry [%v]. Removing from list.\n", name)
 			newRegList = append(regList[:i], regList[i+1:]...)
-			updateCachedRegistries(newRegList)
+			config.UpdateCachedRegistries(newRegList)
 			return
 		}
 	}

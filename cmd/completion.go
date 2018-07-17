@@ -24,7 +24,7 @@ import (
 
 var completionCmd = &cobra.Command{
 	Use:   "completion",
-	Short: "Generates shell completion scripts.",
+	Short: "Generates shell completion scripts",
 	Long: `To load apb completion run
 
 source <(apb completion bash)

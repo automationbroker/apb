@@ -25,12 +25,12 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/automationbroker/apb/pkg/config"
 	"github.com/automationbroker/apb/pkg/runner"
 	"github.com/automationbroker/apb/pkg/util"
 	"github.com/automationbroker/bundle-lib/bundle"
 	"github.com/automationbroker/bundle-lib/registries"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -174,10 +174,10 @@ func init() {
 
 // ListImages finds and prints inforomation on bundle images from all the registries
 func ListImages() {
-	var regConfigs []Registry
-	var newRegConfigs []Registry
+	var regConfigs []config.Registry
+	var newRegConfigs []config.Registry
 
-	err := viper.UnmarshalKey("Registries", &regConfigs)
+	err := config.Registries.UnmarshalKey("Registries", &regConfigs)
 	if err != nil {
 		log.Error("Error unmarshalling config: ", err)
 		return
@@ -201,7 +201,7 @@ func ListImages() {
 	}
 	printRegConfigSpecs(newRegConfigs)
 
-	err = updateCachedRegistries(newRegConfigs)
+	err = config.UpdateCachedRegistries(newRegConfigs)
 	if err != nil {
 		log.Errorf("Error updating cache - %v", err)
 		return
@@ -221,7 +221,7 @@ func executeBundle(action string, args []string) {
 }
 
 // Get images from a single registry
-func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
+func getImages(registryMetadata config.Registry) ([]*bundle.Spec, error) {
 	var specList []*bundle.Spec
 
 	authNamespace := ""
@@ -244,7 +244,7 @@ func getImages(registryMetadata Registry) ([]*bundle.Spec, error) {
 	return specList, nil
 }
 
-func printRegConfigSpecs(regConfigs []Registry) {
+func printRegConfigSpecs(regConfigs []config.Registry) {
 	colFQName := &util.TableColumn{Header: "APB"}
 	colImage := &util.TableColumn{Header: "IMAGE"}
 	colRegName := &util.TableColumn{Header: "REGISTRY"}
@@ -284,9 +284,9 @@ func printBundleInfo(bundleSpec *bundle.Spec) {
 }
 
 func showBundleInfo(bundleName string, registryName string) {
-	var regConfigs []Registry
+	var regConfigs []config.Registry
 
-	err := viper.UnmarshalKey("Registries", &regConfigs)
+	err := config.Registries.UnmarshalKey("Registries", &regConfigs)
 	if err != nil {
 		log.Error("Error unmarshalling config: ", err)
 		return
