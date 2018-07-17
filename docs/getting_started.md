@@ -178,7 +178,36 @@ INFO Registry my-registry has 1 valid APBs available from 2 images scanned
 ```
 
 ### Running the APB
-Now that `apb` is aware of the `my-test-apb` APB in the registry, we can perform any supported action against the APB. The `apb bundle` subcommand gives you some actions you can perform on a specific bundle in a registry.
+Now that `apb` is aware of the `my-test-apb` APB in the registry, we can perform any supported action against the APB. The `apb bundle` subcommand gives you some actions you can perform on a specific bundle in a registry. You can use the `--help` flag to see what options are available:
+```
+$ apb bundle --help
+List, execute and build APBs
+
+Usage:
+  apb bundle [command]
+
+Available Commands:
+  deprovision Deprovision APB images
+  info        Print info on APB image
+  list        List APB images
+  prepare     Stamp APB metadata onto Dockerfile as b64
+  provision   Provision APB images
+
+Flags:
+  -h, --help                help for bundle
+  -k, --kubeconfig string   Path to kubeconfig to use
+
+Global Flags:
+      --config string   configuration file (default is $HOME/.apb)
+  -v, --verbose         verbose output
+
+Use "apb bundle [command] --help" for more information about a command.
+```
+
+We can `provision` the `my-test-apb` that now exists in the registry by running:
+```
+$ sbcli bundle provision my-test-apb
+```
 
 ### More information
 * [Design](design.md) - overall design of Ansible Playbook Bundles
@@ -186,5 +215,5 @@ Now that `apb` is aware of the `my-test-apb` APB in the registry, we can perform
 * [APB CLI Tool](apb_cli.md) - installation and usage of the `apb` cli tool
 * [OpenShift Origin Docs](https://docs.openshift.org/latest/welcome/index.html)
 * The [ansible-kubernetes-modules](https://github.com/ansible/ansible-kubernetes-modules) project.
-* [Example APBs](https://github.com/fusor/apb-examples)
+* [Example APBs](https://github.com/ansibleplaybookbundle)
 * [Ansible Service Broker](https://github.com/openshift/ansible-service-broker)
