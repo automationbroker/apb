@@ -204,7 +204,6 @@ apb list
 <a id="creating-apbs"></a>
 
 ---
-
 ### `binding`
 
 ##### Description
@@ -231,6 +230,7 @@ Create binding out of secret `foo` and add it to Deployment Config `bar`
 apb binding add foo bar
 ```
 
+---
 ### `broker`
 
 ##### Description
@@ -264,89 +264,64 @@ List available APBs in an Ansible Service Broker instance with the name `foo-bro
 apb broker catalog --name foo-broker
 ```
 
+---
 ### `bundle`
 
 ##### Description
-Interact with Ansible Playbook Bundle images
-
-Similar to running `apb prepare` and `docker build` with a tag. 
+Interact with Ansible Playbook Bundle images present in the `apb` tool
 
 ##### Usage
 ```bash
-apb build [OPTIONS]
+apb bundle [COMMAND] [OPTIONS]
 ```
+
+##### Commands
+_deprovision_: Deprovision APB image
+_info_: Print info about APB image
+_list_: List available APB images
+_prepare_: Stamp APB metadata onto Dockerfile in base64 encoding
+_provision_: Provision APB images
 
 ##### Options
 
 | Option, shorthand  | Description |
 | :---               | :---        |
 | --help, -h         | Show help message |
-| --tag TAG          | Sets the tag of the built image to a string in the format registry/org/name|
-| --dockerfile DOCKERFILE, -f DOCKERFILE  | Writes the apb spec to the target filename instead of a file named "Dockerfile"  |
+| --kubeconfig, -k   | Path to kubeconfig to use |
 
 
 ##### Examples
-Build the image and use the name field from apb.yml as the tag.
+Provision `mediawiki-apb` APB image
 ```bash
-apb build
-```
-
-Build the image and use the tag docker.io/my-org/my-new-apb.
-```bash
-apb build --tag docker.io/my-org/my-new-apb
-```
-
-Build the image using the file "Dockerfile-custom" as the Dockerfile definition.
-```bash
-apb build --dockerfile Dockerfile-custom
+apb bundle provision mediawiki-apb
 ```
 
 ---
-### `push`
+### `catalog`
 
 ##### Description
-Uploads the APB to a local openshift registry or a broker mock registry where it will be read by the Ansible Service Broker. 
-
-When using the broker's mock registry, the spec is uploaded and will be displayed in OpenShift, but OpenShift will pull the image from the registry normally.  Usually that means the docker registry where `oc cluster up` was performed.
-
-When using the local openshift registry, the image is uploaded to OpenShift directly.
+Interact with OpenShift Service Catalog. Force the Service Catalog to relist it's available APBs from an Ansible Service Broker instance
 
 ##### Usage
 ```bash
-apb push [OPTIONS]
+apb catalog [COMMAND] [OPTIONS]
 ```
+
+##### Commands
+_relist_: Force a relist of the OpenShift Service Catalog
 
 ##### Options
 
 | Option, shorthand  | Description |
 | :---               | :---        |
 | --help, -h         | Show help message |
-| --broker BROKER_URL | Route to the Ansible Service Broker |
-| --namespace NAMESPACE | Namespace to push to internal OpenShift registry |
-| --registry-service-name REG_SVC_NAME | Name of service for the internal OpenShift registry |
-| --registry-route REG_ROUTE | Name of service for the internal OpenShift registry |
-| --registry-namespace REG_NAMESPACE | Name of service for the internal OpenShift registry |
-| --dockerfile DOCKERFILE, -f DOCKERFILE | Dockerfile to build internal registry image.  Usually defaults to "Dockerfile" but can be set to any filename |
-| --secure           | Use secure connection to Ansible Service Broker |
-| --username  USERNAME| Basic auth username to be used in broker communication  |
-| --password  PASSWORD| Basic auth password to be used in broker communication  |
-| --no-relist        | Do not relist the catalog after pushing an apb to the broker  |
-| --broker-name      | Name of the ServiceBroker k8s resource  |
-| --push-to-broker   | Use the OpenShift Ansible Broker mock registry endpoint |
+| --name, -n         | Name of clusterservicebroker to relist |
 
 
 ##### Examples
-Push to the local OpenShift registry
+Force a relist of `foo-broker`
 ```bash
-apb push
-```
-Push to the Ansible Service Broker development endpoint
-```bash
-apb push --push-to-broker
-```
-Push to the local OpenShift registry under namespace `leto`
-```bash
-apb push --namespace leto
+apb catalog relist --name foo-broker
 ```
 
 ---
