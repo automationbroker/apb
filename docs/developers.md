@@ -397,7 +397,7 @@ There are two main approaches for building APBs:
  1. Using `docker build` to build with the local Docker daemon
 
 ### Recommended Build Approach
-We recommend the OpenShift build system by running `oc start-build` for most APB development use-cases, especially in restricted privilege development environments where the Docker daemon is inaccessible.
+We recommend using the OpenShift build system with `oc start-build` for most APB development use-cases, especially in restricted privilege development environments where the Docker daemon is inaccessible.
 
 This approach builds APBs using OpenShift source-to-image (S2I) functionality. Using source-to-image means that we'll upload APB source files (including a Dockerfile) to OpenShift to be built into a container image. 
 
@@ -414,22 +414,13 @@ $ # encode apb.yml contents as base64 and dump into Dockerfile field `LABEL "com
 $ apb prepare
 ```
 
-### Building with the OpenShift Build System
+### Building with the OpenShift Build System (recommended)
 ```bash
 $ # (first build only) create a new OpenShift binary buildconfig named <apb-name>
 $ oc new-build -n openshift --binary=true --name <apb-name>
 
-$ # upload and start build with contents of current directory using buildconfig <apb-name>
-$ oc start-build -n openshift --from-dir . <apb-name>
-
-$ # (optional) view builds in 'openshift' namespace
-$ oc get builds -n openshift
-
-$ # (optional) follow the build-logs for the newly started build
-$ oc build-logs -f <apb-build-name>
-
-$ # (optional) monitor for the build to complete and for an APB image to exist in the OpenShift registry
-$ watch oc get images -n openshift | grep <apb-name>
+$ # upload contents of current directory and start build with using buildconfig <apb-name>
+$ oc start-build -n openshift --follow --from-dir . <apb-name>
 ```
 
 ### Building with the local Docker daemon
