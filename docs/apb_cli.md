@@ -325,88 +325,61 @@ apb catalog relist --name foo-broker
 ```
 
 ---
-### `test`
+### `completion`
 
 ##### Description
-Runs the APB unit tests.
+Generates shell completion scripts. This gives completion scripts for bash and zsh.
 
 ##### Usage
 ```bash
-apb test [OPTIONS]
+apb completion [COMMAND] [OPTIONS]
 ```
+
+##### Commands
+_bash_: Generate shell completion script for bash
+_zsh_: Generate shell completion script for zsh
 
 ##### Options
 
 | Option, shorthand  | Description |
 | :---               | :---        |
 | --help, -h         | Show help message |
-| --tag TAG          | Sets the tag of the built image to a string in the format registry/org/name |
 
 
 ##### Examples
-Run the tests
+Generate bash completion script
 ```bash
-apb test
+apb completion bash
 ```
-
-Run the tests but use a specific tag on the built image
-```bash
-apb test --tag docker.io/my-org/my-new-apb
-```
-
-<a id="broker-utilities"></a>
 
 ---
 
-### `list`
+### `help`
 
 ##### Description
-Lists all the APBs the broker has loaded
+Get help information for any command
 
 ##### Usage
 ```bash
-apb list [OPTIONS]
+apb help [COMMAND]
 ```
-
-##### Options
-
-| Option, shorthand   | Description |
-| :---                | :---        |
-| --help, -h          | Show help message |
-| --broker BROKER_URL | Route to the Ansible Service Broker|
-| --secure            |  Use secure connection to Ansible Service Broker |
-| --verbose, -v       |  Output verbose spec information from Ansible Service Broker |
-| --output {yaml,json}, -o {yaml,json}| Specify verbose output format in yaml (default) or json |
-| --username BASIC_AUTH_USERNAME, -u BASIC_AUTH_USERNAME | Specify the basic auth username to be used |
-| --password BASIC_AUTH_PASSWORD, -p BASIC_AUTH_PASSWORD | Specify the basic auth password to be used |
-
 
 ##### Examples
 
-Basic list of APBs including name, ID, and description
+Get more information about the `apb broker` subcommand
 ```bash
-apb list
-```
-
-List verbose pretty printed specs
-```bash
-apb list -v 
-```
-
-List all the json output
-```bash
-apb list -v -o json
+apb help broker
 ```
 
 ---
-### `bootstrap`
+### `registry`
 
 ##### Description
-Requests the Ansible Service Broker to reload all APBs from the registries.
+Add, list, or remove registry configurations from the `apb` tool. We support all available registry types available within the Ansible Service Broker
 
 ##### Usage
 ```bash
-apb bootstrap [OPTIONS]
+apb registry [COMMAND] [OPTIONS]
 ```
 
 ##### Options
