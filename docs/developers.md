@@ -13,6 +13,14 @@ The APB developer guide provides an in-depth guide to creating APBs. This guide 
      * [Route](#route)
      * [PersistentVolume](#persistent-volume)
   1. [Custom Error Message](#custom-error-message)
+  1. [Building APBs](#building-apbs)
+     * [Pre-Build](#pre-build)
+     * [Building with OpenShift Build System](#building-with-the-openshift-build-system)
+     * [Building with local Docker daemon](#building-with-the-local-docker-daemon)
+     * [Build Approach Comparison](#build-approaches-compared-oc-start-build-vs-docker-build)
+  1. [Running APBs](#running-apbs)
+     * [Full Path](#full-path)
+     * [Fast Path](#fast-path)
   1. [Tips & Tricks](#tips-and-tricks)
      * [Optional Variables](#optional-variables)
      * [Working with Restricted SCC](#working-with-the-restricted-scc)
@@ -414,7 +422,7 @@ $ # encode apb.yml contents as base64 and dump into Dockerfile field `LABEL "com
 $ apb prepare
 ```
 
-### Building with the OpenShift Build System (recommended)
+### Building with the OpenShift Build System
 ```bash
 $ # (first build only) create a new OpenShift binary buildconfig named <apb-name>
 $ oc new-build -n openshift --binary=true --name <apb-name>
@@ -447,7 +455,7 @@ Pros:
 
 Cons:
 - Requires access to an image build functionality on an OpenShift cluster 
-- More components involved in debug cycle when fixing a Dockerfile that won't build
+- More components involved in debug cycle
 
 #### docker build
 
@@ -467,7 +475,7 @@ Encoding of apb.yml metadata is usually done via `apb prepare`. If you don't hav
 $ base64 apb.yml
 dmVyc2lvbjogMS4wCm5hbWU6IG1lZGlhd2lraS1hcGIKZGVzY3JpcHRpb246IE1lZGlhd2lraSBh # <- base64 encoded apb.yml
 ```
-This will return the base64 encoded `apb.yml` which you can copy and paste into the `Dockerfile` under the `LABEL` `com.redhat.apb.spec` like so:
+This will return the base64 encoded `apb.yml` which you can copy and paste into the `Dockerfile` under the `apb.spec` label like so:
 ```
 LABEL "com.redhat.apb.spec"=\
 "dmVyc2lvbjogMS4wCm5hbWU6IG1lZGlhd2lraS1hcGIKZGVzY3JpcHRpb246IE1lZGlhd2lraSBh"
@@ -480,16 +488,16 @@ After you've built an APB, you'll want to test it out. There are two available p
 The full path exercises the entire production workflow of an APB, including the OpenShift Service Catalog Web UI. 
 Iterating on APBs using this path may be more delay-prone since more components need to sync up before a change can be tested.
 
-1. _Prerequisite_ - Build the APB image, push to a registry that the Automation Broker is configured to look in
+1. Build the APB image, push to a registry that the Automation Broker is configured to search for APBs in
 1. Run `apb broker bootstrap` to notify the Automation Broker to 'bootstrap' itself to search for available APBs
 1. Run `apb broker catalog` to verify that the new APB is known to the Automation Broker
 1. Run `apb catalog relist` to notify the Service Catalog to request an updated 'catalog' of available APBs from the broker
-1. Visit the OpenShift Service Catalog to provision the APB
+1. Visit the OpenShift Service Catalog within the Web UI to provision the APB
 
 ### Fast Path (requires OpenShift + apb CLI tool)
 The fast path lets you test an APB on OpenShift as simply as possible.
 
-1. _Prerequisite_ - Build the APB image, push to a registry that the `apb` tool is configured to look in
+1. Build the APB image, push to a registry that the `apb` tool is configured to search for APBs in
 1. Run `apb bundle list --refresh` to retrieve an updated list of APBs
 1. Run `apb bundle provision <apb-name> --follow` to run the provision action for your APB and view log output
 
