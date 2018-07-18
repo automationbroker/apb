@@ -390,6 +390,165 @@ The following is an example of creating a persistent volume claim resource and d
 
 ```
 
+## Building APBs
+
+There are two main approaches for building APBs:
+ 1. Using `oc start-build` to build with the OpenShift build system
+ 1. Using `docker build` to build with the local Docker daemon
+
+### Recommended Build Approach
+We recommend the OpenShift build system by running `oc start-build` for most APB development use-cases, especially in restricted privilege development environments where the Docker daemon is inaccessible.
+
+This approach builds APBs using OpenShift source-to-image (S2I) functionality. Using source-to-image means that we'll upload APB source files (including a Dockerfile) to OpenShift to be built into a container image. 
+
+By default, the Automation Broker is configured to look for APBs in the `openshift` namespace. Images and ImageStreams in the `openshift` namespace are exposed by default to any authenticated OpenShift user. We'll take advantage of these defaults and build APBs with `oc start-build` into the `openshift` namespace.
+
+
+### Pre-Build
+For any method of building an APB, the first steps will be the same:
+```bash
+$ # navigate to directory containing valid APB contents
+$ cd <my-apb-dir> 
+
+$ # encode apb.yml contents as base64 and dump into Dockerfile field `LABEL "com.redhat.apb.spec"=`
+$ apb prepare
+```
+
+### Building with the OpenShift Build System
+```bash
+$ # (first build only) create a new OpenShift binary buildconfig named <apb-name>
+$ oc new-build -n openshift --binary=true --name <apb-name>
+
+$ # upload and start build with contents of current directory using buildconfig <apb-name>
+$ oc start-build -n openshift --from-dir . <apb-name>
+
+$ # (optional) view builds in 'openshift' namespace
+$ oc get builds -n openshift
+
+$ # (optional) follow the build-logs for the newly started build
+$ oc build-logs -f <apb-build-name>
+
+$ # (optional) monitor for the build to complete and for an APB image to exist in the OpenShift registry
+$ watch oc get images -n openshift | grep <apb-name>
+```
+
+### Building with the local Docker daemon
+```bash
+$ # build contents of current directory into an APB image. build logs will be printed to stdout
+$ docker build . -t <docker-registry-name>/<my-apb-name>:<tag>
+
+$ # push APB image to a registry where it can be consumed 
+$ docker push <my-apb-name>
+
+$ # placeholder for additional steps to push to OpenShift internal registry
+```
+
+## More on Building APBs
+
+### Build Approaches Compared: `oc start-build` vs `docker build`
+
+#### oc start-build
+
+Pros:
+- Works without local root access (don't need to interact with Docker daemon)
+- No extra `docker push` step when image build completes
+- Helps facilitate quick build-test cycle for APBs within OpenShift
+
+Cons:
+- Requires access to an image build functionality on an OpenShift cluster 
+- More components involved in debug cycle when fixing a Dockerfile that won't build
+
+#### docker build
+
+Pros:
+- Build process can be faster than 'oc start-build'
+- Fewer components involved, may be easier to debug build failures
+
+Cons:
+- Requires access to local Docker daemon, which may equate to root access
+- Requires extra step of running `docker push` when image build completes
+- Pushing to internal OpenShift registry requires additional auth steps
+
+
+### Alternate approach to encoding apb.yml contents
+Encoding of apb.yml metadata is usually done via `apb prepare`. If you don't have `apb` tool installed, you can run:
+```bash
+$ base64 apb.yml
+dmVyc2lvbjogMS4wCm5hbWU6IG1lZGlhd2lraS1hcGIKZGVzY3JpcHRpb246IE1lZGlhd2lraSBh # <- base64 encoded apb.yml
+```
+This will return the base64 encoded `apb.yml` which you can copy and paste into the `Dockerfile` under the `LABEL` `com.redhat.apb.spec` like so:
+```
+LABEL "com.redhat.apb.spec"=\
+"dmVyc2lvbjogMS4wCm5hbWU6IG1lZGlhd2lraS1hcGIKZGVzY3JpcHRpb246IE1lZGlhd2lraSBh"
+```
+
+## Running APBs
+After you've built an APB, you'll want to test it out. There are two available paths for testing an APB:
+
+### Full Path (requires OpenShift + Automation Broker + Service Catalog + apb CLI tool)
+The full path exercises the entire production workflow of an APB, including the OpenShift Service Catalog Web UI. 
+Iterating on APBs using this path may be more delay-prone since more components need to sync up before a change can be tested.
+
+1. _Prerequisite_ - Build the APB image, push to a registry that the Automation Broker is configured to look in
+1. Run `apb broker bootstrap` to notify the Automation Broker to 'bootstrap' itself to search for available APBs
+1. Run `apb broker catalog` to verify that the new APB is known to the Automation Broker
+1. Run `apb catalog relist` to notify the Service Catalog to request an updated 'catalog' of available APBs from the broker
+1. Visit the OpenShift Service Catalog to provision the APB
+
+### Fast Path (requires OpenShift + apb CLI tool)
+The fast path lets you test an APB on OpenShift as simply as possible.
+
+1. _Prerequisite_ - Build the APB image, push to a registry that the `apb` tool is configured to look in
+1. Run `apb bundle list --refresh` to retrieve an updated list of APBs
+1. Run `apb bundle provision <apb-name> --follow` to run the provision action for your APB and view log output
+
+
+## More on Running APBs
+#### Manually triggering 'apb broker bootstrap'
+If you don't have access to do `apb broker bootstrap`, you can also do the following:
+```
+$ oc get route -n ansible-service-broker
+NAME       HOST/PORT                                           PATH      SERVICES   PORT        TERMINATION   WILDCARD
+asb-1338   asb-1338-ansible-service-broker.172.17.0.1.nip.io             asb        port-1338   reencrypt     None
+
+$ curl -H "Authorization: Bearer $(oc whoami -t)" -k -X POST https://asb-1338-ansible-service-broker.172.17.0.1.nip.io/ansible-service-broker/v2/bootstrap                                 
+{
+  "spec_count": 38,
+  "image_count": 109
+}
+```
+Note: `oc whoami -t` should return a token and the logged in user must have permissions that are documented [here](apb_cli.md#access-permissions)
+
+#### Manually triggering 'apb broker catalog' to view APBs known to the Automation Broker
+If you do not have access to use `apb broker catalog`, you can use the route gathered from step 3 and do:
+```
+$ curl -H "Authorization: Bearer $(oc whoami -t)" -k https://asb-1338-ansible-service-broker.172.17.0.1.nip.io/ansible-service-broker/v2/catalog
+```
+
+You should see a list of all bootstrapped specs and one that is labeled `localregistry-<apb_name>`. I recommend using `|grep <apb_name>` to help find it since the output is in JSON.
+
+#### Manually running an APB from the OpenShift internal registry
+In order to do this, first push the into the internal OpenShift registry. Once the image exists, you should be able to see the image with:
+```
+$ oc get images | grep <apb_name>
+sha256:bfaa73a5e15bf90faec343c7d5f8cc4f952987afdbc3f11a24c54c037528d2ed   172.30.1.1:5000/openshift/<apb_name>@sha256:bfaa73a5e15bf90faec343c7d5f8cc4f952987afdbc3f11a24c54c037528d2ed
+```
+
+Now in order to provision the APB, we can use `oc run`:
+```
+$ oc new-project <target_namespace>
+$ oc create serviceaccount apb
+$ oc create rolebinding apb --clusterrole=admin --serviceaccount=<target_namespace>:apb
+$ oc run <pod_name> \
+      --env="POD_NAME=<pod_name>" \
+      --env="POD_NAMESPACE=<target_namespace>" \
+      --image=172.30.1.1:5000/openshift/<apb_name> \
+      --restart=Never \
+      --attach=true \
+      --serviceaccount=apb \
+      -- <action> -e namespace=<target_namespace> -e cluster=$CLUSTER```
+```
+
 ## Tips and Tricks
 
 ### Optional Variables
@@ -425,114 +584,6 @@ etherpad_admin_password: "{{ lookup('env','ETHERPAD_ADMIN_PASSWORD') | default('
 etherpad_admin_user: "{{ lookup('env','ETHERPAD_ADMIN_USER') | default('etherpad', true) }}"
 etherpad_db_host: "{{ lookup('env','ETHERPAD_DB_HOST') | default('mariadb', true) }}"
 state: present
-```
-
-### Building APBs
-
-#### Choose What's Best for You: 'docker build' vs. the OpenShift Build System
-There are two main approaches for building APBs:
- 1. Using 'oc new-build'/'oc start-build' to build with the OpenShift build system
- 1. Using 'docker build' to build with the local Docker daemon
-
- In order to build an APB image without using Docker, we will take advantage of the source-to-image functionality of OpenShift. By default, the Automation Broker is configured to look at the `openshift` namespace for published APBs. The `openshift` namespace is detailed in our documentation as a namespace which exposes its images/imagestreams to be available to any authenticated user on the cluster. We will take advantage of this by using `oc new-build`/`oc start-build` in namespace `openshift` to build our image.
-
- We recommend the OpenShift build system for most use-cases, especially in restricted privilege development environments where the Docker daemon is inaccessible.
-
-#### Pre-Build
-For any method of building an APB, the first steps will be the same:
-1. `cd <my-apb-dir>` - navigate to directory containing valid APB contents
-1. `apb prepare` - encodes apb.yml contents as base64 and dumps into Dockerfile field `LABEL "com.redhat.apb.spec"=`
-
-#### Building with the OpenShift Build System
-1. `oc new-build -n openshift --binary=true --name <apb-name>` - create a new OpenShift binary buildconfig called `<apb-name>` (do this once per APB)
-1. `oc start-build -n openshift --from-dir . <apb-name>` - upload the contents of `.` to be built into an APB image using the previously created buildconfig `<apb-name>`
-1. `watch oc get images | grep <apb-name>` - monitor for the build to complete and for an APB image to exist in the OpenShift registry
-
-#### Building with the Docker daemon
-1. `docker build . -t <my-apb-name>` - build contents of `.` into APB image
-1. `docker push <my-apb-name>` - push APB image to a registry where it can be consumed 
-
-
-#### More on Building APBs
-##### Alternate approach to encoding apb.yml contents
-Encoding of apb.yml metadata is usually done via `apb prepare`. If you don't have `apb` tool installed, you can run:
-```
-$ cat apb.yml | base64
-```
-This will return the base64 encoded `apb.yml` which you can copy and paste into the `Dockerfile` under the `LABEL` `com.redhat.apb.spec` like so ('\' are not required):
-```
-LABEL "com.redhat.apb.spec"=\
-"dmVyc2lvbjogMS4wCm5hbWU6IG1lZGlhd2lraS1hcGIKZGVzY3JpcHRpb246IE1lZGlhd2lraSBh\
-cGIgaW1wbGVtZW50YXRpb24KYmluZGFibGU6IEZhbHNlCmFzeW5jOiBvcHRpb25hbAptZXRhZGF0\
-YToKICBkb2N1bWVudGF0aW9uVXJsOiBodHRwczovL3d3dy5tZWRpYXdpa2kub3JnL3dpa2kvRG9j\
-dW1lbnRhdGlvbgogIGxvbmdEZXNjcmlwdGlvbjogQW4gYXBiIHRoYXQgZGVwbG95cyBNZWRpYXdp"
-```
-
-### Running APBs
-After you've built an APB, you'll want to test it out. There are two available paths for testing an APB:
-
-#### Traditional Path (requires OpenShift + Automation Broker + Service Catalog + `apb` tool)
-The traditional path exercises the entire production workflow of an APB, including the OpenShift Service Catalog Web UI. 
-Iterating quickly on APBs using this path may be more error-prone since more components need to sync up.
-
-1. _Prerequisite_ - Build the APB image, push to a registry that the Automation Broker is configured to look in
-1. Run `apb broker bootstrap` to notify the Automation Broker to 'bootstrap' itself to search for available APBs
-1. Run `apb broker catalog` to verify that the new APB is known to the Automation Broker
-1. Run `apb catalog relist` to notify the Service Catalog to request an updated 'catalog' of available APBs from the broker
-1. Visit the OpenShift Service Catalog to provision the APB
-
-#### Minimal Path (requires OpenShift + `apb` tool)
-The minimal path lets you test an APB on OpenShift as simply as possible.
-
-1. _Prerequisite_ - Build the APB image, push to a registry that the `apb` tool is configured to look in
-1. Run `apb bundle list --refresh` to retrieve an updated list of APBs
-1. Run `apb bundle provision <apb-name> --follow` to run the provision action for your APB and view log output
-
-
-#### More on Running APBs
-##### Manually triggering 'apb broker bootstrap'
-If you do not have access to do `apb broker bootstrap`, you can also do the following:
-```
-$ oc get route -n ansible-service-broker
-NAME       HOST/PORT                                           PATH      SERVICES   PORT        TERMINATION   WILDCARD
-asb-1338   asb-1338-ansible-service-broker.172.17.0.1.nip.io             asb        port-1338   reencrypt     None
-
-$ curl -H "Authorization: Bearer $(oc whoami -t)" -k -X POST https://asb-1338-ansible-service-broker.172.17.0.1.nip.io/ansible-service-broker/v2/bootstrap                                 
-{
-  "spec_count": 38,
-  "image_count": 109
-}
-```
-Note: `oc whoami -t` should return a token and the logged in user must have permissions that are documented [here](apb_cli.md#access-permissions)
-
-##### Manually triggering 'apb broker catalog' to view APBs known to the Automation Broker
-If you do not have access to use `apb broker catalog`, you can use the route gathered from step 3 and do:
-```
-$ curl -H "Authorization: Bearer $(oc whoami -t)" -k https://asb-1338-ansible-service-broker.172.17.0.1.nip.io/ansible-service-broker/v2/catalog
-```
-
-You should see a list of all bootstrapped specs and one that is labeled `localregistry-<apb_name>`. I recommend using `|grep <apb_name>` to help find it since the output is in JSON.
-
-##### Manually running an APB from the OpenShift internal registry
-In order to do this, first push the into the internal OpenShift registry. Once the image exists, you should be able to see the image with:
-```
-$ oc get images | grep <apb_name>
-sha256:bfaa73a5e15bf90faec343c7d5f8cc4f952987afdbc3f11a24c54c037528d2ed   172.30.1.1:5000/openshift/<apb_name>@sha256:bfaa73a5e15bf90faec343c7d5f8cc4f952987afdbc3f11a24c54c037528d2ed
-```
-
-Now in order to provision the APB, we can use `oc run`:
-```
-$ oc new-project <target_namespace>
-$ oc create serviceaccount apb
-$ oc create rolebinding apb --clusterrole=admin --serviceaccount=<target_namespace>:apb
-$ oc run <pod_name> \
-      --env="POD_NAME=<pod_name>" \
-      --env="POD_NAMESPACE=<target_namespace>" \
-      --image=172.30.1.1:5000/openshift/<apb_name> \
-      --restart=Never \
-      --attach=true \
-      --serviceaccount=apb \
-      -- <action> -e namespace=<target_namespace> -e cluster=$CLUSTER```
 ```
 
 ### Working with the restricted scc
