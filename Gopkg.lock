@@ -20,6 +20,7 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
+  branch = "master"
   name = "github.com/automationbroker/broker-client-go"
   packages = [
     "client/clientset/versioned",
@@ -28,8 +29,7 @@
     "pkg/apis/automationbroker",
     "pkg/apis/automationbroker/v1alpha1"
   ]
-  revision = "6918e8ae55fc54e0b69c5d17afd77d07efd5dc23"
-  version = "0.1.2"
+  revision = "bf1c2b52e55d67b4c3a917daaadee9b86a6c66e0"
 
 [[projects]]
   name = "github.com/automationbroker/bundle-lib"
@@ -41,8 +41,8 @@
     "registries/adapters/oauth",
     "runtime"
   ]
-  revision = "6b13aa1285fd32855c61277a55e3cf9da4d448c3"
-  version = "0.2.4"
+  revision = "1ec29fa04e8947fca997358936fe356cbb2358ce"
+  version = "0.2.6"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -676,6 +676,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2e12e83b8a0d90a2a5673807a97ed6ee925e157e1f4fe7685948b3e203b9a563"
+  inputs-digest = "e3cf8832aefcdb881617db2184b838d29a80e3c39a876664369f90a063053c4b"
   solver-name = "gps-cdcl"
   solver-version = 1
