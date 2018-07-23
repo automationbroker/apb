@@ -382,129 +382,41 @@ Add, list, or remove registry configurations from the `apb` tool. We support all
 apb registry [COMMAND] [OPTIONS]
 ```
 
-##### Options
-
-| Option, shorthand   | Description |
-| :---                | :---        |
-| --help, -h          | Show help message |
-| --broker BROKER_URL | Route to the Ansible Service Broker |
-| --secure            | Use secure connection to Ansible Service Broker |
-| --no-relist         | Do not relist the catalog after bootstrapping the broker |
-| --username BASIC_AUTH_USERNAME, -u BASIC_AUTH_USERNAME | Specify the basic auth username to be used |
-| --password BASIC_AUTH_PASSWORD, -p BASIC_AUTH_PASSWORD | Specify the basic auth password to be used |
-| --broker-name BROKER_NAME | Name of the ServiceBroker k8s resource |
-
-
-##### Examples
-Basic reload of APBs
-```bash
-apb bootstrap
-```
-
-
----
-### `remove`
-
-##### Description
-Removes one (or all) APBs from the broker.
-
-##### Usage
-```bash
-apb remove [OPTIONS]
-```
+##### Commands
+_add_: Add a new registry adapter
+_list_: List the configured registry adapters
+_remove_: Remove a registry adapter
 
 ##### Options
 
 | Option, shorthand   | Description |
 | :---                | :---        |
 | --help, -h          | Show help message |
-| --broker BROKER_URL | Route to the Ansible Service Broker|
-| --secure            | Use secure connection to Ansible Service Broker |
-| --all               | Remove all stored APBs |
-| --local, -l         | Remove APB from internal registry (apb push'ed APB) |
-| --id ID             | ID of APB to remove |
-| --secure            | Use secure connection to Ansible Service Broker |
-| --username BASIC_AUTH_USERNAME, -u BASIC_AUTH_USERNAME | Specify the basic auth username to be used |
-| --password BASIC_AUTH_PASSWORD, -p BASIC_AUTH_PASSWORD | Specify the basic auth password to be used |
-| --no-relist         | Do not relist the catalog after deletion|
-
-
-##### Examples                                                                                                                                         
-Remove an APB that was pushed to the internal registry using `apb push`
-```bash
-$ pwd
-/home/user/my-test-apb
-$ apb remove -l
-```
-Remove all APBs from internal registry (assumes all APBs are named `*-apb`)
-```bash
-$ apb remove -l --all
-```
-
-Remove an APB using an ID (This only removes the spec from the broker. It does *not* remove the image itself from the remote registry.)
-```bash
-apb remove --id ca91b61da8476984f18fc13883ae2fdb
-oc delete clusterserviceclass ca91b61da8476984f18fc13883ae2fdb
-```
-Deleting the `clusterserviceclass` removes the associated APB from the Service Catalog.
-
-*Note: If you need an ID of an APB, use* `apb list`.
-```bash
-$ apb list
-ID                                NAME                     DESCRIPTION
-ca91b61da8476984f18fc13883ae2fdb  dh-etherpad-apb          Note taking web application
-```  
-
-Remove all APB specs from the broker
-```bash
-apb remove --all
-```
-
----
-### `relist`
-
-##### Description
-Forces service catalog to relist the provided services to match the broker.
-
-##### Usage
-```bash
-apb relist [OPTIONS]
-```
-
-##### Options
-| Option, shorthand   | Description |
-| :---                | :---        |
-| --help, -h          | Show help message |
-| --broker-name BROKER_NAME | Name of the ServiceBroker k8s resource |
-| --secure            | Use secure connection to Ansible Service Broker
-| --username BASIC_AUTH_USERNAME, -u BASIC_AUTH_USERNAME | Specify the basic auth username to be used |
-| --password BASIC_AUTH_PASSWORD, -p BASIC_AUTH_PASSWORD | Specify the basic auth password to be used |
 
 
 ##### Examples
+Add a registry named `dockerhub` configured to use organization `dune` from Dockerhub
 ```bash
-apb relist
+apb registry add --org dune dockerhub
 ```
 
-<a id="other"></a>
+List configured registries
+```bash
+apb registry list
+```
+
+Remove registry `dockerhub`
+```bash
+apb registry remove dockerhub
+```
 
 ---
-
-### `help`
+### `version`
 
 ##### Description
-Displays a help message
+Displays current version of `apb` tool
 
 ##### Usage
 ```bash
-apb help
-```
-
-##### Examples
-```bash
-apb help
-```
-
-```bash
-apb -h
+apb version
 ```
