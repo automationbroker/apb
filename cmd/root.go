@@ -56,9 +56,9 @@ func initConfig() {
 	// Load or create defaults.json
 	config.Defaults, isNewDefaultsConfig = config.InitJSONConfig(cfgDir, "defaults")
 	if isNewDefaultsConfig {
-		config.UpdateCachedDefaults(config.InitialDefaultSettings())
+		config.UpdateCachedDefaults(config.Defaults, config.InitialDefaultSettings())
 	}
-	config.LoadDefaultSettings()
+	config.LoadDefaultSettings(config.Defaults, config.LoadedDefaults)
 }
 
 // Execute invokes the root command

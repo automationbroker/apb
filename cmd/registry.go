@@ -135,7 +135,7 @@ func addRegistry(addName string) {
 		}
 	}
 	regList = append(regList, newConfig)
-	config.UpdateCachedRegistries(regList)
+	config.UpdateCachedRegistries(config.Registries, regList)
 	ListImages()
 	return
 }
@@ -199,7 +199,7 @@ func removeRegistry(name string) {
 		if r.Config.Name == name {
 			fmt.Printf("Found registry [%v]. Removing from list.\n", name)
 			newRegList = append(regList[:i], regList[i+1:]...)
-			config.UpdateCachedRegistries(newRegList)
+			config.UpdateCachedRegistries(config.Registries, newRegList)
 			return
 		}
 	}

@@ -44,7 +44,7 @@ func gatherDefaultsConfig() {
 		ClusterServiceBrokerName: getUserInput("clusterservicebroker resource name", config.InitialDefaultSettings().ClusterServiceBrokerName),
 	}
 	fmt.Println("\nSaving new configuration....")
-	config.UpdateCachedDefaults(defaultSettings)
+	config.UpdateCachedDefaults(config.Defaults, defaultSettings)
 }
 
 func getUserInput(prompt string, defaultValue string) string {
