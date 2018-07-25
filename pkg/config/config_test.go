@@ -10,8 +10,6 @@ const defaultConfigDir = "testdata/.apb"
 const defaultConfigName = "registries"
 
 func TestInitJSONConfigWithData(t *testing.T) {
-	/*pre test login */
-
 	// test case table
 	testCases := []struct {
 		name       string
@@ -157,7 +155,6 @@ func TestUpdateCachedRegistries(t *testing.T) {
 }
 
 func TestInitializeDefaultSettings(t *testing.T) {
-	// test case table
 	testCases := []struct {
 		name      string
 		namespace string
@@ -169,7 +166,6 @@ func TestInitializeDefaultSettings(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			/* Testing logic */
 			settings := InitialDefaultSettings()
 			if settings.BrokerNamespace != tc.namespace {
 				t.Fatalf("Expected default namespace [%v], got [%v]", tc.namespace, settings.BrokerNamespace)

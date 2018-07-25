@@ -5,7 +5,6 @@ import (
 )
 
 func TestGetCurrentNamespace(t *testing.T) {
-	/*pre test login */
 	// test case table
 	testCases := []struct {
 		name       string
