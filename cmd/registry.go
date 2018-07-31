@@ -33,7 +33,7 @@ var defaultLocalOpenShiftConfig = registries.Config{
 	WhiteList:  []string{".*$"},
 }
 
-var defaultDockerHubConfig = registries.Config{
+var defaultQuayConfig = registries.Config{
 	Name:      "quay",
 	Type:      "quay",
 	URL:       "quay.io",
