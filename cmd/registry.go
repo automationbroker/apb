@@ -33,6 +33,14 @@ var defaultLocalOpenShiftConfig = registries.Config{
 	WhiteList:  []string{".*$"},
 }
 
+var defaultQuayConfig = registries.Config{
+	Name:      "quay",
+	Type:      "quay",
+	Org:       "redhat",
+	URL:       "quay.io",
+	WhiteList: []string{".*$"},
+}
+
 var defaultDockerHubConfig = registries.Config{
 	Name:      "dockerhub",
 	Type:      "dockerhub",
@@ -119,6 +127,8 @@ func addRegistry(addName string) {
 		newConfig.Config = defaultLocalOpenShiftConfig
 	case "helm":
 		newConfig.Config = defaultHelmConfig
+	case "quay":
+		newConfig.Config = defaultQuayConfig
 	default:
 		fmt.Printf("Unrecognized registry type [%v]\n", registryConfig.Config.Type)
 		fmt.Printf("Supported types are: dockerhub, local_openshift, helm.\n")
