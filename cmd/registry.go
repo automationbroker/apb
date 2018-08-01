@@ -37,7 +37,7 @@ var defaultQuayConfig = registries.Config{
 	Name:      "quay",
 	Type:      "quay",
 	Org:       "redhat",
-	URL:       "quay.io",
+	URL:       "http://quay.io",
 	WhiteList: []string{".*$"},
 }
 
