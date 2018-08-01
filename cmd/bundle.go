@@ -201,7 +201,7 @@ func ListImages() {
 	}
 	printRegConfigSpecs(newRegConfigs)
 
-	err = config.UpdateCachedRegistries(newRegConfigs)
+	err = config.UpdateCachedRegistries(config.Registries, newRegConfigs)
 	if err != nil {
 		log.Errorf("Error updating cache - %v", err)
 		return

@@ -71,16 +71,16 @@ func InitJSONConfig(configDir string, configName string) (config *viper.Viper, i
 }
 
 // UpdateCachedRegistries saves the contents of regList to a configuration file
-func UpdateCachedRegistries(regList []Registry) error {
-	Registries.Set("Registries", regList)
-	Registries.WriteConfig()
+func UpdateCachedRegistries(viperConfig *viper.Viper, regList []Registry) error {
+	viperConfig.Set("Registries", regList)
+	viperConfig.WriteConfig()
 	return nil
 }
 
 // UpdateCachedDefaults saves the contents of defaults to a configuration file
-func UpdateCachedDefaults(defaults *DefaultSettings) error {
-	Defaults.Set("Defaults", defaults)
-	Defaults.WriteConfig()
+func UpdateCachedDefaults(viperConfig *viper.Viper, defaults *DefaultSettings) error {
+	viperConfig.Set("Defaults", defaults)
+	viperConfig.WriteConfig()
 	return nil
 }
 
@@ -95,6 +95,6 @@ func InitialDefaultSettings() *DefaultSettings {
 }
 
 // LoadDefaultSettings loads default settings from disk into a config.LoadedDefaults for later use
-func LoadDefaultSettings() {
-	Defaults.UnmarshalKey("Defaults", &LoadedDefaults)
+func LoadDefaultSettings(viperConfig *viper.Viper, defaults *DefaultSettings) {
+	viperConfig.UnmarshalKey("Defaults", defaults)
 }
