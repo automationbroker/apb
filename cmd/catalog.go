@@ -53,6 +53,7 @@ var catalogRelistCmd = &cobra.Command{
 	Short: "relist service catalog",
 	Long:  `Force a relist of the OpenShift Service Catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
+		config.LoadDefaultSettings(config.Defaults, &config.LoadedDefaults)
 		relistCatalog(config.LoadedDefaults.BrokerResourceURL, config.LoadedDefaults.ClusterServiceBrokerName)
 	},
 }
