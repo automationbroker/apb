@@ -54,6 +54,7 @@ var brokerCatalogCmd = &cobra.Command{
 	Short: "List available APBs in Automation Broker catalog",
 	Long:  `Fetch list of APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
+		config.LoadDefaultSettings(config.Defaults, &config.LoadedDefaults)
 		listBrokerCatalog(config.LoadedDefaults.BrokerRouteName, config.LoadedDefaults.BrokerNamespace)
 	},
 }

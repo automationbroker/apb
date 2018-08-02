@@ -27,7 +27,7 @@ import (
 
 // Defaults stores command defaults
 var Defaults *viper.Viper
-var LoadedDefaults *DefaultSettings
+var LoadedDefaults DefaultSettings
 
 // Registries stores APB registry and spec data
 var Registries *viper.Viper

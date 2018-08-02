@@ -58,7 +58,7 @@ func initConfig() {
 	if isNewDefaultsConfig {
 		config.UpdateCachedDefaults(config.Defaults, config.InitialDefaultSettings())
 	}
-	config.LoadDefaultSettings(config.Defaults, config.LoadedDefaults)
+	config.LoadDefaultSettings(config.Defaults, &config.LoadedDefaults)
 }
 
 // Execute invokes the root command
