@@ -54,7 +54,6 @@ var brokerCatalogCmd = &cobra.Command{
 	Short: "List available APBs in Automation Broker catalog",
 	Long:  `Fetch list of APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.LoadDefaultSettings(config.Defaults, &config.LoadedDefaults)
 		listBrokerCatalog(config.LoadedDefaults.BrokerRouteName, config.LoadedDefaults.BrokerNamespace)
 	},
 }
@@ -64,7 +63,6 @@ var brokerBootstrapCmd = &cobra.Command{
 	Short: "Bootstrap an Automation Broker instance",
 	Long:  `Refresh list of bootstrapped APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
-		config.LoadDefaultSettings(config.Defaults, &config.LoadedDefaults)
 		bootstrapBroker(config.LoadedDefaults.BrokerRouteName, config.LoadedDefaults.BrokerNamespace)
 	},
 }
