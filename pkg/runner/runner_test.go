@@ -171,29 +171,3 @@ func TestPruneInput(t *testing.T) {
 		})
 	}
 }
-
-func TestCreateExtraVars(t *testing.T) {
-	// test case table
-	testCases := []struct {
-		name      string
-		targetNs  string
-		params    bundle.Parameters
-		shouldErr bool
-	}{
-		{
-			name:     "test valid params",
-			targetNs: "foo",
-			params: &bundle.Parameters{
-				"test-param": true,
-			},
-			plan:      bundle.Plan{},
-			shouldErr: false,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			/* Testing logic */
-			vars, err := createExtraVars(tc.targetNs, tc.params, tc.plan)
-		})
-	}
-}
