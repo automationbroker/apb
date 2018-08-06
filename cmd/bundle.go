@@ -104,6 +104,16 @@ var bundleDeprovisionCmd = &cobra.Command{
 	},
 }
 
+var bundleTestCmd = &cobra.Command{
+	Use:   "test <apb-name>",
+	Short: "test APB images",
+	Long:  `Test an APB from a registry adapter`,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		executeBundle("test", args)
+	},
+}
+
 var bundleInitStub = &cobra.Command{
 	Use:        "init <bundle-name>",
 	Deprecated: "use 'ansible-galaxy init --type=apb <bundle-name>'",
@@ -153,6 +163,13 @@ func init() {
 	bundleProvisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
 	rootCmd.AddCommand(createHiddenCmd(bundleProvisionCmd, ""))
 	bundleCmd.AddCommand(bundleProvisionCmd)
+
+	bundleTestCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision APB to")
+	bundleTestCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
+	bundleTestCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
+	bundleTestCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
+	rootCmd.AddCommand(createHiddenCmd(bundleTestCmd, "running `apb bundle test` instead."))
+	bundleCmd.AddCommand(bundleTestCmd)
 
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to deprovision APB from")
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
