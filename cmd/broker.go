@@ -18,10 +18,8 @@ package cmd
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,11 +33,6 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-type bootstrapResponse struct {
-	SpecCount  int `json:"spec_count"`
-	ImageCount int `json:"image_count"`
-}
 
 var brokerName string
 
@@ -74,7 +67,7 @@ func init() {
 	brokerCmd.AddCommand(brokerCatalogCmd)
 
 	brokerCmd.AddCommand(brokerBootstrapCmd)
-	rootCmd.AddCommand(createHiddenCmd(brokerBootstrapCmd, "running 'apb broker boostrap'"))
+	rootCmd.AddCommand(createHiddenCmd(brokerBootstrapCmd, "running 'apb broker bootstrap'"))
 }
 
 func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
@@ -180,7 +173,7 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 	}
 
 	// Do bootstrap request
-	fmt.Printf("Bootstrapping the broker at [%v/v2/bootstrap]. This may take up to a minute...\n", brokerRoute)
+	fmt.Printf("Bootstrapping the broker at [%v/v2/bootstrap].\n", brokerRoute)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Errorf("Failed to get response: %v", err)
@@ -199,20 +192,7 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 		return
 	}
 
-	// Unmarshal response
-	jsonBoot, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("Failed to read response body: %v", err)
-	}
-
-	bootResp := bootstrapResponse{}
-	err = json.Unmarshal(jsonBoot, &bootResp)
-	if err != nil {
-		log.Errorf("Failed to unmarshal response: %v", err)
-	}
-
-	fmt.Printf("Successfully bootstrapped broker [%v]\n", brokerRouteName)
-	fmt.Printf("Broker loaded %v valid APB specs from %v total images.\n", bootResp.SpecCount, bootResp.ImageCount)
+	fmt.Printf("Successfully started bootstrap job for broker [%v]\n", brokerRouteName)
 	return
 }
 
