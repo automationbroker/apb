@@ -172,6 +172,20 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	return pn, nil
 }
 
+func GetPodStatus(namespace string, podName string) string {
+	k8scli, err := clients.Kubernetes()
+	if err != nil {
+		panic(err.Error())
+	}
+	pod, err := k8scli.Client.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+	if err != nil {
+		log.Errorf("Error getting pod [%v] status: %v", podName, err)
+		return ""
+	}
+	status := pod.Status.Phase
+	return string(status)
+}
+
 func printBundleLogs(podName string, namespace string, action string) {
 	k8scli, err := clients.Kubernetes()
 	if err != nil {
