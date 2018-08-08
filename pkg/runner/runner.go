@@ -40,7 +40,7 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (string, error) {
 	reg := []config.Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
@@ -60,15 +60,15 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	if len(candidateSpecs) == 0 {
 		if len(bundleRegistry) > 0 {
 			log.Errorf("Didn't find APB [%v] in registry [%v]\n", bundleName, bundleRegistry)
-			return
+			return "", errors.New(fmt.Sprintf("failed to find APB [%v] in registry [%v]", bundleName, bundleRegistry))
 		}
 		log.Errorf("Didn't find APB [%v] in configured registries\n", bundleName)
-		return
+		return "", errors.New(fmt.Sprintf("failed to find APB [%v] on configured registries", bundleName))
 		// TODO: return an ErrorBundleNotFound
 	}
 	if len(candidateSpecs) > 1 {
 		log.Warnf("Found multiple APBs matching name [%v]. Specify a registry with --registry.", bundleName)
-		return
+		return "", errors.New(fmt.Sprintf("found multiple APBs with matching name [%v]", bundleName))
 	}
 
 	targetSpec = candidateSpecs[0]
@@ -89,14 +89,14 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		params, err = selectParameters(plan)
 		if err != nil {
 			log.Errorf("Error validating selected parameters: %v", err)
-			return
+			return "", err
 		}
 	}
 
 	extraVars, err := createExtraVars(ns, &params, plan)
 	if err != nil {
 		log.Errorf("Error creating extravars: %v\n", err)
-		return
+		return "", err
 	}
 
 	labels := map[string]string{
@@ -160,7 +160,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	if err != nil {
 		log.Errorf("Failed to create pod: %v", err)
 		// TODO: return ErrorPodCreationFailed
-		return
+		return "", err
 	}
 	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, bundleName, ns)
 
@@ -169,7 +169,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 
 	// TODO: return nil
-	return
+	return pn, nil
 }
 
 func printBundleLogs(podName string, namespace string, action string) {
