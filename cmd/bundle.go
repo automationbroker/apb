@@ -238,7 +238,7 @@ func ListImages() {
 	}
 }
 
-func executeBundle(action string, args []string) string {
+func executeBundle(action string, args []string) (podName string) {
 	if bundleNamespace == "" {
 		bundleNamespace = util.GetCurrentNamespace(kubeConfig)
 		if bundleNamespace == "" {

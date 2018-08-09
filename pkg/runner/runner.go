@@ -40,7 +40,7 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (string, error) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (podName string, error) {
 	reg := []config.Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
@@ -59,16 +59,13 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 	if len(candidateSpecs) == 0 {
 		if len(bundleRegistry) > 0 {
-			log.Errorf("Didn't find APB [%v] in registry [%v]\n", bundleName, bundleRegistry)
 			return "", errors.New(fmt.Sprintf("failed to find APB [%v] in registry [%v]", bundleName, bundleRegistry))
 		}
-		log.Errorf("Didn't find APB [%v] in configured registries\n", bundleName)
-		return "", errors.New(fmt.Sprintf("failed to find APB [%v] on configured registries", bundleName))
+		return "", errors.New(fmt.Sprintf("failed to find APB [%v] in configured registries", bundleName))
 		// TODO: return an ErrorBundleNotFound
 	}
 	if len(candidateSpecs) > 1 {
-		log.Warnf("Found multiple APBs matching name [%v]. Specify a registry with --registry.", bundleName)
-		return "", errors.New(fmt.Sprintf("found multiple APBs with matching name [%v]", bundleName))
+		return "", errors.New(fmt.Sprintf("found multiple APBs with matching name [%v]. Specify a registry with --registry", bundleName))
 	}
 
 	targetSpec = candidateSpecs[0]
@@ -88,14 +85,12 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	} else {
 		params, err = selectParameters(plan)
 		if err != nil {
-			log.Errorf("Error validating selected parameters: %v", err)
 			return "", err
 		}
 	}
 
 	extraVars, err := createExtraVars(ns, &params, plan)
 	if err != nil {
-		log.Errorf("Error creating extravars: %v\n", err)
 		return "", err
 	}
 
@@ -158,8 +153,6 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 	_, err = k8scli.Client.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		log.Errorf("Failed to create pod: %v", err)
-		// TODO: return ErrorPodCreationFailed
 		return "", err
 	}
 	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, bundleName, ns)
