@@ -70,6 +70,9 @@ devel for %{name}
 
 %prep
 %setup -q -n %{repo}-%{version}
+%if !0%{?copr}
+patch -p0 < downstream.patch
+%endif
 ln -sf vendor src
 mkdir -p src/github.com/automationbroker/apb
 cp -r pkg src/github.com/automationbroker/apb
