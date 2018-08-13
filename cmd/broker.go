@@ -17,9 +17,12 @@
 package cmd
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
+	yaml "gopkg.in/yaml.v2"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,6 +38,7 @@ import (
 )
 
 var brokerName string
+var catalogOutputFormat string
 
 var brokerCmd = &cobra.Command{
 	Use:   "broker",
@@ -47,6 +51,7 @@ var brokerCatalogCmd = &cobra.Command{
 	Short: "List available APBs in Automation Broker catalog",
 	Long:  `Fetch list of APBs in Automation Broker catalog`,
 	Run: func(cmd *cobra.Command, args []string) {
+		pruneOutputFormat(catalogOutputFormat)
 		listBrokerCatalog(config.LoadedDefaults.BrokerRouteName, config.LoadedDefaults.BrokerNamespace)
 	},
 }
@@ -64,10 +69,18 @@ func init() {
 	brokerCmd.PersistentFlags().StringVarP(&brokerName, "name", "n", "", "Name of Automation Broker instance")
 	rootCmd.AddCommand(brokerCmd)
 
+	brokerCatalogCmd.Flags().StringVarP(&catalogOutputFormat, "output", "o", "", "Display broker catalog output in JSON or YaML format")
 	brokerCmd.AddCommand(brokerCatalogCmd)
 
 	brokerCmd.AddCommand(brokerBootstrapCmd)
 	rootCmd.AddCommand(createHiddenCmd(brokerBootstrapCmd, "running 'apb broker bootstrap'"))
+}
+
+func pruneOutputFormat(format string) {
+	if format != "yaml" && format != "json" && format != "" {
+		log.Warnf("Did not recognize --output argument [%v], printing as table", format)
+	}
+	return
 }
 
 func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
@@ -122,7 +135,15 @@ func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
 		log.Errorf("Failed fetch catalog: %v", err)
 		return
 	}
-	printServices(services.Services)
+
+	switch catalogOutputFormat {
+	case "json":
+		printServicesAsJSON(services.Services)
+	case "yaml":
+		printServicesAsYaML(services.Services)
+	default:
+		printServicesAsTable(services.Services)
+	}
 	return
 }
 
@@ -196,7 +217,34 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 	return
 }
 
-func printServices(services []osb.Service) {
+func printServicesAsYaML(services []osb.Service) {
+	buffer := new(bytes.Buffer)
+	encoder := yaml.NewEncoder(buffer)
+
+	err := encoder.Encode(services)
+	if err != nil {
+		log.Errorf("Failed to encode services data: [%v]", err)
+		return
+	}
+	fmt.Printf("%v", buffer.String())
+	return
+}
+
+func printServicesAsJSON(services []osb.Service) {
+	buffer := new(bytes.Buffer)
+	encoder := json.NewEncoder(buffer)
+	encoder.SetIndent("", "    ")
+
+	err := encoder.Encode(services)
+	if err != nil {
+		log.Errorf("Failed to encode services data: [%v]", err)
+		return
+	}
+	fmt.Printf("%v", buffer.String())
+	return
+}
+
+func printServicesAsTable(services []osb.Service) {
 	colName := &util.TableColumn{Header: "NAME"}
 	colID := &util.TableColumn{Header: "ID"}
 	colBind := &util.TableColumn{Header: "BINDABLE"}
