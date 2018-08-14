@@ -56,6 +56,14 @@ BuildRequires: golang
 %description
 %{summary}
 
+%package container-scripts
+Summary: scripts required for running apb in a container
+BuildArch: noarch
+Requires: %{name}
+
+%description container-scripts
+containers scripts for apb
+
 %if 0%{?with_devel}
 %package devel
 Summary: %{summary}
@@ -94,6 +102,7 @@ rm -rf src
 %install
 install -d -p %{buildroot}%{_bindir}
 install -p -m 755 apb %{buildroot}%{_bindir}/apb
+install -m 755 apb-wrapper %{buildroot}%{_bindir}/apb-wrapper
 
 # source codes for building projects
 %if 0%{?with_devel}
@@ -120,6 +129,9 @@ sort -u -o devel.file-list devel.file-list
 %files
 %license LICENSE
 %{_bindir}/apb
+
+%files container-scripts
+%{_bindir}/apb-wrapper
 
 %if 0%{?with_devel}
 %files devel -f devel.file-list
