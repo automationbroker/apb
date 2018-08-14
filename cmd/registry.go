@@ -178,6 +178,7 @@ func applyOverrides(conf *registries.Config, params registries.Config) {
 	}
 	if params.Runner != "" {
 		conf.Runner = params.Runner
+	}
 	if params.Tag != "" {
 		conf.Tag = params.Tag
 	}
