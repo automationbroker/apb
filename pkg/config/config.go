@@ -89,7 +89,7 @@ func InitialDefaultSettings() *DefaultSettings {
 	return &DefaultSettings{
 		BrokerNamespace:          "openshift-automation-service-broker",
 		BrokerResourceURL:        "/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/",
-		BrokerRouteName:          "openshift-automation-service-broker",
+		BrokerRouteName:          "broker",
 		ClusterServiceBrokerName: "openshift-automation-service-broker",
 	}
 }
