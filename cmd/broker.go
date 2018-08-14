@@ -82,7 +82,7 @@ func init() {
 
 func pruneOutputFormat(format string) {
 	if format != "yaml" && format != "json" && format != "" {
-		log.Warnf("Did not recognize --output argument [%v], printing as table", format)
+		log.Warnf("Did not recognize --output argument [%v], printing as table. Acceptable arguments: 'json', 'yaml'", format)
 	}
 	return
 }
