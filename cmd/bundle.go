@@ -258,9 +258,16 @@ func executeBundle(action string, args []string) (podName string) {
 // Check running pod if it has succeeded or not
 func checkTestSucceeded(podName string, namespace string) bool {
 	log.Infof("Monitoring test pod [%v] for status every 5 seconds...", podName)
-	status := runner.GetPodStatus(namespace, podName)
+	status, err := runner.GetPodStatus(namespace, podName)
+	if err != nil {
+		log.Errorf("Failed to get pod status for pod [%v]: %v", podName, err)
+		return false
+	}
 	for status != "Succeeded" && status != "Failed" {
-		status = runner.GetPodStatus(namespace, podName)
+		status, err = runner.GetPodStatus(namespace, podName)
+		if err != nil {
+			log.Errorf("Failed to get pod status for pod [%v]: %v", podName, err)
+		}
 		log.Infof("Test pod [%v] status: %v", podName, status)
 		time.Sleep(5 * time.Second)
 	}

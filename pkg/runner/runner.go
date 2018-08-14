@@ -41,8 +41,6 @@ import (
 
 // RunBundle will run the bundle's action in the given namespace
 func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (podName string, err error) {
-	podName = ""
-	err = nil
 	reg := []config.Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
@@ -165,18 +163,17 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	return
 }
 
-func GetPodStatus(namespace string, podName string) string {
+func GetPodStatus(namespace string, podName string) (string, error) {
 	k8scli, err := clients.Kubernetes()
 	if err != nil {
 		panic(err.Error())
 	}
 	pod, err := k8scli.Client.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
 	if err != nil {
-		log.Errorf("Error getting pod [%v] status: %v", podName, err)
-		return ""
+		return "", err
 	}
 	status := pod.Status.Phase
-	return string(status)
+	return string(status), nil
 }
 
 func printBundleLogs(podName string, namespace string, action string) {
