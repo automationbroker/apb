@@ -73,7 +73,7 @@ func init() {
 	brokerCmd.PersistentFlags().StringVarP(&brokerName, "name", "n", "", "Name of Automation Broker instance")
 	rootCmd.AddCommand(brokerCmd)
 
-	brokerCatalogCmd.Flags().StringVarP(&catalogOutputFormat, "output", "o", "", "Display broker catalog output in JSON or YAML format")
+	brokerCatalogCmd.Flags().StringVarP(&catalogOutputFormat, "output", "o", "", "Display broker catalog output in different format (json or yaml)")
 	brokerCmd.AddCommand(brokerCatalogCmd)
 
 	brokerCmd.AddCommand(brokerBootstrapCmd)
