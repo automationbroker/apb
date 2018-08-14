@@ -40,11 +40,11 @@ import (
 )
 
 // RunBundle will run the bundle's action in the given namespace
-func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) {
+func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (podName string, err error) {
 	reg := []config.Registry{}
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
-	pn := fmt.Sprintf("bundle-%s", uuid.New())
+	podName = fmt.Sprintf("bundle-%s", uuid.New())
 	config.Registries.UnmarshalKey("Registries", &reg)
 	for _, r := range reg {
 		if len(bundleRegistry) > 0 && r.Config.Name != bundleRegistry {
@@ -59,16 +59,13 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 	if len(candidateSpecs) == 0 {
 		if len(bundleRegistry) > 0 {
-			log.Errorf("Didn't find APB [%v] in registry [%v]\n", bundleName, bundleRegistry)
-			return
+			return "", errors.New(fmt.Sprintf("failed to find APB [%v] in registry [%v]", bundleName, bundleRegistry))
 		}
-		log.Errorf("Didn't find APB [%v] in configured registries\n", bundleName)
-		return
+		return "", errors.New(fmt.Sprintf("failed to find APB [%v] in configured registries", bundleName))
 		// TODO: return an ErrorBundleNotFound
 	}
 	if len(candidateSpecs) > 1 {
-		log.Warnf("Found multiple APBs matching name [%v]. Specify a registry with --registry.", bundleName)
-		return
+		return "", errors.New(fmt.Sprintf("found multiple APBs with matching name [%v]. Specify a registry with --registry", bundleName))
 	}
 
 	targetSpec = candidateSpecs[0]
@@ -82,27 +79,24 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 
 	var params bundle.Parameters
-	var err error
 	if skipParams {
 		params = bundle.Parameters{}
 	} else {
 		params, err = selectParameters(plan)
 		if err != nil {
-			log.Errorf("Error validating selected parameters: %v", err)
-			return
+			return "", err
 		}
 	}
 
 	extraVars, err := createExtraVars(ns, &params, plan)
 	if err != nil {
-		log.Errorf("Error creating extravars: %v\n", err)
-		return
+		return "", err
 	}
 
 	labels := map[string]string{
 		"bundle-fqname":   targetSpec.FQName,
 		"bundle-action":   action,
-		"bundle-pod-name": pn,
+		"bundle-pod-name": podName,
 	}
 
 	// TODO: using edit directly. The bundle code uses clusterConfig.SandboxRole
@@ -110,14 +104,14 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 
 	runtime.NewRuntime(runtime.Configuration{})
 	targets := []string{ns}
-	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(pn, ns, targets, sandboxRole, labels)
+	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(podName, ns, targets, sandboxRole, labels)
 	if err != nil {
-		fmt.Printf("\nProblem creating sandbox [%s] to run APB. Did you run `oc new-project %s` first?\n\n", pn, ns)
+		fmt.Printf("\nProblem creating sandbox [%s] to run APB. Did you run `oc new-project %s` first?\n\n", podName, ns)
 		os.Exit(-1)
 	}
 
 	ec := runtime.ExecutionContext{
-		BundleName: pn,
+		BundleName: podName,
 		Targets:    targets,
 		Metadata:   labels,
 		Action:     action,
@@ -141,7 +135,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
-					Name:  pn,
+					Name:  podName,
 					Image: ec.Image,
 					Args: []string{
 						ec.Action,
@@ -158,18 +152,28 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 	_, err = k8scli.Client.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		log.Errorf("Failed to create pod: %v", err)
-		// TODO: return ErrorPodCreationFailed
-		return
+		return "", err
 	}
-	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", pn, ec.Action, bundleName, ns)
+	fmt.Printf("Successfully created pod [%v] to %s [%v] in namespace [%v]\n", podName, ec.Action, bundleName, ns)
 
 	if printLogs {
-		printBundleLogs(pn, ns, action)
+		printBundleLogs(podName, ns, action)
 	}
 
-	// TODO: return nil
 	return
+}
+
+func GetPodStatus(namespace string, podName string) (string, error) {
+	k8scli, err := clients.Kubernetes()
+	if err != nil {
+		panic(err.Error())
+	}
+	pod, err := k8scli.Client.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	status := pod.Status.Phase
+	return string(status), nil
 }
 
 func printBundleLogs(podName string, namespace string, action string) {

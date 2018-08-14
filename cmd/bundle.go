@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/automationbroker/apb/pkg/config"
 	"github.com/automationbroker/apb/pkg/runner"
@@ -104,6 +105,28 @@ var bundleDeprovisionCmd = &cobra.Command{
 	},
 }
 
+var bundleTestCmd = &cobra.Command{
+	Use:   "test <apb-name>",
+	Short: "test APB images",
+	Long:  `Test an APB from a registry adapter`,
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		pn := executeBundle("test", args)
+		if pn == "" {
+			log.Errorf("Failed to execute bundle")
+			return
+		}
+		//using bundleNamespace here is safe because executeBundle ensures it's not empty
+		succeed := checkTestSucceeded(pn, bundleNamespace)
+		if succeed {
+			fmt.Printf("Test succeeded for bundle [%v]\n", args[0])
+			return
+		}
+		log.Errorf("Test failed for bundle [%v]. Check the logs for pod [%v] to see what went wrong.", args[0], pn)
+		return
+	},
+}
+
 var bundleInitStub = &cobra.Command{
 	Use:        "init <bundle-name>",
 	Deprecated: "use 'ansible-galaxy init --type=apb <bundle-name>'",
@@ -153,6 +176,13 @@ func init() {
 	bundleProvisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
 	rootCmd.AddCommand(createHiddenCmd(bundleProvisionCmd, ""))
 	bundleCmd.AddCommand(bundleProvisionCmd)
+
+	bundleTestCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision APB to")
+	bundleTestCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
+	bundleTestCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
+	bundleTestCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
+	rootCmd.AddCommand(createHiddenCmd(bundleTestCmd, "running `apb bundle test` instead."))
+	bundleCmd.AddCommand(bundleTestCmd)
 
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to deprovision APB from")
 	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
@@ -208,16 +238,44 @@ func ListImages() {
 	}
 }
 
-func executeBundle(action string, args []string) {
+func executeBundle(action string, args []string) (podName string) {
 	if bundleNamespace == "" {
 		bundleNamespace = util.GetCurrentNamespace(kubeConfig)
 		if bundleNamespace == "" {
 			log.Errorf("Failed to get current namespace. Try supplying it with --namespace.")
-			return
+			return ""
 		}
 	}
 	log.Debugf("Running bundle [%v] with action [%v] in namespace [%v].", args[0], action, bundleNamespace)
-	runner.RunBundle(action, bundleNamespace, args[0], sandboxRole, bundleRegistry, printLogs, skipParams, args[1:])
+	pn, err := runner.RunBundle(action, bundleNamespace, args[0], sandboxRole, bundleRegistry, printLogs, skipParams, args[1:])
+	if err != nil {
+		log.Errorf("Failed to execute bundle [%v]: %v", args[0], err)
+		return ""
+	}
+	return pn
+}
+
+// Check running pod if it has succeeded or not
+func checkTestSucceeded(podName string, namespace string) bool {
+	log.Infof("Monitoring test pod [%v] for status every 5 seconds...", podName)
+	status, err := runner.GetPodStatus(namespace, podName)
+	if err != nil {
+		log.Errorf("Failed to get pod status for pod [%v]: %v", podName, err)
+		return false
+	}
+	for status != "Succeeded" && status != "Failed" {
+		status, err = runner.GetPodStatus(namespace, podName)
+		if err != nil {
+			log.Errorf("Failed to get pod status for pod [%v]: %v", podName, err)
+		}
+		log.Infof("Test pod [%v] status: %v", podName, status)
+		time.Sleep(5 * time.Second)
+	}
+	if status == "Succeeded" {
+		log.Debugf("Test pod [%v] succeeded", podName)
+		return true
+	}
+	return false
 }
 
 // Get images from a single registry
