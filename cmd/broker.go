@@ -40,6 +40,10 @@ import (
 var brokerName string
 var catalogOutputFormat string
 
+type ServiceEncoder interface {
+	Encode(interface{}) error
+}
+
 var brokerCmd = &cobra.Command{
 	Use:   "broker",
 	Short: "Interact with Automation Broker",
@@ -69,7 +73,7 @@ func init() {
 	brokerCmd.PersistentFlags().StringVarP(&brokerName, "name", "n", "", "Name of Automation Broker instance")
 	rootCmd.AddCommand(brokerCmd)
 
-	brokerCatalogCmd.Flags().StringVarP(&catalogOutputFormat, "output", "o", "", "Display broker catalog output in JSON or YaML format")
+	brokerCatalogCmd.Flags().StringVarP(&catalogOutputFormat, "output", "o", "", "Display broker catalog output in JSON or YAML format")
 	brokerCmd.AddCommand(brokerCatalogCmd)
 
 	brokerCmd.AddCommand(brokerBootstrapCmd)
@@ -136,14 +140,7 @@ func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
 		return
 	}
 
-	switch catalogOutputFormat {
-	case "json":
-		printServicesAsJSON(services.Services)
-	case "yaml":
-		printServicesAsYaML(services.Services)
-	default:
-		printServicesAsTable(services.Services)
-	}
+	printServices(services.Services, catalogOutputFormat)
 	return
 }
 
@@ -217,24 +214,21 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 	return
 }
 
-func printServicesAsYaML(services []osb.Service) {
+func printServices(services []osb.Service, format string) {
+	var encoder ServiceEncoder
 	buffer := new(bytes.Buffer)
-	encoder := yaml.NewEncoder(buffer)
 
-	err := encoder.Encode(services)
-	if err != nil {
-		log.Errorf("Failed to encode services data: [%v]", err)
+	switch format {
+	case "json":
+		enc := json.NewEncoder(buffer)
+		enc.SetIndent("", "    ")
+		encoder = enc
+	case "yaml":
+		encoder = yaml.NewEncoder(buffer)
+	default:
+		printServicesAsTable(services)
 		return
 	}
-	fmt.Printf("%v", buffer.String())
-	return
-}
-
-func printServicesAsJSON(services []osb.Service) {
-	buffer := new(bytes.Buffer)
-	encoder := json.NewEncoder(buffer)
-	encoder.SetIndent("", "    ")
-
 	err := encoder.Encode(services)
 	if err != nil {
 		log.Errorf("Failed to encode services data: [%v]", err)
