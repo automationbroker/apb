@@ -133,8 +133,8 @@ var bundleInitStub = &cobra.Command{
 	Hidden:     true,
 }
 
-const buildConfigCmd string = `oc new-build . --to <bundle-name>`
-const buildTriggerCmd string = `oc start-build --from-dir . <bundle-name>`
+const buildConfigCmd string = `oc new-build --binary=true --name <bundle-name>`
+const buildTriggerCmd string = `oc start-build --follow --from-dir . <bundle-name>`
 
 var bundlePushStub = &cobra.Command{
 	Use: "push <bundle-name>",
@@ -162,7 +162,7 @@ func init() {
 	rootCmd.AddCommand(createHiddenCmd(bundlePrepareCmd, "running 'apb bundle prepare'"))
 	bundleCmd.AddCommand(bundlePrepareCmd)
 
-	bundleListCmd.Flags().BoolVarP(&Refresh, "refresh", "r", false, "refresh list of specs")
+	bundleListCmd.Flags().BoolVar(&Refresh, "refresh", false, "refresh list of specs")
 	rootCmd.AddCommand(createHiddenCmd(bundleListCmd, "running 'apb bundle list'. To list APBs known to a broker, run 'apb broker catalog'"))
 	bundleCmd.AddCommand(bundleListCmd)
 
@@ -171,24 +171,24 @@ func init() {
 	bundleCmd.AddCommand(bundleInfoCmd)
 
 	bundleProvisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision APB to")
-	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
-	bundleProvisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
+	bundleProvisionCmd.Flags().StringVarP(&sandboxRole, "sandbox-role", "s", "edit", "ClusterRole to be applied to APB sandbox")
+	bundleProvisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to load APB from")
 	bundleProvisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
 	rootCmd.AddCommand(createHiddenCmd(bundleProvisionCmd, ""))
 	bundleCmd.AddCommand(bundleProvisionCmd)
 
 	bundleTestCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to provision APB to")
-	bundleTestCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
-	bundleTestCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
+	bundleTestCmd.Flags().StringVarP(&sandboxRole, "sandbox-role", "s", "edit", "ClusterRole to be applied to APB sandbox")
+	bundleTestCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to load APB from")
 	bundleTestCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from provision pod")
 	rootCmd.AddCommand(createHiddenCmd(bundleTestCmd, "running `apb bundle test` instead."))
 	bundleCmd.AddCommand(bundleTestCmd)
 
 	bundleDeprovisionCmd.Flags().StringVarP(&bundleNamespace, "namespace", "n", "", "Namespace to deprovision APB from")
-	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "role", "r", "edit", "ClusterRole to be applied to APB sandbox")
-	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "", "", "Registry to load APB from")
+	bundleDeprovisionCmd.Flags().StringVarP(&sandboxRole, "sandbox-role", "s", "edit", "ClusterRole to be applied to APB sandbox")
+	bundleDeprovisionCmd.Flags().StringVarP(&bundleRegistry, "registry", "r", "", "Registry to load APB from")
 	bundleDeprovisionCmd.Flags().BoolVarP(&printLogs, "follow", "f", false, "Print logs from deprovision pod")
-	bundleDeprovisionCmd.Flags().BoolVarP(&skipParams, "skip-params", "s", false, "Don't prompt for parameters")
+	bundleDeprovisionCmd.Flags().BoolVar(&skipParams, "skip-params", false, "Don't prompt for parameters")
 	rootCmd.AddCommand(createHiddenCmd(bundleDeprovisionCmd, ""))
 	bundleCmd.AddCommand(bundleDeprovisionCmd)
 

@@ -33,11 +33,13 @@ Usage:
   apb [command]
 Available Commands:
   binding     Manage bindings
-  broker      Interact with an Automation Broker instance
-  bundle      Interact with ServiceBundles
+  broker      Interact with Automation Broker
+  bundle      Interact with APBs
+  catalog     Interact with OpenShift Service Catalog
   completion  Generates shell completion scripts.
   help        Help about any command
   registry    Configure registry adapters
+  version     Get version
 
 Flags:
       --config string   configuration file (default is $HOME/.apb)
@@ -139,17 +141,12 @@ USER apb
 
 At this point we have a fully formed APB that we can build. To do this, we leverage the OpenShift build system. To create a `buildconfig` for your APB:
 ```bash
-$ oc new-build . --to <bundle-name>
+$ oc new-build --binary=true --name <apb-name>
 ```
 
-To start the build from the current directory:
+To start the build from the current directory and follow the logs:
 ```bash
-$ oc start-build --from-dir . <bundle-name>
-```
-
-At this point, you can check the status of the build:
-```bash
-$ oc logs -f bc/<bundle-name>
+$ oc start-build --follow --from-dir . <apb-name>
 ```
 
 When the build is complete, you should see available imagestreams:
@@ -192,6 +189,7 @@ Available Commands:
   list        List APB images
   prepare     Stamp APB metadata onto Dockerfile as b64
   provision   Provision APB images
+  test        Test APB images
 
 Flags:
   -h, --help                help for bundle
@@ -206,7 +204,7 @@ Use "apb bundle [command] --help" for more information about a command.
 
 We can `provision` the `my-test-apb` that now exists in the registry by running:
 ```
-$ sbcli bundle provision my-test-apb
+$ apb bundle provision my-test-apb
 ```
 
 ### More information
@@ -214,6 +212,5 @@ $ sbcli bundle provision my-test-apb
 * [Developers](developers.md) - in-depth explanation of Ansible Playbook Bundles
 * [APB CLI Tool](apb_cli.md) - installation and usage of the `apb` cli tool
 * [OpenShift Origin Docs](https://docs.openshift.org/latest/welcome/index.html)
-* The [ansible-kubernetes-modules](https://github.com/ansible/ansible-kubernetes-modules) project.
 * [Example APBs](https://github.com/ansibleplaybookbundle)
 * [Ansible Service Broker](https://github.com/openshift/ansible-service-broker)
