@@ -9,7 +9,6 @@ care of the details so they should be easy to deploy.
     * [Running from a container](#running-from-a-container)
     * [RPM Installation](#rpm-installation)
     * [Installing from source](#installing-from-source)
-        * [Python/VirtualEnv](#installing-from-source---pythonvirtualenv)
         * [Installing from source - Tito](#installing-from-source---tito)
     * [Test APB tooling](#test-apb-tooling)
 1. [Typical Workflows](#typical-workflows)
@@ -116,9 +115,12 @@ Available Commands:
   binding     Manage bindings
   broker      Interact with an Automation Broker instance
   bundle      Interact with ServiceBundles
+  catalog     Interact with OpenShift Service Catalog
   completion  Generates shell completion scripts.
+  config      Set tool defaults
   help        Help about any command
   registry    Configure registry adapters
+  version     Get version
 
 Flags:
       --config string   configuration file (default is $HOME/.apb)
@@ -155,6 +157,16 @@ The `developer` account does not have such permissions. `oc login -u system:admi
 be sufficient.
 
 ## Typical Workflows
+
+#### Creating and Testing APBs
+In version `2.0.0` and above, `apb` allows you as a developer to develop and test APB images without using an Ansible Service Broker. `apb` allows the user to configure registries to source APBs from and store the list of images locally (in `~/.apb`). Once the images are found, `apb` allows the user to provision the APB directly for testing.
+
+Initializing the APB is done with `ansible-galaxy`:
+```
+ansible-galaxy init --type apb <apb-name>
+```
+
+Modify the APB as you wish. Once complete, we need to build
 
 #### Local Registry
 In order to use the internal OpenShift Docker Registry to source APBs, you must have configured the Ansible Service Broker to use the `local_openshift` type registry adapter. Please see the [config](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#local-openshift-registry) section for more information.
