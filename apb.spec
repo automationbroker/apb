@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 1.9.1
+Version: 1.9.2
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,49 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Fri Aug 17 2018 David Zager <david.j.zager@gmail.com> 1.9.2-1
+- Bug 1613664 - Update shorthand flags for bundle subcommand (#117)
+  (dymurray@redhat.com)
+- Bug 1577769 - Add support for outputting broker catalog request in yaml, json
+  (#114) (dymurray@redhat.com)
+- Fix BrokerRouteName (#115) (jmontleo@redhat.com)
+- Bug 1613224 - Add CLI param support for Runner field (#113)
+  (dymurray@redhat.com)
+- Add apb-container-scripts sub-package with wrapper (#116)
+  (jmontleo@redhat.com)
+- Add support for specifying tag in registry add (#110) (dymurray@redhat.com)
+- Bug 1595153 - Add support for apb test that works in and out of cluster
+  (#109) (dymurray@redhat.com)
+- Hard code the broker prefix to osb (#112) (jmontleo@redhat.com)
+- add downstream patch (#111) (jmontleo@redhat.com)
+- Updates for spec reconciliation changes to bootstrap endpoint (#107)
+  (dymurray@redhat.com)
+- Fix loading of defaults for config package & add tests (#105)
+  (dymurray@redhat.com)
+- Fix quay default (#104) (dymurray@redhat.com)
+- Add unit tests for config and util packages (#97) (dymurray@redhat.com)
+- Add quay registry adapter (#101) (dymurray@redhat.com)
+- Change default imagePullPolicy to always (#100) (dymurray@redhat.com)
+- Update vendor to pick up bundle-lib 0.2.6 (#96) (dymurray@redhat.com)
+- Update repo with docs folder (#93) (dymurray@redhat.com)
+- Add developers.md, include sections on building and running APBs (#94)
+  (derekwhatley@gmail.com)
+- Add `apb config` cmd for configuring broker/catalog interaction vars (#88)
+  (derekwhatley@gmail.com)
+- Update deprovision command with --skip-params flag (#85)
+  (dymurray@redhat.com)
+- Remove go compiler macro (#87) (jmontleo@redhat.com)
+- Pre-release tweaks (#84) (derekwhatley@gmail.com)
+- Update vendor to pick up bundle-lib release (#83) (dymurray@redhat.com)
+- Add support for `apb catalog relist` (#79) (dymurray@redhat.com)
+- Match old apb commands (#78) (derekwhatley@gmail.com)
+- Add apb version command with tito versioning (#80) (dymurray@redhat.com)
+- Make registry subcommand experience better (#71) (dymurray@redhat.com)
+- Add support for viewing bundle logs for action. (#76)
+  (derekwhatley@gmail.com)
+- Remove requirement to supply namespace (#72) (dymurray@redhat.com)
+- Add releasers info for tito and brew (#74) (dymurray@redhat.com)
+
 * Thu Jul 05 2018 Dylan Murray <dymurray@redhat.com> 1.9.1-1
 - new package built with tito
 
