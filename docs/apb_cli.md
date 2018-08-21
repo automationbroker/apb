@@ -9,27 +9,14 @@ care of the details so they should be easy to deploy.
     * [Running from a container](#running-from-a-container)
     * [RPM Installation](#rpm-installation)
     * [Installing from source](#installing-from-source)
-        * [Python/VirtualEnv](#installing-from-source---pythonvirtualenv)
         * [Installing from source - Tito](#installing-from-source---tito)
     * [Test APB tooling](#test-apb-tooling)
+    * [Access Permissions](#access-permissions)
 1. [Typical Workflows](#typical-workflows)
-    * [Local Registry](#local-registry)
-    * [Remote Registry](#remote-registry)
+    * [Creating and Testing APBs](#creating-and-testing-apbs)
+    * [Using the internal OpenShift Registry](#using-the-internal-openshift-registry)
+    * [Using a remote Registry](#using-a-remote-registry-dockerhub)
 1. [APB Commands](#apb-commands)
-    * [Creating APBs](#creating-apbs)
-        * [init](#init)
-        * [prepare](#prepare)
-        * [build](#build)
-        * [push](#push)
-        * [test](#test)
-    * [Broker Utilities](#broker-utilities)
-        * [list](#list)
-        * [bootstrap](#bootstrap)
-        * [remove](#remove)
-        * [relist](#relist)    
-    * [Other](#other)
-        * [help](#help)    
-
 
 ## Installing the **_apb_** tool
 
@@ -116,9 +103,12 @@ Available Commands:
   binding     Manage bindings
   broker      Interact with an Automation Broker instance
   bundle      Interact with ServiceBundles
+  catalog     Interact with OpenShift Service Catalog
   completion  Generates shell completion scripts.
+  config      Set tool defaults
   help        Help about any command
   registry    Configure registry adapters
+  version     Get version
 
 Flags:
       --config string   configuration file (default is $HOME/.apb)
@@ -156,52 +146,92 @@ be sufficient.
 
 ## Typical Workflows
 
-#### Local Registry
-In order to use the internal OpenShift Docker Registry to source APBs, you must have configured the Ansible Service Broker to use the `local_openshift` type registry adapter. Please see the [config](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#local-openshift-registry) section for more information.
+#### Creating and Testing APBs
+In version `2.0.0` and above, `apb` allows you as a developer to develop and test APB images without using an Ansible Service Broker. `apb` allows the user to configure registries to source APBs from and stores the list of images locally (in `~/.apb`). Once the images are found, `apb` allows the user to provision the APB directly for testing.
 
-```bash
-apb init my-new-apb
-cd my-new-apb
-apb build
-apb push
-apb list
+Initializing the APB is done with `ansible-galaxy`:
+```
+ansible-galaxy init --type apb <apb-name>
 ```
 
-If you are using a namespace other than the default `openshift` namespace to host your APBs then you can use the following command:
+##### Using the internal OpenShift registry
+After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. We recommend using the `openshift` namespace for this since by default all imagestreams in `openshift` namespace are accessible to all authenticated users, but, `apb` works with any accesible namespace. This is documented in the [getting-started document]().
+Once the imagestream exists in namespace `foo`. You can add a new registry adapter with:
 ```
-apb push --namespace <namespace>
+apb registry add --type local_openshift --namespaces foo lo
 ```
 
-#### Remote Registry
-Ansible Service Broker can also be [configured](https://github.com/openshift/ansible-service-broker/blob/master/docs/config.md#dockerhub-registry) to use a remote registry and org such as [docker.io/ansibleplaybookbundle](https://hub.docker.com/u/ansibleplaybookbundle/) or your own personal account.  In order to use this for developing APBs, you can build and push to your remote registry and then `bootstrap` to reload your APBs.
+##### Using a remote registry (DockerHub)
+Once your image is pushed to an organization on Dockerhub, you can configure `apb` to check the registry for available APBs. If your images exist in organization `foo`, you can configure a new registry adapter with:
+```
+apb registry add --type dockerhub --org foo foo-dockerhub
+```
 
-```bash
-apb init my-new-apb
-cd my-new-apb
-apb build --tag docker.io/my-org/my-new-apb
-docker push docker.io/my-org/my-new-apb
-apb bootstrap
-apb list
+To run the `provision` playbook:
+```
+apb bundle provision <apb_name> 
+```
+
+To view available APBs:
+```
+apb bundle list
 ```
 
 ## APB Commands
-[Creating APBs](#creating-apbs)
-* [init](#init)
-* [prepare](#prepare)
-* [build](#build)
-* [push](#push)
-* [test](#test)
-    
-[Broker Utilities](#broker-utilities)
-* [list](#list)
-* [bootstrap](#bootstrap)
-* [remove](#remove)
-* [relist](#relist)    
+These are the top level commands with each subcommand documented under the parent:
 
-[Other](#other)
-* [help](#help)    
+[bundle](#bundle)
 
-<a id="creating-apbs"></a>
+[broker](#broker)
+
+[catalog](#catalog)
+
+[binding](#bindina)
+
+[completion](#completion)
+
+[config](#config)
+
+[help](#help)
+
+[registry](#registry)
+
+[version](#version)
+
+---
+### `bundle`
+
+##### Description
+Interact with Ansible Playbook Bundle images present in the `apb` tool
+
+##### Usage
+```bash
+apb bundle [COMMAND] [OPTIONS]
+```
+
+##### Commands
+| Subcommand  | Description |
+| :---        | :---        |
+| deprovision | Deprovision APB image |
+| info        | Print info about APB image |
+| list        | List available APB images |
+| prepare     | Stamp APB metadata onto Dockerfile in base64 encoding |
+| provision   | Provision APB images |
+| test        | Test APB images |
+
+##### Options
+
+| Option, shorthand  | Description |
+| :---               | :---        |
+| --help, -h         | Show help message |
+| --kubeconfig, -k   | Path to kubeconfig to use |
+
+
+##### Examples
+Provision `mediawiki-apb` APB image
+```bash
+apb bundle provision mediawiki-apb
+```
 
 ---
 ### `binding`
@@ -215,7 +245,9 @@ apb binding [command]
 ```
 
 ##### Commands
-_add_: Add bind credentials to an application
+| Subcommand | Description |
+| :---       | :---        |
+| add        | Add bind credentials to an application |
 
 ##### Options
 
@@ -244,8 +276,10 @@ apb broker [command]
 ```
 
 ##### Commands
-_bootstrap_: Bootstrap an Ansible Service Broker instance
-_catalog_: List available APBs in Anisble Service Broker catalog
+| Subcommand | Description |
+| :---       | :---        |
+| bootstrap  | Bootstrap an Ansible Service Broker instance |
+| catalog    | List available APBs in Anisble Service Broker catalog |
 
 ##### Options
 | Option, shorthand  | Description |
@@ -265,42 +299,10 @@ apb broker catalog --name foo-broker
 ```
 
 ---
-### `bundle`
-
-##### Description
-Interact with Ansible Playbook Bundle images present in the `apb` tool
-
-##### Usage
-```bash
-apb bundle [COMMAND] [OPTIONS]
-```
-
-##### Commands
-_deprovision_: Deprovision APB image
-_info_: Print info about APB image
-_list_: List available APB images
-_prepare_: Stamp APB metadata onto Dockerfile in base64 encoding
-_provision_: Provision APB images
-
-##### Options
-
-| Option, shorthand  | Description |
-| :---               | :---        |
-| --help, -h         | Show help message |
-| --kubeconfig, -k   | Path to kubeconfig to use |
-
-
-##### Examples
-Provision `mediawiki-apb` APB image
-```bash
-apb bundle provision mediawiki-apb
-```
-
----
 ### `catalog`
 
 ##### Description
-Interact with OpenShift Service Catalog. Force the Service Catalog to relist it's available APBs from an Ansible Service Broker instance
+Interact with OpenShift Service Catalog. Force the Service Catalog to relist its available APBs from an Ansible Service Broker instance
 
 ##### Usage
 ```bash
@@ -308,7 +310,9 @@ apb catalog [COMMAND] [OPTIONS]
 ```
 
 ##### Commands
-_relist_: Force a relist of the OpenShift Service Catalog
+| Subcommand | Description |
+| :---       | :---        |
+| relist     | Force a relist of the OpenShift Service Catalog |
 
 ##### Options
 
@@ -319,9 +323,33 @@ _relist_: Force a relist of the OpenShift Service Catalog
 
 
 ##### Examples
-Force a relist of `foo-broker`
+Force a relist of clusterservicebroker `foo-broker`
 ```bash
 apb catalog relist --name foo-broker
+```
+
+---
+### `config`
+
+##### Description
+Runs an interactive prompt to configure defaults for the `apb` tool
+
+##### Usage
+```bash
+apb config [OPTIONS]
+```
+
+##### Options
+
+| Option, shorthand   | Description |
+| :---                | :---        |
+| --help, -h          | Show help message |
+
+##### Examples
+
+Set new defaults for `apb`
+```bash
+apb config
 ```
 
 ---
@@ -336,8 +364,10 @@ apb completion [COMMAND] [OPTIONS]
 ```
 
 ##### Commands
-_bash_: Generate shell completion script for bash
-_zsh_: Generate shell completion script for zsh
+| Subcommand | Description |
+| :---       | :---        |
+| bash       | Generate shell completion script for bash |
+| zsh        | Generate shell completion script for zsh | 
 
 ##### Options
 
@@ -383,9 +413,11 @@ apb registry [COMMAND] [OPTIONS]
 ```
 
 ##### Commands
-_add_: Add a new registry adapter
-_list_: List the configured registry adapters
-_remove_: Remove a registry adapter
+| Subcommand | Description |
+| :---       | :---        |
+| add        | Add a new registry adapter |
+| list       | List the configured registry adapters |
+| remove | Remove a registry adapter |
 
 ##### Options
 
@@ -420,3 +452,6 @@ Displays current version of `apb` tool
 ```bash
 apb version
 ```
+
+---
+
