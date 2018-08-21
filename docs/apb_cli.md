@@ -15,7 +15,7 @@ care of the details so they should be easy to deploy.
 1. [Typical Workflows](#typical-workflows)
     * [Creating and Testing APBs](#creating-and-testing-apbs)
     * [Using the internal OpenShift Registry](#using-the-internal-openshift-registry)
-    * [Using a Remote Registry](#using-a-remote-registry-dockerhub)
+    * [Using a remote Registry](#using-a-remote-registry-dockerhub)
 1. [APB Commands](#apb-commands)
 
 ## Installing the **_apb_** tool
@@ -147,7 +147,7 @@ be sufficient.
 ## Typical Workflows
 
 #### Creating and Testing APBs
-In version `2.0.0` and above, `apb` allows you as a developer to develop and test APB images without using an Ansible Service Broker. `apb` allows the user to configure registries to source APBs from and store the list of images locally (in `~/.apb`). Once the images are found, `apb` allows the user to provision the APB directly for testing.
+In version `2.0.0` and above, `apb` allows you as a developer to develop and test APB images without using an Ansible Service Broker. `apb` allows the user to configure registries to source APBs from and stores the list of images locally (in `~/.apb`). Once the images are found, `apb` allows the user to provision the APB directly for testing.
 
 Initializing the APB is done with `ansible-galaxy`:
 ```
@@ -155,7 +155,7 @@ ansible-galaxy init --type apb <apb-name>
 ```
 
 ##### Using the internal OpenShift registry
-Modify the APB as you wish. Once complete, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. We recommend using the `openshift` namespace for this since by default all imagestreams in `openshift` namespace are accessible to all authenticated users. Regardless, `apb` works with any namespaces. This is documented in the [getting-started document]().
+After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. We recommend using the `openshift` namespace for this since by default all imagestreams in `openshift` namespace are accessible to all authenticated users, but, `apb` works with any accesible namespace. This is documented in the [getting-started document]().
 Once the imagestream exists in namespace `foo`. You can add a new registry adapter with:
 ```
 apb registry add --type local_openshift --namespaces foo lo
@@ -302,7 +302,7 @@ apb broker catalog --name foo-broker
 ### `catalog`
 
 ##### Description
-Interact with OpenShift Service Catalog. Force the Service Catalog to relist it's available APBs from an Ansible Service Broker instance
+Interact with OpenShift Service Catalog. Force the Service Catalog to relist its available APBs from an Ansible Service Broker instance
 
 ##### Usage
 ```bash
@@ -323,7 +323,7 @@ apb catalog [COMMAND] [OPTIONS]
 
 
 ##### Examples
-Force a relist of `foo-broker`
+Force a relist of clusterservicebroker `foo-broker`
 ```bash
 apb catalog relist --name foo-broker
 ```
@@ -347,7 +347,7 @@ apb config [OPTIONS]
 
 ##### Examples
 
-Get more information about the `apb broker` subcommand
+Set new defaults for `apb`
 ```bash
 apb config
 ```
