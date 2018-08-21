@@ -37,7 +37,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var brokerName string
+var brokerNamespaceFlag string
 var catalogOutputFormat string
 
 type ServiceEncoder interface {
@@ -70,7 +70,7 @@ var brokerBootstrapCmd = &cobra.Command{
 }
 
 func init() {
-	brokerCmd.PersistentFlags().StringVarP(&brokerName, "name", "n", "", "Name of Automation Broker instance")
+	brokerCmd.PersistentFlags().StringVarP(&brokerNamespaceFlag, "namespace", "n", "", "Namespace of Automation Broker instance")
 	rootCmd.AddCommand(brokerCmd)
 
 	brokerCatalogCmd.Flags().StringVarP(&catalogOutputFormat, "output", "o", "", "Display broker catalog output in different format (json or yaml)")
@@ -89,10 +89,9 @@ func pruneOutputFormat(format string) {
 
 func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
 	log.Debugf("func::listBrokerCatalog()")
-	// Override configured values if user provides brokerName as cmd arg
-	if brokerName != "" {
-		brokerRouteName = brokerName
-		brokerNamespace = brokerName
+	// Override configured values if user provides brokerNamespace as cmd arg
+	if brokerNamespaceFlag != "" {
+		brokerNamespace = brokerNamespaceFlag
 	}
 	kube, err := clients.Kubernetes()
 	if err != nil {
@@ -146,9 +145,8 @@ func listBrokerCatalog(brokerRouteName string, brokerNamespace string) {
 
 func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 	// Override configured values if user provides brokerName as cmd arg
-	if brokerName != "" {
-		brokerRouteName = brokerName
-		brokerNamespace = brokerName
+	if brokerNamespaceFlag != "" {
+		brokerNamespace = brokerNamespaceFlag
 	}
 	kube, err := clients.Kubernetes()
 	if err != nil {
@@ -162,7 +160,7 @@ func bootstrapBroker(brokerRouteName string, brokerNamespace string) {
 		return
 	}
 
-	// Get the broker route given brokerName
+	// Get the broker route
 	brokerRoute, err := getBrokerRoute(brokerRouteName, brokerNamespace)
 	if err != nil {
 		log.Errorf("Failed to get broker route: %v", err)
@@ -255,9 +253,8 @@ func printServicesAsTable(services []osb.Service) {
 
 func getBrokerRoute(brokerRouteName string, brokerNamespace string) (string, error) {
 	// Override configured values if user provides brokerName as cmd arg
-	if brokerName != "" {
-		brokerRouteName = brokerName
-		brokerNamespace = brokerName
+	if brokerNamespaceFlag != "" {
+		brokerNamespace = brokerNamespaceFlag
 	}
 	var brokerRoute string
 	ocp, err := clients.Openshift()
