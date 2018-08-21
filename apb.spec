@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 1.9.2
+Version: 1.9.3
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,10 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Tue Aug 21 2018 Dylan Murray <dymurray@redhat.com> 1.9.3-1
+- Update apb_cli document (#118) (dymurray@redhat.com)
+- Bug 1613720 - Make -n flag for broker namespace (#119) (dymurray@redhat.com)
+
 * Fri Aug 17 2018 David Zager <david.j.zager@gmail.com> 1.9.2-1
 - Bug 1613664 - Update shorthand flags for bundle subcommand (#117)
   (dymurray@redhat.com)
