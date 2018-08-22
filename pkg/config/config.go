@@ -91,6 +91,7 @@ func InitialDefaultSettings() *DefaultSettings {
 		BrokerResourceURL:        "/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/",
 		BrokerRouteName:          "broker",
 		ClusterServiceBrokerName: "openshift-automation-service-broker",
+		BrokerRouteSuffix:        "osb",
 	}
 }
 
