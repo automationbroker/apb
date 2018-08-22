@@ -262,7 +262,7 @@ Create binding out of secret `foo` and add it to Deployment Config `bar`
 apb binding add foo bar
 ```
 
-Our example APBs create secrets that match the name of the APB pod. So if you want to bind Postgresql APB to Mediawiki, you would first provision Postgresql (`apb bundle provision postgresql-apb`) and Mediawiki (`apb bundle provision mediawiki-apb`). Once they are done, you should see a secret named `bundle-<hash>` if you do `oc get secret`. Then find the name of the DeploymentConfig you want to bind to (`oc get dc`).If the DeploymentConfig is `mediawiki-1234` a binding command may look like
+Our example APBs create secrets that match the name of the APB pod. To bind Postgresql APB to Mediawiki, you would first provision Postgresql (`apb bundle provision postgresql-apb`) and Mediawiki (`apb bundle provision mediawiki-apb`). Once the APBs have finished provisioning, you should see a secret named `bundle-<hash>` when you run `oc get secret`. Then find the name of the DeploymentConfig you want to bind to (`oc get dc`).If the DeploymentConfig is `mediawiki-1234` a binding command may look like
 ```
 $ apb binding add bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40 mediawiki-1234
 INFO Create a binding using secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40] to app [mediawiki-1234]                                                                                     
