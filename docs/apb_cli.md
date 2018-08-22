@@ -155,16 +155,16 @@ ansible-galaxy init --type apb <apb-name>
 ```
 
 ##### Using the internal OpenShift registry
-After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. We recommend using the `openshift` namespace for this since by default all imagestreams in `openshift` namespace are accessible to all authenticated users, but, `apb` works with any accesible namespace. This is documented in the [getting-started document]().
+After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. We recommend using the `openshift` namespace for this since by default all imagestreams in `openshift` namespace are accessible to all authenticated users, but, `apb` works with any accesible namespace. This is documented in [getting-started.md](getting-started.md).
 Once the imagestream exists in namespace `foo`. You can add a new registry adapter with:
 ```
-apb registry add --type local_openshift --namespaces foo lo
+apb registry add lo --type local_openshift --namespaces foo
 ```
 
 ##### Using a remote registry (DockerHub)
 Once your image is pushed to an organization on Dockerhub, you can configure `apb` to check the registry for available APBs. If your images exist in organization `foo`, you can configure a new registry adapter with:
 ```
-apb registry add --type dockerhub --org foo foo-dockerhub
+apb registry add foo-dockerhub --type dockerhub --org foo
 ```
 
 To run the `provision` playbook:
@@ -230,7 +230,17 @@ apb bundle [COMMAND] [OPTIONS]
 ##### Examples
 Provision `mediawiki-apb` APB image
 ```bash
+# Provision mediawiki-apb in the background
 apb bundle provision mediawiki-apb
+
+# Provision mediawiki-apb and follow APB logs
+apb bundle provision mediawiki-apb --follow
+
+# Provision mediawiki-apb using 'admin' sandbox-role
+apb bundle provision mediawiki-apb --sandbox-role admin
+
+# Deprovision mediawiki-apb without prompting for parameters and follow APB logs
+apb bundle deprovision --skip-params --follow
 ```
 
 ---
@@ -257,9 +267,9 @@ apb binding [command]
 | --namespace, -n        | Namespace of binding |
 
 ##### Examples
-Create binding out of secret `foo` and add it to Deployment Config `bar`
+Create binding out of secret `foo-secret` and add it to Deployment Config `bar-dc`:
 ```bash
-apb binding add foo bar
+apb binding add foo-secret bar-dc
 ```
 
 Our example APBs create secrets that match the name of the APB pod. To bind Postgresql APB to Mediawiki, you would first provision Postgresql (`apb bundle provision postgresql-apb`) and Mediawiki (`apb bundle provision mediawiki-apb`). Once the APBs have finished provisioning, you should see a secret named `bundle-<hash>` when you run `oc get secret`. Then find the name of the DeploymentConfig you want to bind to (`oc get dc`).If the DeploymentConfig is `mediawiki-1234` a binding command may look like
@@ -447,7 +457,7 @@ apb registry [COMMAND] [OPTIONS]
 ##### Examples
 Add a registry named `dockerhub` configured to use organization `dune` from Dockerhub
 ```bash
-apb registry add --org dune dockerhub
+apb registry add dockerhub --org dune 
 ```
 
 List configured registries
@@ -455,7 +465,7 @@ List configured registries
 apb registry list
 ```
 
-Remove registry `dockerhub`
+Remove registry named `dockerhub`
 ```bash
 apb registry remove dockerhub
 ```

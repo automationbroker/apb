@@ -2,13 +2,10 @@
 
 1. [Introduction](#introduction-to-ansible-playbook-bundles-apbs)
 1. [Development Environment](#development-environment)
-1. [Creating Your First APB](#creating-your-first-apb)
-    1. [Init](#using-apb-init)
-    1. [Actions](#actions)
-        * [Provision](#provision)
-        * [Deprovision](#deprovision)
-        * [Bind](#bind)
-        * [Test](#test)
+1. [Creating Your First APB](#creating-and-testing-your-first-apb)
+    1. [Initializing your APB](#initializing-your-apb-project)
+    1. [Building and Publishing your APB](#building-and-publishing-your-apb-for-testing)
+    1. [Running your APB](#running-the-apb)        
 1. [Notes](#notes)
 1. [More Information](#more-information)
 
@@ -52,7 +49,7 @@ Use "apb [command] --help" for more information about a command.
 ## Creating and testing your first APB
 In this tutorial, we'll create an APB for a containerized [hello world application](https://hub.docker.com/r/ansibleplaybookbundle/hello-world/).  We'll work through a basic APB that will mirror the [hello-world-apb](https://github.com/ansibleplaybookbundle/hello-world-apb).
 
-### Initializing APB project
+### Initializing your APB project
 Our first task is to create the skeleton for your app using `ansible-galaxy`.  The command for this is simple:
 ```bash
 $ ansible-galaxy init --type apb my-test-apb
@@ -139,7 +136,7 @@ USER apb
 
 ### Building and publishing your APB for testing
 
-At this point we have a fully formed APB that we can build. To do this, we leverage the OpenShift build system. To create a `buildconfig` for your APB:
+At this point we have a fully formed APB that we can build. In this example, we'll build an APB using the OpenShift build system. Let's first create a `buildconfig` for the APB. Perform this step when you're building a new APB that you haven't previously built on OpenShift:
 ```bash
 $ oc new-build --binary=true --name <apb-name>
 ```
@@ -149,7 +146,7 @@ To start the build from the current directory and follow the logs:
 $ oc start-build --follow --from-dir . <apb-name>
 ```
 
-When the build is complete, you should see available imagestreams:
+If the build completes successfully, you'll see some newly available imagestreams:
 ```bash
 $ oc get is                    
 NAME          DOCKER REPO                       TAGS      UPDATED     
@@ -204,8 +201,9 @@ Use "apb bundle [command] --help" for more information about a command.
 
 We can `provision` the `my-test-apb` that now exists in the registry by running:
 ```
-$ apb bundle provision my-test-apb
+$ apb bundle provision my-test-apb --follow
 ```
+The `--follow` flag used above will show logs produced by the running APB.
 
 ### More information
 * [Design](design.md) - overall design of Ansible Playbook Bundles
