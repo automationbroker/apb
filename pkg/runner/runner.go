@@ -359,7 +359,6 @@ func createExtraVars(targetNamespace string, parameters *bundle.Parameters, plan
 	paramsCopy["_apb_plan_id"] = plan.Name
 	paramsCopy["_apb_service_instance_id"] = "1234"
 	paramsCopy["_apb_service_class_id"] = "1234"
-	paramsCopy["in_cluster"] = false
 	extraVars, err := json.Marshal(paramsCopy)
 	return string(extraVars), err
 }
