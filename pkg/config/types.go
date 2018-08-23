@@ -17,4 +17,5 @@ type DefaultSettings struct {
 	BrokerResourceURL        string
 	BrokerRouteName          string
 	ClusterServiceBrokerName string
+	BrokerRouteSuffix        string
 }

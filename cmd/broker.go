@@ -271,7 +271,7 @@ func getBrokerRoute(brokerRouteName string, brokerNamespace string) (string, err
 
 	for _, route := range rc.Items {
 		if route.Name == brokerRouteName {
-			brokerRoute = fmt.Sprintf("https://%v/%v", route.Spec.Host, "osb")
+			brokerRoute = fmt.Sprintf("https://%v/%v", route.Spec.Host, config.LoadedDefaults.BrokerRouteSuffix)
 			return brokerRoute, nil
 		}
 	}

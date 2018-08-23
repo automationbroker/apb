@@ -42,6 +42,7 @@ func gatherDefaultsConfig() {
 		BrokerResourceURL:        getUserInput("Broker resource URL", config.InitialDefaultSettings().BrokerResourceURL),
 		BrokerRouteName:          getUserInput("Broker route name", config.InitialDefaultSettings().BrokerRouteName),
 		ClusterServiceBrokerName: getUserInput("clusterservicebroker resource name", config.InitialDefaultSettings().ClusterServiceBrokerName),
+		BrokerRouteSuffix:        getUserInput("Broker route suffix", config.InitialDefaultSettings().BrokerRouteSuffix),
 	}
 	fmt.Println("\nSaving new configuration....")
 	config.UpdateCachedDefaults(config.Defaults, defaultSettings)
