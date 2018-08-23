@@ -58,7 +58,7 @@ sudo yum -y install apb
 ```
 
 
-For Fedora 26 or Fedora 27:
+For Fedora 26, 27, 28+:
 ```
 sudo dnf -y install dnf-plugins-core
 sudo dnf -y copr enable @ansible-service-broker/ansible-service-broker-latest
@@ -272,17 +272,26 @@ Create binding out of secret `foo-secret` and add it to Deployment Config `bar-d
 apb binding add foo-secret bar-dc
 ```
 
-Our example APBs create secrets that match the name of the APB pod. To bind Postgresql APB to Mediawiki, you would first provision Postgresql (`apb bundle provision postgresql-apb`) and Mediawiki (`apb bundle provision mediawiki-apb`). Once the APBs have finished provisioning, you should see a secret named `bundle-<hash>` when you run `oc get secret`. Then find the name of the DeploymentConfig you want to bind to (`oc get dc`).If the DeploymentConfig is `mediawiki-1234` a binding command may look like
+Our example APBs create secrets that match the name of the APB pod. 
+
+To bind Postgresql APB to Mediawiki:
+1. Provision Postgresql (`apb bundle provision postgresql-apb`)
+1. Provision Mediawiki (`apb bundle provision mediawiki-apb`)
+1. Wait for APBs to finish provisioning
+1. Run `oc get secret`, look for a secret named `bundle-<hash>` that matches the hash from your Postgres APB run
+1. Run `oc get dc` and identify the DeploymentConfig you want to add your bind secrets to
+1. If the DeploymentConfig is named `mediawiki-1234` and the bundle hash is `772f6e70-[...]` a binding command may look like:
 ```
 $ apb binding add bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40 mediawiki-1234
-INFO Create a binding using secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40] to app [mediawiki-1234]                                                                                     
 
-Successfully created secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds] in namespace [apb].                                                                                          
+INFO Create a binding using secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40] to app [mediawiki-1234]                                 
+Successfully created secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds] in namespace [apb].                                      
+
 Use the following command to attach the binding to your application:
 oc set env dc/mediawiki-1234 --from=secret/bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds
 ```
 
-Type the recommended command:
+Type the recommended command to complete the binding:
 ```
 $ oc set env dc/mediawiki-1234 --from=secret/bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds
 deploymentconfig "mediawiki-1234" updated
