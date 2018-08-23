@@ -58,7 +58,7 @@ sudo yum -y install apb
 ```
 
 
-For Fedora 26 or Fedora 27:
+For Fedora 26, 27, 28+:
 ```
 sudo dnf -y install dnf-plugins-core
 sudo dnf -y copr enable @ansible-service-broker/ansible-service-broker-latest
@@ -149,22 +149,26 @@ be sufficient.
 #### Creating and Testing APBs
 In version `2.0.0` and above, `apb` allows you as a developer to develop and test APB images without using an Ansible Service Broker. `apb` allows the user to configure registries to source APBs from and stores the list of images locally (in `~/.apb`). Once the images are found, `apb` allows the user to provision the APB directly for testing.
 
+
 Initializing the APB is done with `ansible-galaxy`:
 ```
 ansible-galaxy init --type apb <apb-name>
 ```
 
 ##### Using the internal OpenShift registry
-After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. We recommend using the `openshift` namespace for this since by default all imagestreams in `openshift` namespace are accessible to all authenticated users, but, `apb` works with any accesible namespace. This is documented in the [getting-started document]().
-Once the imagestream exists in namespace `foo`. You can add a new registry adapter with:
+After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. 
+
+We recommend putting APB images into the `openshift` namespace since imagestreams in the `openshift` namespace are accessible to all authenticated users by default, but `apb` works with any accessible namespace. More information is available in [getting-started.md](getting-started.md).
+
+You can make APB imagestreams in namespace `foo` accessible to the `apb` tool by adding a new registry adapter with:
 ```
-apb registry add --type local_openshift --namespaces foo lo
+apb registry add lo --type local_openshift --namespaces foo
 ```
 
 ##### Using a remote registry (DockerHub)
 Once your image is pushed to an organization on Dockerhub, you can configure `apb` to check the registry for available APBs. If your images exist in organization `foo`, you can configure a new registry adapter with:
 ```
-apb registry add --type dockerhub --org foo foo-dockerhub
+apb registry add foo-dockerhub --type dockerhub --org foo
 ```
 
 To run the `provision` playbook:
@@ -230,7 +234,17 @@ apb bundle [COMMAND] [OPTIONS]
 ##### Examples
 Provision `mediawiki-apb` APB image
 ```bash
+# Provision mediawiki-apb in the background
 apb bundle provision mediawiki-apb
+
+# Provision mediawiki-apb and follow APB logs
+apb bundle provision mediawiki-apb --follow
+
+# Provision mediawiki-apb using 'admin' sandbox-role
+apb bundle provision mediawiki-apb --sandbox-role admin
+
+# Deprovision mediawiki-apb without prompting for parameters and follow APB logs
+apb bundle deprovision --skip-params --follow
 ```
 
 ---
@@ -257,22 +271,31 @@ apb binding [command]
 | --namespace, -n        | Namespace of binding |
 
 ##### Examples
-Create binding out of secret `foo` and add it to Deployment Config `bar`
+Create binding out of secret `foo-secret` and add it to Deployment Config `bar-dc`:
 ```bash
-apb binding add foo bar
+apb binding add foo-secret bar-dc
 ```
 
-Our example APBs create secrets that match the name of the APB pod. To bind Postgresql APB to Mediawiki, you would first provision Postgresql (`apb bundle provision postgresql-apb`) and Mediawiki (`apb bundle provision mediawiki-apb`). Once the APBs have finished provisioning, you should see a secret named `bundle-<hash>` when you run `oc get secret`. Then find the name of the DeploymentConfig you want to bind to (`oc get dc`).If the DeploymentConfig is `mediawiki-1234` a binding command may look like
+Our example APBs create secrets that match the name of the APB pod. 
+
+To bind Postgresql APB to Mediawiki:
+1. Provision Postgresql (`apb bundle provision postgresql-apb`)
+1. Provision Mediawiki (`apb bundle provision mediawiki-apb`)
+1. Wait for APBs to finish provisioning
+1. Run `oc get secret`, look for a secret named `bundle-<hash>` that matches the hash from your Postgres APB run
+1. Run `oc get dc` and identify the DeploymentConfig you want to add your bind secrets to
+1. If the DeploymentConfig is named `mediawiki-1234` and the bundle hash is `772f6e70-[...]` a binding command may look like:
 ```
 $ apb binding add bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40 mediawiki-1234
-INFO Create a binding using secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40] to app [mediawiki-1234]                                                                                     
 
-Successfully created secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds] in namespace [apb].                                                                                          
+INFO Create a binding using secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40] to app [mediawiki-1234]                                 
+Successfully created secret [bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds] in namespace [apb].                                      
+
 Use the following command to attach the binding to your application:
 oc set env dc/mediawiki-1234 --from=secret/bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds
 ```
 
-Type the recommended command:
+Type the recommended command to complete the binding:
 ```
 $ oc set env dc/mediawiki-1234 --from=secret/bundle-772f6e70-3ee5-4fce-9c26-1dec57cc0c40-creds
 deploymentconfig "mediawiki-1234" updated
@@ -367,7 +390,19 @@ apb config [OPTIONS]
 
 Set new defaults for `apb`
 ```bash
-apb config
+$ apb config
+Broker namespace [default: openshift-automation-service-broker]: 
+Broker resource URL [default: /apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/]: 
+Broker route name [default: openshift-automation-service-broker]: 
+clusterservicebroker resource name [default: openshift-automation-service-broker]: 
+# Broker route suffix values: 
+# -------------------------------
+# 3.9:   "ansible-service-broker"
+# 3.10:  "ansible-service-broker"
+# 3.11+: "osb"
+Broker route suffix [default: osb]:                                     
+
+Saving new configuration.... 
 ```
 
 ---
@@ -447,7 +482,7 @@ apb registry [COMMAND] [OPTIONS]
 ##### Examples
 Add a registry named `dockerhub` configured to use organization `dune` from Dockerhub
 ```bash
-apb registry add --org dune dockerhub
+apb registry add dockerhub --org dune 
 ```
 
 List configured registries
@@ -455,7 +490,7 @@ List configured registries
 apb registry list
 ```
 
-Remove registry `dockerhub`
+Remove registry named `dockerhub`
 ```bash
 apb registry remove dockerhub
 ```

@@ -10,11 +10,11 @@ $ oc new-project test-project
 ### Add a registry
 First add the default registry (ansibleplaybookbundle on Dockerhub):
 ```
-$ apb registry add
+$ apb registry add docker
 ```
 Or to add a custom registry:
 ``` 
-$ apb registry add --name docker --org ansibleplaybookbundle --type dockerhub
+$ apb registry add docker --org ansibleplaybookbundle --type dockerhub
 ```
 
 Then you can list your registries:
@@ -26,7 +26,7 @@ Found registries already in config:
  docker  |  dockerhub  |  ansibleplaybookbundle  |  docker.io
 ```
 
-### List available Service Bundles
+### List available APBs
 
 Once a registry is configured, run `apb bundle list`:
 ```
@@ -41,19 +41,19 @@ Found specs already in registry: [docker]
  etherpad-apb           |  docker.io/ansibleplaybookbundle/etherpad-apb:latest                  |  docker                                    
  pyzip-demo-db-apb      |  docker.io/ansibleplaybookbundle/pyzip-demo-db-apb:latest             |  docker
 ```
-This command loads and caches Service Bundle specs (metadata) from newly added registries. Cached specs can be updated with `apb bundle list --refresh`
+This command loads and caches APB specs (metadata) from newly added registries. Cached specs can be updated with `apb bundle list --refresh`
 
-### Provision a Service Bundle
-Provision any of the listed Service Bundles like so:
+### Provision an APB
+Provision any of the listed APBs like so:
 ```
-$ apb bundle provision <bundle_name> -n my-project
-```
-
-To provision a Service Bundle with the `admin` ClusterRole, run:
-```
-$ apb bundle provision <bundle_name> -n my-project -r admin
+$ apb bundle provision <bundle_name> -n myproject --follow
 ```
 
+To provision an APB with the `admin` ClusterRole used in the APB sandbox, run:
+```
+$ apb bundle provision <bundle_name> -n myproject --sandbox-role admin --follow
+```
+_Note:_ the `--follow` flag waits for the APB to start running and shows logs on-screen.
 
 ## Tips
 ### Enabling tab completion for apb
