@@ -386,7 +386,19 @@ apb config [OPTIONS]
 
 Set new defaults for `apb`
 ```bash
-apb config
+$ apb config
+Broker namespace [default: openshift-automation-service-broker]: 
+Broker resource URL [default: /apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/]: 
+Broker route name [default: openshift-automation-service-broker]: 
+clusterservicebroker resource name [default: openshift-automation-service-broker]: 
+# Broker route suffix values: 
+# -------------------------------
+# 3.9:   "ansible-service-broker"
+# 3.10:  "ansible-service-broker"
+# 3.11+: "osb"
+Broker route suffix [default: osb]:                                     
+
+Saving new configuration.... 
 ```
 
 ---
