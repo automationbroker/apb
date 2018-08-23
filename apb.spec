@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 1.9.3
+Version: 1.9.4
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,11 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Thu Aug 23 2018 Dylan Murray <dymurray@redhat.com> 1.9.4-1
+- Add broker route suffix as a config option (#123) (dymurray@redhat.com)
+- Bug 1620042 - do not harcode in_cluster var & update docs (#120)
+  (dymurray@redhat.com)
+
 * Tue Aug 21 2018 Dylan Murray <dymurray@redhat.com> 1.9.3-1
 - Update apb_cli document (#118) (dymurray@redhat.com)
 - Bug 1613720 - Make -n flag for broker namespace (#119) (dymurray@redhat.com)
