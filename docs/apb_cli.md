@@ -149,14 +149,18 @@ be sufficient.
 #### Creating and Testing APBs
 In version `2.0.0` and above, `apb` allows you as a developer to develop and test APB images without using an Ansible Service Broker. `apb` allows the user to configure registries to source APBs from and stores the list of images locally (in `~/.apb`). Once the images are found, `apb` allows the user to provision the APB directly for testing.
 
+
 Initializing the APB is done with `ansible-galaxy`:
 ```
 ansible-galaxy init --type apb <apb-name>
 ```
 
 ##### Using the internal OpenShift registry
-After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. We recommend using the `openshift` namespace for this since by default all imagestreams in `openshift` namespace are accessible to all authenticated users, but, `apb` works with any accesible namespace. This is documented in [getting-started.md](getting-started.md).
-Once the imagestream exists in namespace `foo`. You can add a new registry adapter with:
+After modifying the APB as desired, we need to create a buildconfig so that an imagestream is populated in a namespace which `apb` can read from. 
+
+We recommend putting APB images into the `openshift` namespace since imagestreams in the `openshift` namespace are accessible to all authenticated users by default, but `apb` works with any accessible namespace. More information is available in [getting-started.md](getting-started.md).
+
+You can make APB imagestreams in namespace `foo` accessible to the `apb` tool by adding a new registry adapter with:
 ```
 apb registry add lo --type local_openshift --namespaces foo
 ```
