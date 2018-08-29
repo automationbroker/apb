@@ -22,5 +22,5 @@ else
 fi
 sudo usermod -a -G $group apb
 
-command="apb $@"
+command="apb --config /.apb $@"
 sg $group -c "$command"
