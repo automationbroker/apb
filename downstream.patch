@@ -11,6 +11,6 @@
 -		ClusterServiceBrokerName: "openshift-automation-service-broker",
 +		BrokerRouteName:          "asb",
 +		ClusterServiceBrokerName: "ansible-service-broker",
+ 		BrokerRouteSuffix:        "osb",
  	}
  }
- 
