@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 1.9.4
+Version: 1.9.5
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,11 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Fri Aug 31 2018 Jason Montleon <jmontleo@redhat.com> 1.9.5-1
+- Fix downstream patch (#127) (jmontleo@redhat.com)
+- Ensure that one apb alias works consistently (#126) (jmontleo@redhat.com)
+- Pre-release docs update. (#122) (derekwhatley@gmail.com)
+
 * Thu Aug 23 2018 Dylan Murray <dymurray@redhat.com> 1.9.4-1
 - Add broker route suffix as a config option (#123) (dymurray@redhat.com)
 - Bug 1620042 - do not harcode in_cluster var & update docs (#120)
