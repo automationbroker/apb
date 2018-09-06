@@ -42,9 +42,10 @@ import (
 // RunBundle will run the bundle's action in the given namespace
 func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (podName string, err error) {
 	reg := []config.Registry{}
+	id := uuid.New()
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
-	podName = fmt.Sprintf("bundle-%s", uuid.New())
+	podName = fmt.Sprintf("bundle-%s", id)
 	config.Registries.UnmarshalKey("Registries", &reg)
 	for _, r := range reg {
 		if len(bundleRegistry) > 0 && r.Config.Name != bundleRegistry {
@@ -88,7 +89,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		}
 	}
 
-	extraVars, err := createExtraVars(ns, &params, plan)
+	extraVars, err := createExtraVars(id, ns, &params, plan)
 	if err != nil {
 		return "", err
 	}
@@ -343,7 +344,7 @@ func createPodEnv(executionContext runtime.ExecutionContext) []v1.EnvVar {
 	return podEnv
 }
 
-func createExtraVars(targetNamespace string, parameters *bundle.Parameters, plan bundle.Plan) (string, error) {
+func createExtraVars(id string, targetNamespace string, parameters *bundle.Parameters, plan bundle.Plan) (string, error) {
 	var paramsCopy bundle.Parameters
 	if parameters != nil && *parameters != nil {
 		paramsCopy = *parameters
@@ -357,8 +358,8 @@ func createExtraVars(targetNamespace string, parameters *bundle.Parameters, plan
 
 	paramsCopy["cluster"] = "openshift"
 	paramsCopy["_apb_plan_id"] = plan.Name
-	paramsCopy["_apb_service_instance_id"] = "1234"
-	paramsCopy["_apb_service_class_id"] = "1234"
+	paramsCopy["_apb_service_instance_id"] = id
+	paramsCopy["_apb_service_class_id"] = id
 	extraVars, err := json.Marshal(paramsCopy)
 	return string(extraVars), err
 }
