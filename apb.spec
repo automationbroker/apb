@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 1.9.5
+Version: 1.9.6
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,14 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Thu Sep 06 2018 Dylan Murray <dymurray@redhat.com> 1.9.6-1
+- Bug 1625877 - Change downstream patch to use proper route name (#130)
+  (dymurray@redhat.com)
+- Bug 1625870 - Update registry add help command with valid org (#131)
+  (dymurray@redhat.com)
+- Update apb_cli.md with instructions to use config file values. (#129)
+  (derekwhatley@gmail.com)
+
 * Fri Aug 31 2018 Jason Montleon <jmontleo@redhat.com> 1.9.5-1
 - Fix downstream patch (#127) (jmontleo@redhat.com)
 - Ensure that one apb alias works consistently (#126) (jmontleo@redhat.com)
