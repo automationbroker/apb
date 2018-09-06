@@ -326,17 +326,11 @@ apb broker [command]
 | Option, shorthand  | Description |
 | :---               | :---        |
 | --help, -h         | Show help message for broker |
-| --name, -n         | Name of Ansible Service Broker instance |
 
 ##### Examples
-Bootstrap an Ansible Service Broker instance with the name `openshift-ansible-service-broker`
+Bootstrap an Ansible Service Broker instance using config values stored in ~/.apb/defaults.json
 ```bash
-apb broker bootstrap --name openshift-ansible-service-broker
-```
-
-List available APBs in an Ansible Service Broker instance with the name `foo-broker`
-```bash
-apb broker catalog --name foo-broker
+apb broker bootstrap
 ```
 
 ---
@@ -360,13 +354,18 @@ apb catalog [COMMAND] [OPTIONS]
 | Option, shorthand  | Description |
 | :---               | :---        |
 | --help, -h         | Show help message |
-| --name, -n         | Name of clusterservicebroker to relist |
+| --output, -o       | Display output as `yaml` or `json` |
 
 
 ##### Examples
-Force a relist of clusterservicebroker `foo-broker`
+Force a relist of the service broker specified by config values stored in ~/.apb/defaults.json
 ```bash
-apb catalog relist --name foo-broker
+apb catalog relist
+```
+
+Force a relist of the service broker specified by config values stored in ~/.apb/defaults.json, printing output as JSON.
+```bash
+apb catalog relist -o json
 ```
 
 ---
