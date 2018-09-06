@@ -42,10 +42,22 @@ import (
 // RunBundle will run the bundle's action in the given namespace
 func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (podName string, err error) {
 	reg := []config.Registry{}
-	id := uuid.New()
+	var id string
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
-	podName = fmt.Sprintf("bundle-%s", id)
+
+	if action == "deprovision" {
+		id, err = getProvisionedInstanceId(bundleName)
+		if err != nil {
+			log.Errorf("Error getting provisioned instances: %v", err)
+			return "", err
+		}
+	} else {
+		id = uuid.New()
+	}
+	log.Debugf("HERE: %v", id)
+
+	podName = fmt.Sprintf("bundle-%s-%s", action, id)
 	config.Registries.UnmarshalKey("Registries", &reg)
 	for _, r := range reg {
 		if len(bundleRegistry) > 0 && r.Config.Name != bundleRegistry {
@@ -70,6 +82,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 
 	targetSpec = candidateSpecs[0]
+	log.Debugf("na: %v", targetSpec.FQName)
 
 	// determine the correct plan
 	plan := selectPlan(targetSpec)
@@ -108,6 +121,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(podName, ns, targets, sandboxRole, labels)
 	if err != nil {
 		fmt.Printf("\nProblem creating sandbox [%s] to run APB. Did you run `oc new-project %s` first?\n\n", podName, ns)
+		log.Errorf("error creating sandbox: %v", err)
 		os.Exit(-1)
 	}
 
@@ -400,4 +414,24 @@ func contains(s []string, t string) bool {
 		}
 	}
 	return false
+}
+
+func getProvisionedInstanceId(name string) (string, error) {
+	var instanceConfigs []config.ProvisionedInstance
+	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
+	if err != nil {
+		return "", err
+	}
+	for _, instance := range instanceConfigs {
+		if instance.BundleName == name {
+			if len(instance.InstanceIDs) == 1 {
+				return instance.InstanceIDs[0], nil
+			} else if len(instance.InstanceIDs) == 0 {
+				return "", errors.New("found no available instances")
+			} else {
+				// Select instance
+			}
+		}
+	}
+	return "", nil
 }

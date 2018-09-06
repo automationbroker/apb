@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/automationbroker/apb/pkg/config"
@@ -251,6 +252,16 @@ func executeBundle(action string, args []string) (podName string) {
 	if err != nil {
 		log.Errorf("Failed to execute bundle [%v]: %v", args[0], err)
 		return ""
+	}
+	id := strings.Split(pn, "bundle-")[1]
+	log.Debugf("id: %v", id)
+	switch action {
+	case "provision":
+		addInstance(args[0], id)
+		// Add instance to ProvisionedInstances
+	case "deprovision":
+		removeInstance(args[0], id)
+		// Remove instance from ProvisionedInstances
 	}
 	return pn
 }
@@ -481,4 +492,33 @@ func processLineBreaks(text []byte, lineBreakText []byte, breakAfter int) []byte
 		}
 	}
 	return newText
+}
+
+func addInstance(name, id string) error {
+	var instanceConfigs []config.ProvisionedInstance
+	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
+	if err != nil {
+		return err
+	}
+
+	for _, instance := range instanceConfigs {
+		if instance.BundleName == name {
+			instance.InstanceIDs = append(instance.InstanceIDs, id)
+			config.UpdateCachedInstances(config.ProvisionedInstances, instanceConfigs)
+			return nil
+		}
+	}
+
+	instance := config.ProvisionedInstance{
+		BundleName:  name,
+		InstanceIDs: []string{id},
+	}
+
+	instanceConfigs = append(instanceConfigs, instance)
+	config.UpdateCachedInstances(config.ProvisionedInstances, instanceConfigs)
+	return nil
+}
+
+func removeInstance(name, id string) error {
+	return nil
 }

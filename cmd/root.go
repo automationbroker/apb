@@ -53,6 +53,8 @@ func initConfig() {
 
 	// Load or create registries.json
 	config.Registries, _ = config.InitJSONConfig(cfgDir, "registries")
+	// Load or create instances.json
+	config.ProvisionedInstances, _ = config.InitJSONConfig(cfgDir, "instances")
 	// Load or create defaults.json
 	config.Defaults, isNewDefaultsConfig = config.InitJSONConfig(cfgDir, "defaults")
 	if isNewDefaultsConfig {

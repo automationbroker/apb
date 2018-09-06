@@ -32,6 +32,9 @@ var LoadedDefaults DefaultSettings
 // Registries stores APB registry and spec data
 var Registries *viper.Viper
 
+// ProvisionedInstances stores APB instances
+var ProvisionedInstances *viper.Viper
+
 // InitJSONConfig will load (or create if needed) a JSON config at ~/home/.apb/configName.json or configDir/configName.json
 func InitJSONConfig(configDir string, configName string) (config *viper.Viper, isNewConfig bool) {
 	var configPath string
@@ -68,6 +71,13 @@ func InitJSONConfig(configDir string, configName string) (config *viper.Viper, i
 		os.Exit(1)
 	}
 	return viperConfig, isNewConfig
+}
+
+// UpdateCachedInstances saves the contents of instanceList to a configuration file
+func UpdateCachedInstances(viperConfig *viper.Viper, instanceList []ProvisionedInstance) error {
+	viperConfig.Set("ProvisionedInstances", instanceList)
+	viperConfig.WriteConfig()
+	return nil
 }
 
 // UpdateCachedRegistries saves the contents of regList to a configuration file

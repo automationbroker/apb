@@ -5,6 +5,12 @@ import (
 	"github.com/automationbroker/bundle-lib/registries"
 )
 
+// ProvisionedInstance stores a list of provisioned uuids associated with a bundle
+type ProvisionedInstance struct {
+	BundleName  string
+	InstanceIDs []string
+}
+
 // Registry stores a single registry config and references all associated bundle specs
 type Registry struct {
 	Config registries.Config
