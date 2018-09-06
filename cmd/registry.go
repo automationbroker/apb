@@ -101,7 +101,7 @@ func init() {
 	// Registry Add Flags
 	registryAddCmd.Flags().StringVarP(&registryConfig.Config.Type, "type", "t", "dockerhub", "registry type (dockerhub, local_openshift, helm)")
 	registryAddCmd.Flags().StringVar(&registryConfig.Config.Tag, "tag", "", "specify the tag of images in registry (e.g. 'latest')")
-	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "", "organization for 'dockerhub' adapter to search (e.g. 'ansible-playbook-bundle')")
+	registryAddCmd.Flags().StringVar(&registryConfig.Config.Org, "org", "", "organization for 'dockerhub' adapter to search (e.g. 'ansibleplaybookbundle')")
 	registryAddCmd.Flags().StringVar(&registryConfig.Config.Runner, "runner", "", "base image used to run Helm APBs (e.g. 'docker.io/automationbroker/helm-runner:latest')")
 	registryAddCmd.Flags().StringVar(&registryConfig.Config.URL, "url", "", "URL (e.g. docker.io)")
 	registryAddCmd.Flags().StringSliceVar(&registryConfig.Config.WhiteList, "whitelist", []string{}, "regexes for filtering registry contents (e.g. '.*apb$,.*bundle$')")
