@@ -9,7 +9,7 @@
  		BrokerResourceURL:        "/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/",
 -		BrokerRouteName:          "broker",
 -		ClusterServiceBrokerName: "openshift-automation-service-broker",
-+		BrokerRouteName:          "asb",
++		BrokerRouteName:          "asb-1338",
 +		ClusterServiceBrokerName: "ansible-service-broker",
  		BrokerRouteSuffix:        "osb",
  	}
