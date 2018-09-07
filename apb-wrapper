@@ -4,9 +4,13 @@ if [ -f /opt/apb/bin/activate ] ; then
  source /opt/apb/bin/activate
 fi
 
-echo "apb:x:$UID:$UID:apb:/home/apb:/bin/bash" >> /etc/passwd
-sudo groupadd apb -g $UID
-sudo usermod -a -G apb apb
+if [ $UID == 0 ]; then
+  ln -sf /.kube /root/.kube
+else
+  echo "apb:x:$UID:$UID:apb:/home/apb:/bin/bash" >> /etc/passwd
+  sudo groupadd apb -g $UID
+  sudo usermod -a -G apb apb
+fi
 
 if ! [[ "${MINISHIFT_REGISTRY}" == "" ]]; then
   gid=$(stat -c '%g' ${DOCKER_CERT_PATH}/ca.pem)
@@ -20,7 +24,10 @@ else
   group=docker
   sudo groupadd $group -g $gid
 fi
-sudo usermod -a -G $group apb
+
+if [ $UID != 0 ]; then
+  sudo usermod -a -G $group apb
+fi
 
 command="apb --config /.apb $@"
 sg $group -c "$command"
