@@ -81,7 +81,12 @@ func addBinding(args []string) {
 	}
 	data := map[string][]byte{}
 	for key, value := range extCreds.Credentials {
-		data[key] = []byte(value.(string))
+		d, err := json.Marshal(value)
+		if err != nil {
+			log.Errorf("error marshalling extracted credential data: %v", err)
+			return
+		}
+		data[key] = d
 	}
 	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
