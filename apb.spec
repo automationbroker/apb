@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 1.9.6
+Version: 1.9.7
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,11 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Mon Sep 10 2018 Dylan Murray <dymurray@redhat.com> 1.9.7-1
+- Bug 1626986 - Marshal ext creds instead of assuming interface type (#133)
+  (dymurray@redhat.com)
+- Improvements for running the container as root (#132) (jmontleo@redhat.com)
+
 * Thu Sep 06 2018 Dylan Murray <dymurray@redhat.com> 1.9.6-1
 - Bug 1625877 - Change downstream patch to use proper route name (#130)
   (dymurray@redhat.com)
