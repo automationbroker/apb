@@ -81,7 +81,6 @@ var bundleInfoCmd = &cobra.Command{
 
 var bundleNamespace string
 var sandboxRole string
-var kubeConfig string
 var printLogs bool
 var skipParams bool
 
@@ -153,9 +152,7 @@ var bundleBuildStub = &cobra.Command{
 }
 
 func init() {
-	bundleCmd.PersistentFlags().StringVarP(&kubeConfig, "kubeconfig", "k", "", "Path to kubeconfig to use")
 	rootCmd.AddCommand(bundleCmd)
-
 	bundlePrepareCmd.Flags().StringVarP(&bundleMetadataFilename, "bundlemeta", "b", "apb.yml", "APB metadata file to encode as b64")
 	bundlePrepareCmd.Flags().StringVarP(&containerMetadataFilename, "containermeta", "c", "Dockerfile", "Container metadata file to stamp")
 	bundlePrepareCmd.Flags().BoolVarP(&noLineBreaks, "nolinebreak", "n", false, "Skip adding linebreaks to b64 APB spec")
