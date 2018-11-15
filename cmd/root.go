@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/automationbroker/apb/pkg/config"
+	"github.com/automationbroker/apb/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -28,6 +29,8 @@ import (
 var Verbose bool
 
 var cfgDir string
+
+var kubeConfig string
 
 var rootCmd = &cobra.Command{
 	Use:   "apb",
@@ -46,6 +49,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "config", "", "configuration directory (default is $HOME/.apb)")
+	rootCmd.PersistentFlags().StringVarP(&kubeConfig, "kubeconfig", "k", "", "Path to kubeconfig to use (default is $HOME/.kube/config)")
 }
 
 func initConfig() {
@@ -59,6 +63,8 @@ func initConfig() {
 		config.UpdateCachedDefaults(config.Defaults, config.InitialDefaultSettings())
 	}
 	config.LoadDefaultSettings(config.Defaults, &config.LoadedDefaults)
+
+	kubeConfig = util.GetKubeConfigPath(kubeConfig)
 }
 
 // Execute invokes the root command
