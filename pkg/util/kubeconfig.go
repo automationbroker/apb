@@ -17,6 +17,7 @@
 package util
 
 import (
+	"os"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -25,9 +26,6 @@ import (
 
 // GetCurrentNamespace returns the current OpenShift namespace or an empty string
 func GetCurrentNamespace(configPath string) string {
-	if configPath == "" {
-		configPath = clientcmd.RecommendedHomeFile
-	}
 	config, err := clientcmd.LoadFromFile(configPath)
 	if err != nil {
 		log.Errorf("Error loading kubeconfig from [%v]: %v", configPath, err)
@@ -38,4 +36,23 @@ func GetCurrentNamespace(configPath string) string {
 		return ""
 	}
 	return strings.Split(config.CurrentContext, "/")[0]
+}
+
+// GetKubeConfigPath returns a valid kubeconfig path
+func GetKubeConfigPath(kcPath string) string {
+	configPath := clientcmd.RecommendedHomeFile
+	kubeconfigEnv := os.Getenv("KUBECONFIG")
+
+	if len(kcPath) > 0 {
+		configPath = kcPath
+	} else if len(kubeconfigEnv) > 0 {
+		configPath = kubeconfigEnv
+	}
+
+	if _, err := os.Stat(configPath); err != nil {
+		log.Errorf("Error loading kubeconfig from [%v]: %v (Try setting the kubeconfig path with -k, --kubeconfig)", configPath, err)
+		os.Exit(1)
+	}
+
+	return configPath
 }
