@@ -40,11 +40,20 @@ There are three tags to choose from:
 - **nightly**: following upstream commits, installed from RPM
 - **canary**: following upstream commits, installed from source build
 
-Copy the [apb-docker-run.sh](https://raw.githubusercontent.com/ansibleplaybookbundle/ansible-playbook-bundle/master/scripts/apb-docker-run.sh) script into your `PATH` and
-make sure it's executable:
-
+Create the `.apb` directory where our configuration data will be stored:
 ```
-cp $APB_CHECKOUT/scripts/apb-docker-run.sh $YOUR_PATH_DIR/apb && chmod +x $YOUR_PATH_DIR/apb
+$ mkdir -p ~/.apb
+```
+
+Create an alias which mounts this directory along with our Kubeconfig into the container:
+```
+$ alias apb=docker run -it --rm --privileged -v $PWD:/mnt -v $HOME/.kube:/.kube -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.apb:/.apb -u $UID docker.io/ansibleplaybookbundle/apb-tools
+```
+
+Run `apb version` to verify everything is working properly:
+```
+$ apb version
+apb-1.9.5
 ```
 
 #### RPM Installation
