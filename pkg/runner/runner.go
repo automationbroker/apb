@@ -80,7 +80,6 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	}
 
 	targetSpec = candidateSpecs[0]
-	log.Debugf("na: %v", targetSpec.FQName)
 
 	// determine the correct plan
 	plan := selectPlan(targetSpec)
