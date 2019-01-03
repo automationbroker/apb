@@ -424,7 +424,7 @@ func getProvisionedInstanceId(name, namespace string) (string, error) {
 			if len(instance.InstanceIDs[namespace]) == 1 {
 				return instance.InstanceIDs[namespace][0], nil
 			} else if len(instance.InstanceIDs[namespace]) == 0 {
-				return "", fmt.Errorf("found no available instancesin namespace [%v]", namespace)
+				return "", fmt.Errorf("found no available instances in namespace [%v]", namespace)
 			} else {
 				// Select instance
 				fmt.Printf("Found more than one service instance for bundle [%v]:\n", name)
