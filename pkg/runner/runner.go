@@ -47,7 +47,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	var candidateSpecs []*bundle.Spec
 
 	if action == "deprovision" {
-		id, err = getProvisionedInstanceId(bundleName)
+		id, err = getProvisionedInstanceId(bundleName, ns)
 		if err != nil {
 			return "", err
 		}
@@ -413,7 +413,7 @@ func contains(s []string, t string) bool {
 	return false
 }
 
-func getProvisionedInstanceId(name string) (string, error) {
+func getProvisionedInstanceId(name, namespace string) (string, error) {
 	var instanceConfigs []config.ProvisionedInstance
 	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
 	if err != nil {
@@ -421,14 +421,14 @@ func getProvisionedInstanceId(name string) (string, error) {
 	}
 	for _, instance := range instanceConfigs {
 		if instance.BundleName == name {
-			if len(instance.InstanceIDs) == 1 {
-				return instance.InstanceIDs[0], nil
-			} else if len(instance.InstanceIDs) == 0 {
-				return "", errors.New("found no available instances")
+			if len(instance.InstanceIDs[namespace]) == 1 {
+				return instance.InstanceIDs[namespace][0], nil
+			} else if len(instance.InstanceIDs[namespace]) == 0 {
+				return "", fmt.Errorf("found no available instancesin namespace [%v]", namespace)
 			} else {
 				// Select instance
 				fmt.Printf("Found more than one service instance for bundle [%v]:\n", name)
-				for i, instance := range instance.InstanceIDs {
+				for i, instance := range instance.InstanceIDs[namespace] {
 					fmt.Printf("[%v] - %v\n", i, instance)
 				}
 				var inputValid = false
@@ -444,14 +444,14 @@ func getProvisionedInstanceId(name string) (string, error) {
 						fmt.Printf("Input was not a valid integer, please enter again.\n")
 						continue
 					}
-					if intInput >= len(instance.InstanceIDs) || intInput < 0 {
-						fmt.Printf("Input is out of range. Please select an integer from 0-%v\n", len(instance.InstanceIDs)-1)
+					if intInput >= len(instance.InstanceIDs[namespace]) || intInput < 0 {
+						fmt.Printf("Input is out of range. Please select an integer from 0-%v\n", len(instance.InstanceIDs[namespace])-1)
 						continue
 					}
-					return instance.InstanceIDs[intInput], nil
+					return instance.InstanceIDs[namespace][intInput], nil
 				}
 			}
 		}
 	}
-	return "", fmt.Errorf("No provisioned instances for bundle [%v]", name)
+	return "", fmt.Errorf("No provisioned instances for bundle [%v] in namespace [%v]", name, namespace)
 }

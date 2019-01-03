@@ -8,7 +8,7 @@ import (
 // ProvisionedInstance stores a list of provisioned uuids associated with a bundle
 type ProvisionedInstance struct {
 	BundleName  string
-	InstanceIDs []string
+	InstanceIDs map[string][]string
 }
 
 // Registry stores a single registry config and references all associated bundle specs

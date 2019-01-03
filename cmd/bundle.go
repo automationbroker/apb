@@ -259,13 +259,13 @@ func executeBundle(action string, args []string) (podName string) {
 	switch action {
 	case "provision":
 		// Add instance to ProvisionedInstances
-		err = addInstance(args[0], id)
+		err = addInstance(args[0], bundleNamespace, id)
 		if err != nil {
 			log.Errorf("Failed to add instance ID to list of provisioned instances")
 		}
 	case "deprovision":
 		// Remove instance from ProvisionedInstances
-		err = removeInstance(args[0], id)
+		err = removeInstance(args[0], bundleNamespace, id)
 		if err != nil {
 			log.Errorf("Failed to remove instance ID from list of provisioned instances")
 		}
@@ -501,7 +501,7 @@ func processLineBreaks(text []byte, lineBreakText []byte, breakAfter int) []byte
 	return newText
 }
 
-func addInstance(name, id string) error {
+func addInstance(name, namespace, id string) error {
 	var instanceConfigs []config.ProvisionedInstance
 	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
 	if err != nil {
@@ -511,7 +511,7 @@ func addInstance(name, id string) error {
 	for i, instance := range instanceConfigs {
 		if instance.BundleName == name {
 			log.Debugf("Adding instance")
-			instanceConfigs[i].InstanceIDs = append(instance.InstanceIDs, id)
+			instanceConfigs[i].InstanceIDs[namespace] = append(instance.InstanceIDs[namespace], id)
 			err = config.UpdateCachedInstances(config.ProvisionedInstances, instanceConfigs)
 			if err != nil {
 				return err
@@ -520,9 +520,11 @@ func addInstance(name, id string) error {
 		}
 	}
 
+	idMap := make(map[string][]string)
+	idMap[namespace] = []string{id}
 	instance := config.ProvisionedInstance{
 		BundleName:  name,
-		InstanceIDs: []string{id},
+		InstanceIDs: idMap,
 	}
 
 	instanceConfigs = append(instanceConfigs, instance)
@@ -533,7 +535,7 @@ func addInstance(name, id string) error {
 	return nil
 }
 
-func removeInstance(name, id string) error {
+func removeInstance(name, namespace, id string) error {
 	var instanceConfigs []config.ProvisionedInstance
 	var foundBundle = false
 	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
@@ -543,10 +545,10 @@ func removeInstance(name, id string) error {
 	for i, instance := range instanceConfigs {
 		if instance.BundleName == name {
 			foundBundle = true
-			for j, instanceID := range instance.InstanceIDs {
+			for j, instanceID := range instance.InstanceIDs[namespace] {
 				if instanceID == id {
 					// Remove instance
-					instanceConfigs[i].InstanceIDs = append(instance.InstanceIDs[:j], instance.InstanceIDs[j+1:]...)
+					instanceConfigs[i].InstanceIDs[namespace] = append(instance.InstanceIDs[namespace][:j], instance.InstanceIDs[namespace][j+1:]...)
 					err = config.UpdateCachedInstances(config.ProvisionedInstances, instanceConfigs)
 					if err != nil {
 						return err
