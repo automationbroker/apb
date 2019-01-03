@@ -49,13 +49,11 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	if action == "deprovision" {
 		id, err = getProvisionedInstanceId(bundleName)
 		if err != nil {
-			log.Errorf("Error getting provisioned instances: %v", err)
 			return "", err
 		}
 	} else {
 		id = uuid.New()
 	}
-	log.Debugf("HERE: %v", id)
 
 	podName = fmt.Sprintf("bundle-%s-%s", action, id)
 	config.Registries.UnmarshalKey("Registries", &reg)
@@ -430,8 +428,31 @@ func getProvisionedInstanceId(name string) (string, error) {
 				return "", errors.New("found no available instances")
 			} else {
 				// Select instance
+				fmt.Printf("Found more than one service instance for bundle [%v]:\n", name)
+				for i, instance := range instance.InstanceIDs {
+					fmt.Printf("[%v] - %v\n", i, instance)
+				}
+				var inputValid = false
+				for !inputValid {
+					var input string
+					fmt.Printf("Enter the number of the instance ID you would wish to deprovision: ")
+					fmt.Scanln(&input)
+					if input == "" {
+						continue
+					}
+					intInput, err := strconv.Atoi(input)
+					if err != nil {
+						fmt.Printf("Input was not a valid integer, please enter again.\n")
+						continue
+					}
+					if intInput >= len(instance.InstanceIDs) || intInput < 0 {
+						fmt.Printf("Input is out of range. Please select an integer from 0-%v\n", len(instance.InstanceIDs)-1)
+						continue
+					}
+					return instance.InstanceIDs[intInput], nil
+				}
 			}
 		}
 	}
-	return "", nil
+	return "", fmt.Errorf("No provisioned instances for bundle [%v]", name)
 }

@@ -76,21 +76,30 @@ func InitJSONConfig(configDir string, configName string) (config *viper.Viper, i
 // UpdateCachedInstances saves the contents of instanceList to a configuration file
 func UpdateCachedInstances(viperConfig *viper.Viper, instanceList []ProvisionedInstance) error {
 	viperConfig.Set("ProvisionedInstances", instanceList)
-	viperConfig.WriteConfig()
+	err := viperConfig.WriteConfig()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // UpdateCachedRegistries saves the contents of regList to a configuration file
 func UpdateCachedRegistries(viperConfig *viper.Viper, regList []Registry) error {
 	viperConfig.Set("Registries", regList)
-	viperConfig.WriteConfig()
+	err := viperConfig.WriteConfig()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // UpdateCachedDefaults saves the contents of defaults to a configuration file
 func UpdateCachedDefaults(viperConfig *viper.Viper, defaults *DefaultSettings) error {
 	viperConfig.Set("Defaults", defaults)
-	viperConfig.WriteConfig()
+	err := viperConfig.WriteConfig()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
