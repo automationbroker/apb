@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/automationbroker/apb/pkg/config"
@@ -248,6 +249,23 @@ func executeBundle(action string, args []string) (podName string) {
 	if err != nil {
 		log.Errorf("Failed to execute bundle [%v]: %v", args[0], err)
 		return ""
+	}
+	id := strings.Split(pn, "bundle-")[1]
+	id = strings.TrimPrefix(id, "provision-")
+	id = strings.TrimPrefix(id, "deprovision-")
+	switch action {
+	case "provision":
+		// Add instance to ProvisionedInstances
+		err = addInstance(args[0], bundleNamespace, id)
+		if err != nil {
+			log.Errorf("Failed to add instance ID to list of provisioned instances")
+		}
+	case "deprovision":
+		// Remove instance from ProvisionedInstances
+		err = removeInstance(args[0], bundleNamespace, id)
+		if err != nil {
+			log.Errorf("Failed to remove instance ID from list of provisioned instances")
+		}
 	}
 	return pn
 }
@@ -478,4 +496,66 @@ func processLineBreaks(text []byte, lineBreakText []byte, breakAfter int) []byte
 		}
 	}
 	return newText
+}
+
+func addInstance(name, namespace, id string) error {
+	var instanceConfigs []config.ProvisionedInstance
+	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
+	if err != nil {
+		return err
+	}
+
+	for i, instance := range instanceConfigs {
+		if instance.BundleName == name {
+			log.Debugf("Adding instance")
+			instanceConfigs[i].InstanceIDs[namespace] = append(instance.InstanceIDs[namespace], id)
+			err = config.UpdateCachedInstances(config.ProvisionedInstances, instanceConfigs)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+
+	idMap := make(map[string][]string)
+	idMap[namespace] = []string{id}
+	instance := config.ProvisionedInstance{
+		BundleName:  name,
+		InstanceIDs: idMap,
+	}
+
+	instanceConfigs = append(instanceConfigs, instance)
+	err = config.UpdateCachedInstances(config.ProvisionedInstances, instanceConfigs)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func removeInstance(name, namespace, id string) error {
+	var instanceConfigs []config.ProvisionedInstance
+	var foundBundle = false
+	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
+	if err != nil {
+		return err
+	}
+	for i, instance := range instanceConfigs {
+		if instance.BundleName == name {
+			foundBundle = true
+			for j, instanceID := range instance.InstanceIDs[namespace] {
+				if instanceID == id {
+					// Remove instance
+					instanceConfigs[i].InstanceIDs[namespace] = append(instance.InstanceIDs[namespace][:j], instance.InstanceIDs[namespace][j+1:]...)
+					err = config.UpdateCachedInstances(config.ProvisionedInstances, instanceConfigs)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+	if foundBundle == false {
+		log.Errorf("Found no provisioned instances of [%v]", name)
+	}
+	return nil
 }

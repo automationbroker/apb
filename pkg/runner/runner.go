@@ -42,9 +42,20 @@ import (
 // RunBundle will run the bundle's action in the given namespace
 func RunBundle(action string, ns string, bundleName string, sandboxRole string, bundleRegistry string, printLogs bool, skipParams bool, args []string) (podName string, err error) {
 	reg := []config.Registry{}
+	var id string
 	var targetSpec *bundle.Spec
 	var candidateSpecs []*bundle.Spec
-	podName = fmt.Sprintf("bundle-%s", uuid.New())
+
+	if action == "deprovision" {
+		id, err = getProvisionedInstanceId(bundleName, ns)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		id = uuid.New()
+	}
+
+	podName = fmt.Sprintf("bundle-%s-%s", action, id)
 	config.Registries.UnmarshalKey("Registries", &reg)
 	for _, r := range reg {
 		if len(bundleRegistry) > 0 && r.Config.Name != bundleRegistry {
@@ -88,7 +99,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 		}
 	}
 
-	extraVars, err := createExtraVars(ns, &params, plan)
+	extraVars, err := createExtraVars(id, ns, &params, plan)
 	if err != nil {
 		return "", err
 	}
@@ -107,6 +118,7 @@ func RunBundle(action string, ns string, bundleName string, sandboxRole string, 
 	serviceAccount, namespace, err := runtime.Provider.CreateSandbox(podName, ns, targets, sandboxRole, labels)
 	if err != nil {
 		fmt.Printf("\nProblem creating sandbox [%s] to run APB. Did you run `oc new-project %s` first?\n\n", podName, ns)
+		log.Errorf("error creating sandbox: %v", err)
 		os.Exit(-1)
 	}
 
@@ -343,7 +355,7 @@ func createPodEnv(executionContext runtime.ExecutionContext) []v1.EnvVar {
 	return podEnv
 }
 
-func createExtraVars(targetNamespace string, parameters *bundle.Parameters, plan bundle.Plan) (string, error) {
+func createExtraVars(id string, targetNamespace string, parameters *bundle.Parameters, plan bundle.Plan) (string, error) {
 	var paramsCopy bundle.Parameters
 	if parameters != nil && *parameters != nil {
 		paramsCopy = *parameters
@@ -357,8 +369,8 @@ func createExtraVars(targetNamespace string, parameters *bundle.Parameters, plan
 
 	paramsCopy["cluster"] = "openshift"
 	paramsCopy["_apb_plan_id"] = plan.Name
-	paramsCopy["_apb_service_instance_id"] = "1234"
-	paramsCopy["_apb_service_class_id"] = "1234"
+	paramsCopy["_apb_service_instance_id"] = id
+	paramsCopy["_apb_service_class_id"] = id
 	extraVars, err := json.Marshal(paramsCopy)
 	return string(extraVars), err
 }
@@ -399,4 +411,47 @@ func contains(s []string, t string) bool {
 		}
 	}
 	return false
+}
+
+func getProvisionedInstanceId(name, namespace string) (string, error) {
+	var instanceConfigs []config.ProvisionedInstance
+	err := config.ProvisionedInstances.UnmarshalKey("ProvisionedInstances", &instanceConfigs)
+	if err != nil {
+		return "", err
+	}
+	for _, instance := range instanceConfigs {
+		if instance.BundleName == name {
+			if len(instance.InstanceIDs[namespace]) == 1 {
+				return instance.InstanceIDs[namespace][0], nil
+			} else if len(instance.InstanceIDs[namespace]) == 0 {
+				return "", fmt.Errorf("found no available instances in namespace [%v]", namespace)
+			} else {
+				// Select instance
+				fmt.Printf("Found more than one service instance for bundle [%v]:\n", name)
+				for i, instance := range instance.InstanceIDs[namespace] {
+					fmt.Printf("[%v] - %v\n", i, instance)
+				}
+				var inputValid = false
+				for !inputValid {
+					var input string
+					fmt.Printf("Enter the number of the instance ID you would wish to deprovision: ")
+					fmt.Scanln(&input)
+					if input == "" {
+						continue
+					}
+					intInput, err := strconv.Atoi(input)
+					if err != nil {
+						fmt.Printf("Input was not a valid integer, please enter again.\n")
+						continue
+					}
+					if intInput >= len(instance.InstanceIDs[namespace]) || intInput < 0 {
+						fmt.Printf("Input is out of range. Please select an integer from 0-%v\n", len(instance.InstanceIDs[namespace])-1)
+						continue
+					}
+					return instance.InstanceIDs[namespace][intInput], nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("No provisioned instances for bundle [%v] in namespace [%v]", name, namespace)
 }
