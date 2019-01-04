@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 2.0.1
+Version: 2.0.2
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,10 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Fri Jan 04 2019 Dylan Murray <dymurray@redhat.com> 2.0.2-1
+- Bug 1625751 - Use uuids for service_instance labels (#128)
+  (dymurray@redhat.com)
+
 * Thu Dec 06 2018 Dylan Murray <dymurray@redhat.com> 2.0.1-1
 - Update container docs for 4.0 (#144) (dymurray@redhat.com)
 - Bug 1640050 - add '--kubeconfig and KUBECONFIG env' support for all sub
