@@ -1,9 +1,13 @@
 SOURCE_DIRS      = cmd pkg
 SOURCES          := $(shell find . -name '*.go' -not -path "*/vendor/*")
+PLATFORMS        = darwin linux
 .DEFAULT_GOAL    := apb
 
 apb: $(SOURCES) ## Build the samplebroker
 	go build -i -ldflags="-s -w"
+
+build-all:
+	$(foreach GOOS, $(PLATFORMS), $(shell export GOOS=$(GOOS); export GOARCH=amd64; go build -v -o apb-$(GOOS)-amd64 -i -ldflags="-s -w"))
 
 install:
 	go install -ldflags="-s -w"
