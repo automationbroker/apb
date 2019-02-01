@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 2.0.2
+Version: 2.0.3
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -141,6 +141,9 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Fri Feb 01 2019 Jason Montleon <jmontleo@redhat.com> 2.0.3-1
+- add cross compilation for Mac OS/X. (#146) (jmrodri@gmail.com)
+
 * Fri Jan 04 2019 Dylan Murray <dymurray@redhat.com> 2.0.2-1
 - Bug 1625751 - Use uuids for service_instance labels (#128)
   (dymurray@redhat.com)
