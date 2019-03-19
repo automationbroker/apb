@@ -67,6 +67,7 @@ func initConfig() {
 	config.LoadDefaultSettings(config.Defaults, &config.LoadedDefaults)
 
 	kubeConfig = util.GetKubeConfigPath(kubeConfig)
+	os.Setenv("KUBECONFIG", kubeConfig)
 }
 
 // Execute invokes the root command
