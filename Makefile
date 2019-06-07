@@ -25,7 +25,7 @@ test: ## Run unit tests
 	@go test -cover ./cmd/... ./pkg/...
 
 vet: ## Run go vet
-	@go tool vet ./cmd ./pkg
+	@go vet ./cmd ./pkg
 
 check: fmtcheck vet lint apb test ## Pre-flight checks before creating PR
 
