@@ -25,7 +25,7 @@ test: ## Run unit tests
 	@go test -cover ./cmd/... ./pkg/...
 
 vet: ## Run go vet
-	@go vet ./cmd ./pkg
+	@go vet $(addprefix ./, $(addsuffix /... , $(SOURCE_DIRS)))
 
 check: fmtcheck vet lint apb test ## Pre-flight checks before creating PR
 
