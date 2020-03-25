@@ -38,7 +38,7 @@
 %define modulename apb
 
 Name: %{repo}
-Version: 2.0.3
+Version: 2.0.4
 Release: 1%{build_timestamp}%{?dist}
 Summary: APB CLI
 License: ASL 2.0
@@ -142,6 +142,12 @@ sort -u -o devel.file-list devel.file-list
 %endif
 
 %changelog
+* Wed Mar 25 2020 jesus m. rodriguez <jesusr@redhat.com> 2.0.4-1
+- correct the vet option (#156) (jesusr@redhat.com)
+- Bug 1793365: move nss_wrapper to container_scripts rpm (#155) (jesusr@redhat.com)
+- Bug 1793365: fix permission for /etc/passwd (#154) (cmacedo@redhat.com)
+- dep ensure (#148) (jmrodri@gmail.com)
+- set KUBECONFIG env for all commands (#147) (jkim@redhat.com)
 * Fri Feb 01 2019 Jason Montleon <jmontleo@redhat.com> 2.0.3-1
 - add cross compilation for Mac OS/X. (#146) (jmrodri@gmail.com)
 
