@@ -60,6 +60,7 @@ BuildRequires: golang
 Summary: scripts required for running apb in a container
 BuildArch: noarch
 Requires: %{name}
+Requires: nss_wrapper
 
 %description container-scripts
 containers scripts for apb
@@ -70,7 +71,6 @@ Summary: %{summary}
 BuildArch: noarch
 
 Requires: golang
-Requires: nss_wrapper
 
 %description devel
 devel for %{name}
