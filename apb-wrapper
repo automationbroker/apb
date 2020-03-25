@@ -4,12 +4,21 @@ if [ -f /opt/apb/bin/activate ] ; then
  source /opt/apb/bin/activate
 fi
 
-if [ $UID == 0 ]; then
-  ln -sf /.kube /root/.kube
-else
-  echo "apb:x:$UID:$UID:apb:/home/apb:/bin/bash" >> /etc/passwd
-  sudo groupadd apb -g $UID
-  sudo usermod -a -G apb apb
+USER_ID=$(id -u)
+
+if [ x"$USER_ID" != x"0" -a x"$USER_ID" != x"1001" ]; then
+    NSS_WRAPPER_PASSWD=/tmp/passwd.nss_wrapper
+    NSS_WRAPPER_GROUP=/etc/group
+
+    cp /etc/passwd $NSS_WRAPPER_PASSWD
+
+    echo "${USER_NAME:-apb}:x:$(id -u):0:${USER_NAME:-apb} user:${HOME}:/sbin/nologin" >> $NSS_WRAPPER_PASSWD
+
+    export NSS_WRAPPER_PASSWD
+    export NSS_WRAPPER_GROUP
+
+    LD_PRELOAD=/usr/lib64/libnss_wrapper.so
+    export LD_PRELOAD
 fi
 
 if ! [[ "${MINISHIFT_REGISTRY}" == "" ]]; then

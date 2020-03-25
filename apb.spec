@@ -70,6 +70,7 @@ Summary: %{summary}
 BuildArch: noarch
 
 Requires: golang
+Requires: nss_wrapper
 
 %description devel
 devel for %{name}
