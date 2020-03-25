@@ -8,7 +8,6 @@ RUN yum -y install epel-release centos-release-openshift-origin \
 WORKDIR /mnt
 
 RUN echo "ALL ALL=NOPASSWD: ALL" > /etc/sudoers.d/usermod
-RUN chmod 666 /etc/passwd
 
 ENTRYPOINT ["apb-wrapper"]
 CMD ["-h"]
